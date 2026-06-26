@@ -1,29 +1,27 @@
-import { useGetDashboardSummary } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useGetDashboardSummary, useGetProfile } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Briefcase, Calendar, Clock, RefreshCw, Trophy } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { AlertCircle, RefreshCw, UserCircle } from "lucide-react";
 import { Link } from "wouter";
 
-export function DashboardPage() {
-  const { data: summary, isLoading, isError, refetch } = useGetDashboardSummary();
+import { Greeting } from "@/components/dashboard/greeting";
+import { StatCards } from "@/components/dashboard/stat-cards";
+import { NewOpportunities } from "@/components/dashboard/new-opportunities";
+import { RecommendedJobs } from "@/components/dashboard/recommended-jobs";
+import { ClosingSoon } from "@/components/dashboard/closing-soon";
+import { DreamCompanies } from "@/components/dashboard/dream-companies";
+import { DeadlineTimeline } from "@/components/dashboard/deadline-timeline";
+import { RecentApplications } from "@/components/dashboard/recent-applications";
+import { ApplicationChart } from "@/components/dashboard/application-chart";
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-64" />
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full rounded-xl" />
-          ))}
-        </div>
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
-    );
-  }
+export function DashboardPage() {
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    isError,
+    refetch,
+  } = useGetDashboardSummary();
+  const { data: profile } = useGetProfile();
 
   if (isError) {
     return (
@@ -31,7 +29,9 @@ export function DashboardPage() {
         <AlertCircle className="h-12 w-12 text-destructive" />
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">Failed to load dashboard</h2>
-          <p className="text-muted-foreground max-w-md">There was a problem connecting to the server.</p>
+          <p className="text-muted-foreground max-w-md">
+            There was a problem connecting to the server.
+          </p>
         </div>
         <Button onClick={() => refetch()} variant="outline">
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -41,88 +41,79 @@ export function DashboardPage() {
     );
   }
 
-  if (!summary) return null;
-
-  const isEmpty = summary.totalApplications === 0;
+  const showProfilePrompt =
+    profile &&
+    summary &&
+    summary.profileCompleteness !== undefined &&
+    summary.profileCompleteness < 80;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Here's what's happening with your placements.</p>
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
 
-      {isEmpty ? (
-        <Card className="border-dashed border-2 bg-secondary/50">
-          <CardContent className="flex flex-col items-center justify-center h-64 text-center space-y-4 py-8">
-            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
-              <Trophy className="h-8 w-8" />
-            </div>
-            <h2 className="text-xl font-semibold">Your journey starts here</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              You haven't tracked any applications yet. Add your first job or internship to begin your placement journey.
-            </p>
-            {/* The API doesn't have an applications endpoint yet, so this button is just a placeholder */}
-            <Button className="mt-4" disabled>
-              <Briefcase className="h-4 w-4 mr-2" />
-              Add Application (Coming Soon)
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Applications</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{summary.totalApplications}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Applied</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{summary.appliedCount}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming Deadlines</CardTitle>
-              <Calendar className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">{summary.upcomingDeadlines}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Recent Activity</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{summary.recentActivity}</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* ── Greeting ─────────────────────────────────────────────── */}
+      <Greeting />
 
-      {summary.profileCompleteness !== undefined && summary.profileCompleteness < 100 && (
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="space-y-1 text-center sm:text-left">
-              <h3 className="font-semibold text-primary">Profile Completeness: {summary.profileCompleteness}%</h3>
-              <p className="text-sm text-muted-foreground">Complete your profile to unlock better tracking insights.</p>
+      {/* ── Profile completion prompt ─────────────────────────────── */}
+      {showProfilePrompt && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <UserCircle className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-primary">
+                  Profile {summary.profileCompleteness}% complete
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Complete your profile to improve job recommendations.
+                </p>
+              </div>
             </div>
             <Link href="/profile">
-              <Button variant="default">Complete Profile</Button>
+              <Button size="sm" variant="outline" className="border-primary/30 text-primary hover:bg-primary/10 shrink-0">
+                Complete Profile
+              </Button>
             </Link>
           </CardContent>
         </Card>
       )}
+
+      {/* ── New Opportunities + Stats ─────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div className="sm:col-span-1">
+          <NewOpportunities />
+        </div>
+        <div className="sm:col-span-3 xl:col-span-4">
+          <StatCards summary={summary} isLoading={summaryLoading} />
+        </div>
+      </div>
+
+      {/* ── Recommended + Closing Soon ────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <RecommendedJobs />
+        </div>
+        <div className="lg:col-span-1">
+          <ClosingSoon />
+        </div>
+      </div>
+
+      {/* ── Dream Companies ───────────────────────────────────────── */}
+      <DreamCompanies />
+
+      {/* ── App Funnel + Deadline Timeline ───────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <ApplicationChart summary={summary} isLoading={summaryLoading} />
+        </div>
+        <div className="lg:col-span-2">
+          <DeadlineTimeline />
+        </div>
+      </div>
+
+      {/* ── Recent Applications ───────────────────────────────────── */}
+      <RecentApplications />
     </div>
   );
 }
