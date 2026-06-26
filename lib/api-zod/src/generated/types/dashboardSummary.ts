@@ -3,14 +3,17 @@
  * Do not edit manually.
  * Api
  * CareerRadar API — personal placement OS for CS students
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
+import type { DashboardSummaryByStatus } from './dashboardSummaryByStatus';
 
 export interface DashboardSummary {
   totalApplications: number;
   appliedCount: number;
   upcomingDeadlines: number;
   recentActivity: number;
-  /** Percentage 0-100 */
-  profileCompleteness?: number;
+  profileCompleteness: number;
+  bookmarksCount?: number;
+  activeJobsCount?: number;
+  byStatus?: DashboardSummaryByStatus;
 }

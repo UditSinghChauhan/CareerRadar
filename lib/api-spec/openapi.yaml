@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
+  version: 0.2.0
   description: CareerRadar API — personal placement OS for CS students
 servers:
   - url: /api
@@ -16,6 +16,16 @@ tags:
     description: User settings management
   - name: dashboard
     description: Dashboard summary and stats
+  - name: companies
+    description: Company directory
+  - name: jobs
+    description: Job listings
+  - name: applications
+    description: User job applications
+  - name: bookmarks
+    description: Bookmarked jobs
+  - name: saved-searches
+    description: Saved search filters
 
 paths:
   /healthz:
@@ -23,7 +33,6 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -125,6 +134,491 @@ paths:
         "401":
           description: Unauthorized
 
+  # ─── Companies ────────────────────────────────────────────────────────────────
+
+  /companies:
+    get:
+      operationId: listCompanies
+      tags: [companies]
+      summary: List all companies
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: industry
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated company list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyListResponse"
+    post:
+      operationId: createCompany
+      tags: [companies]
+      summary: Create a company
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyInput"
+      responses:
+        "201":
+          description: Created company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+
+  /companies/{id}:
+    get:
+      operationId: getCompany
+      tags: [companies]
+      summary: Get a company by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "404":
+          description: Not found
+
+  # ─── Jobs ─────────────────────────────────────────────────────────────────────
+
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List jobs with filters
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: companyId
+          schema:
+            type: string
+        - in: query
+          name: workMode
+          schema:
+            type: string
+            enum: [remote, hybrid, onsite]
+        - in: query
+          name: jobType
+          schema:
+            type: string
+            enum: [internship, full_time]
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, closed, draft]
+        - in: query
+          name: eligibleBatch
+          schema:
+            type: integer
+        - in: query
+          name: minCgpaLte
+          schema:
+            type: number
+        - in: query
+          name: deadlineBefore
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated job list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobListResponse"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a job listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "201":
+          description: Created job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/deadlines/soon:
+    get:
+      operationId: getJobsClosingSoon
+      tags: [jobs]
+      summary: Get jobs closing within N days
+      parameters:
+        - in: query
+          name: days
+          schema:
+            type: integer
+            default: 7
+      responses:
+        "200":
+          description: Jobs closing soon
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a job by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Not found
+    put:
+      operationId: updateJob
+      tags: [jobs]
+      summary: Update a job listing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobUpdateInput"
+      responses:
+        "200":
+          description: Updated job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+    delete:
+      operationId: deleteJob
+      tags: [jobs]
+      summary: Close/deactivate a job listing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  # ─── Applications ─────────────────────────────────────────────────────────────
+
+  /applications:
+    get:
+      operationId: listApplications
+      tags: [applications]
+      summary: List user's applications
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+        - in: query
+          name: jobType
+          schema:
+            type: string
+            enum: [internship, full_time]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated application list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationListResponse"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createApplication
+      tags: [applications]
+      summary: Create an application
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Created application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "401":
+          description: Unauthorized
+
+  /applications/{id}:
+    get:
+      operationId: getApplication
+      tags: [applications]
+      summary: Get an application by ID
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+    put:
+      operationId: updateApplication
+      tags: [applications]
+      summary: Update application status or notes
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationUpdateInput"
+      responses:
+        "200":
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "401":
+          description: Unauthorized
+    delete:
+      operationId: deleteApplication
+      tags: [applications]
+      summary: Delete an application
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+
+  # ─── Bookmarks ────────────────────────────────────────────────────────────────
+
+  /bookmarks:
+    get:
+      operationId: listBookmarks
+      tags: [bookmarks]
+      summary: List user's bookmarked jobs
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: Bookmarked jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bookmark"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createBookmark
+      tags: [bookmarks]
+      summary: Bookmark a job
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookmarkInput"
+      responses:
+        "201":
+          description: Bookmark created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bookmark"
+        "401":
+          description: Unauthorized
+
+  /bookmarks/{jobId}:
+    delete:
+      operationId: deleteBookmark
+      tags: [bookmarks]
+      summary: Remove a bookmark
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Removed
+        "401":
+          description: Unauthorized
+
+  # ─── Saved Searches ───────────────────────────────────────────────────────────
+
+  /saved-searches:
+    get:
+      operationId: listSavedSearches
+      tags: [saved-searches]
+      summary: List user's saved searches
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: Saved searches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedSearch"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createSavedSearch
+      tags: [saved-searches]
+      summary: Save a search
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavedSearchInput"
+      responses:
+        "201":
+          description: Saved search created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedSearch"
+        "401":
+          description: Unauthorized
+
+  /saved-searches/{id}:
+    delete:
+      operationId: deleteSavedSearch
+      tags: [saved-searches]
+      summary: Delete a saved search
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+
 components:
   securitySchemes:
     clerkAuth:
@@ -132,13 +626,29 @@ components:
       scheme: bearer
 
   schemas:
+    # ─── Shared ─────────────────────────────────────────────────────────────────
+
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
+
+    PaginationMeta:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    # ─── Profile & Settings ─────────────────────────────────────────────────────
 
     Profile:
       type: object
@@ -244,7 +754,7 @@ components:
 
     DashboardSummary:
       type: object
-      required: [totalApplications, appliedCount, upcomingDeadlines, recentActivity]
+      required: [totalApplications, appliedCount, upcomingDeadlines, recentActivity, profileCompleteness]
       properties:
         totalApplications:
           type: integer
@@ -256,4 +766,502 @@ components:
           type: integer
         profileCompleteness:
           type: integer
-          description: Percentage 0-100
+        bookmarksCount:
+          type: integer
+        activeJobsCount:
+          type: integer
+        byStatus:
+          type: object
+          additionalProperties:
+            type: integer
+
+    # ─── Company ────────────────────────────────────────────────────────────────
+
+    Company:
+      type: object
+      required: [id, name, slug, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        industry:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        headquarters:
+          type: ["string", "null"]
+        size:
+          type: ["string", "null"]
+          enum: [startup, small, medium, large, enterprise, null]
+        type:
+          type: ["string", "null"]
+          enum: [product, service, consulting, startup, null]
+        linkedinUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    CompanyInput:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        logoUrl:
+          type: string
+        website:
+          type: string
+        industry:
+          type: string
+        description:
+          type: string
+        headquarters:
+          type: string
+        size:
+          type: string
+          enum: [startup, small, medium, large, enterprise]
+        type:
+          type: string
+          enum: [product, service, consulting, startup]
+        linkedinUrl:
+          type: string
+
+    CompanyListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Company"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    # ─── Job Source ─────────────────────────────────────────────────────────────
+
+    JobSource:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        baseUrl:
+          type: ["string", "null"]
+        logoUrl:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    # ─── Job ────────────────────────────────────────────────────────────────────
+
+    Job:
+      type: object
+      required: [id, companyId, title, jobType, workMode, status, createdAt]
+      properties:
+        id:
+          type: string
+        companyId:
+          type: string
+        sourceId:
+          type: ["string", "null"]
+        title:
+          type: string
+        department:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        country:
+          type: ["string", "null"]
+        workMode:
+          type: string
+          enum: [remote, hybrid, onsite]
+        jobType:
+          type: string
+          enum: [internship, full_time]
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        stipend:
+          type: ["integer", "null"]
+        currency:
+          type: string
+        eligibleBatch:
+          type: array
+          items:
+            type: integer
+        eligibleBranches:
+          type: array
+          items:
+            type: string
+        minCgpa:
+          type: ["number", "null"]
+        requiredSkills:
+          type: array
+          items:
+            type: string
+        experienceMin:
+          type: ["integer", "null"]
+        experienceMax:
+          type: ["integer", "null"]
+        deadline:
+          type: ["string", "null"]
+          format: date-time
+        applyUrl:
+          type: ["string", "null"]
+        sourcePlatform:
+          type: ["string", "null"]
+        sourceUrl:
+          type: ["string", "null"]
+        postedDate:
+          type: ["string", "null"]
+          format: date-time
+        status:
+          type: string
+          enum: [active, closed, draft]
+        description:
+          type: ["string", "null"]
+        requirements:
+          type: ["string", "null"]
+        benefits:
+          type: array
+          items:
+            type: string
+        selectionProcess:
+          type: ["string", "null"]
+        company:
+          $ref: "#/components/schemas/Company"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    JobInput:
+      type: object
+      required: [companyId, title, jobType, workMode]
+      properties:
+        companyId:
+          type: string
+        sourceId:
+          type: string
+        title:
+          type: string
+        department:
+          type: string
+        location:
+          type: string
+        country:
+          type: string
+        workMode:
+          type: string
+          enum: [remote, hybrid, onsite]
+        jobType:
+          type: string
+          enum: [internship, full_time]
+        salaryMin:
+          type: integer
+        salaryMax:
+          type: integer
+        stipend:
+          type: integer
+        currency:
+          type: string
+        eligibleBatch:
+          type: array
+          items:
+            type: integer
+        eligibleBranches:
+          type: array
+          items:
+            type: string
+        minCgpa:
+          type: number
+        requiredSkills:
+          type: array
+          items:
+            type: string
+        experienceMin:
+          type: integer
+        experienceMax:
+          type: integer
+        deadline:
+          type: string
+          format: date-time
+        applyUrl:
+          type: string
+        sourcePlatform:
+          type: string
+        sourceUrl:
+          type: string
+        postedDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, closed, draft]
+        description:
+          type: string
+        requirements:
+          type: string
+        benefits:
+          type: array
+          items:
+            type: string
+        selectionProcess:
+          type: string
+
+    JobUpdateInput:
+      type: object
+      properties:
+        title:
+          type: string
+        department:
+          type: string
+        location:
+          type: string
+        workMode:
+          type: string
+          enum: [remote, hybrid, onsite]
+        jobType:
+          type: string
+          enum: [internship, full_time]
+        salaryMin:
+          type: integer
+        salaryMax:
+          type: integer
+        stipend:
+          type: integer
+        eligibleBatch:
+          type: array
+          items:
+            type: integer
+        eligibleBranches:
+          type: array
+          items:
+            type: string
+        minCgpa:
+          type: number
+        requiredSkills:
+          type: array
+          items:
+            type: string
+        deadline:
+          type: string
+          format: date-time
+        applyUrl:
+          type: string
+        status:
+          type: string
+          enum: [active, closed, draft]
+        description:
+          type: string
+        requirements:
+          type: string
+        benefits:
+          type: array
+          items:
+            type: string
+        selectionProcess:
+          type: string
+
+    JobListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    # ─── Application ─────────────────────────────────────────────────────────────
+
+    Application:
+      type: object
+      required: [id, clerkId, jobId, status, createdAt]
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        jobId:
+          type: string
+        status:
+          type: string
+          enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+        appliedDate:
+          type: ["string", "null"]
+          format: date-time
+        notes:
+          type: ["string", "null"]
+        resumeVersion:
+          type: ["string", "null"]
+        referralName:
+          type: ["string", "null"]
+        followUpDate:
+          type: ["string", "null"]
+          format: date-time
+        offerAmount:
+          type: ["integer", "null"]
+        job:
+          $ref: "#/components/schemas/Job"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    ApplicationInput:
+      type: object
+      required: [jobId]
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+          enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+        notes:
+          type: string
+        resumeVersion:
+          type: string
+        referralName:
+          type: string
+
+    ApplicationUpdateInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+        notes:
+          type: string
+        resumeVersion:
+          type: string
+        referralName:
+          type: string
+        followUpDate:
+          type: string
+          format: date-time
+        appliedDate:
+          type: string
+          format: date-time
+        offerAmount:
+          type: integer
+
+    ApplicationListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Application"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    # ─── Bookmark ───────────────────────────────────────────────────────────────
+
+    Bookmark:
+      type: object
+      required: [id, clerkId, jobId, createdAt]
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        jobId:
+          type: string
+        job:
+          $ref: "#/components/schemas/Job"
+        createdAt:
+          type: string
+          format: date-time
+
+    BookmarkInput:
+      type: object
+      required: [jobId]
+      properties:
+        jobId:
+          type: string
+
+    # ─── Saved Search ────────────────────────────────────────────────────────────
+
+    SavedSearch:
+      type: object
+      required: [id, clerkId, name, filters, createdAt]
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        name:
+          type: string
+        filters:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    SavedSearchInput:
+      type: object
+      required: [name, filters]
+      properties:
+        name:
+          type: string
+        filters:
+          type: object
+          additionalProperties: true
+
+    # ─── Notification ───────────────────────────────────────────────────────────
+
+    Notification:
+      type: object
+      required: [id, clerkId, title, message, type, isRead, createdAt]
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [deadline_reminder, new_job, status_update, system]
+        isRead:
+          type: boolean
+        relatedJobId:
+          type: ["string", "null"]
+        metadata:
+          type: ["object", "null"]
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time

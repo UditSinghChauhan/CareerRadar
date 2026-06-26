@@ -3,10 +3,17 @@
  * Do not edit manually.
  * Api
  * CareerRadar API — personal placement OS for CS students
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 export interface HealthStatus {
   status: string;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 export interface Profile {
@@ -86,12 +93,539 @@ export interface SettingsInput {
   timezone?: string;
 }
 
+export type DashboardSummaryByStatus = {[key: string]: number};
+
 export interface DashboardSummary {
   totalApplications: number;
   appliedCount: number;
   upcomingDeadlines: number;
   recentActivity: number;
-  /** Percentage 0-100 */
-  profileCompleteness?: number;
+  profileCompleteness: number;
+  bookmarksCount?: number;
+  activeJobsCount?: number;
+  byStatus?: DashboardSummaryByStatus;
 }
+
+/**
+ * @nullable
+ */
+export type CompanySize = typeof CompanySize[keyof typeof CompanySize] | null;
+
+
+export const CompanySize = {
+  startup: 'startup',
+  small: 'small',
+  medium: 'medium',
+  large: 'large',
+  enterprise: 'enterprise',
+} as const;
+
+/**
+ * @nullable
+ */
+export type CompanyType = typeof CompanyType[keyof typeof CompanyType] | null;
+
+
+export const CompanyType = {
+  product: 'product',
+  service: 'service',
+  consulting: 'consulting',
+  startup: 'startup',
+} as const;
+
+export interface Company {
+  id: string;
+  name: string;
+  slug: string;
+  /** @nullable */
+  logoUrl?: string | null;
+  /** @nullable */
+  website?: string | null;
+  /** @nullable */
+  industry?: string | null;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  headquarters?: string | null;
+  /** @nullable */
+  size?: CompanySize;
+  /** @nullable */
+  type?: CompanyType;
+  /** @nullable */
+  linkedinUrl?: string | null;
+  createdAt: string;
+  /** @nullable */
+  updatedAt?: string | null;
+}
+
+export type CompanyInputSize = typeof CompanyInputSize[keyof typeof CompanyInputSize];
+
+
+export const CompanyInputSize = {
+  startup: 'startup',
+  small: 'small',
+  medium: 'medium',
+  large: 'large',
+  enterprise: 'enterprise',
+} as const;
+
+export type CompanyInputType = typeof CompanyInputType[keyof typeof CompanyInputType];
+
+
+export const CompanyInputType = {
+  product: 'product',
+  service: 'service',
+  consulting: 'consulting',
+  startup: 'startup',
+} as const;
+
+export interface CompanyInput {
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  website?: string;
+  industry?: string;
+  description?: string;
+  headquarters?: string;
+  size?: CompanyInputSize;
+  type?: CompanyInputType;
+  linkedinUrl?: string;
+}
+
+export interface CompanyListResponse {
+  data: Company[];
+  meta: PaginationMeta;
+}
+
+export interface JobSource {
+  id: string;
+  name: string;
+  /** @nullable */
+  baseUrl?: string | null;
+  /** @nullable */
+  logoUrl?: string | null;
+  isActive?: boolean;
+  createdAt: string;
+}
+
+export type JobWorkMode = typeof JobWorkMode[keyof typeof JobWorkMode];
+
+
+export const JobWorkMode = {
+  remote: 'remote',
+  hybrid: 'hybrid',
+  onsite: 'onsite',
+} as const;
+
+export type JobJobType = typeof JobJobType[keyof typeof JobJobType];
+
+
+export const JobJobType = {
+  internship: 'internship',
+  full_time: 'full_time',
+} as const;
+
+export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
+
+
+export const JobStatus = {
+  active: 'active',
+  closed: 'closed',
+  draft: 'draft',
+} as const;
+
+export interface Job {
+  id: string;
+  companyId: string;
+  /** @nullable */
+  sourceId?: string | null;
+  title: string;
+  /** @nullable */
+  department?: string | null;
+  /** @nullable */
+  location?: string | null;
+  /** @nullable */
+  country?: string | null;
+  workMode: JobWorkMode;
+  jobType: JobJobType;
+  /** @nullable */
+  salaryMin?: number | null;
+  /** @nullable */
+  salaryMax?: number | null;
+  /** @nullable */
+  stipend?: number | null;
+  currency?: string;
+  eligibleBatch?: number[];
+  eligibleBranches?: string[];
+  /** @nullable */
+  minCgpa?: number | null;
+  requiredSkills?: string[];
+  /** @nullable */
+  experienceMin?: number | null;
+  /** @nullable */
+  experienceMax?: number | null;
+  /** @nullable */
+  deadline?: string | null;
+  /** @nullable */
+  applyUrl?: string | null;
+  /** @nullable */
+  sourcePlatform?: string | null;
+  /** @nullable */
+  sourceUrl?: string | null;
+  /** @nullable */
+  postedDate?: string | null;
+  status: JobStatus;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  requirements?: string | null;
+  benefits?: string[];
+  /** @nullable */
+  selectionProcess?: string | null;
+  company?: Company;
+  createdAt: string;
+  /** @nullable */
+  updatedAt?: string | null;
+}
+
+export type JobInputWorkMode = typeof JobInputWorkMode[keyof typeof JobInputWorkMode];
+
+
+export const JobInputWorkMode = {
+  remote: 'remote',
+  hybrid: 'hybrid',
+  onsite: 'onsite',
+} as const;
+
+export type JobInputJobType = typeof JobInputJobType[keyof typeof JobInputJobType];
+
+
+export const JobInputJobType = {
+  internship: 'internship',
+  full_time: 'full_time',
+} as const;
+
+export type JobInputStatus = typeof JobInputStatus[keyof typeof JobInputStatus];
+
+
+export const JobInputStatus = {
+  active: 'active',
+  closed: 'closed',
+  draft: 'draft',
+} as const;
+
+export interface JobInput {
+  companyId: string;
+  sourceId?: string;
+  title: string;
+  department?: string;
+  location?: string;
+  country?: string;
+  workMode: JobInputWorkMode;
+  jobType: JobInputJobType;
+  salaryMin?: number;
+  salaryMax?: number;
+  stipend?: number;
+  currency?: string;
+  eligibleBatch?: number[];
+  eligibleBranches?: string[];
+  minCgpa?: number;
+  requiredSkills?: string[];
+  experienceMin?: number;
+  experienceMax?: number;
+  deadline?: string;
+  applyUrl?: string;
+  sourcePlatform?: string;
+  sourceUrl?: string;
+  postedDate?: string;
+  status?: JobInputStatus;
+  description?: string;
+  requirements?: string;
+  benefits?: string[];
+  selectionProcess?: string;
+}
+
+export type JobUpdateInputWorkMode = typeof JobUpdateInputWorkMode[keyof typeof JobUpdateInputWorkMode];
+
+
+export const JobUpdateInputWorkMode = {
+  remote: 'remote',
+  hybrid: 'hybrid',
+  onsite: 'onsite',
+} as const;
+
+export type JobUpdateInputJobType = typeof JobUpdateInputJobType[keyof typeof JobUpdateInputJobType];
+
+
+export const JobUpdateInputJobType = {
+  internship: 'internship',
+  full_time: 'full_time',
+} as const;
+
+export type JobUpdateInputStatus = typeof JobUpdateInputStatus[keyof typeof JobUpdateInputStatus];
+
+
+export const JobUpdateInputStatus = {
+  active: 'active',
+  closed: 'closed',
+  draft: 'draft',
+} as const;
+
+export interface JobUpdateInput {
+  title?: string;
+  department?: string;
+  location?: string;
+  workMode?: JobUpdateInputWorkMode;
+  jobType?: JobUpdateInputJobType;
+  salaryMin?: number;
+  salaryMax?: number;
+  stipend?: number;
+  eligibleBatch?: number[];
+  eligibleBranches?: string[];
+  minCgpa?: number;
+  requiredSkills?: string[];
+  deadline?: string;
+  applyUrl?: string;
+  status?: JobUpdateInputStatus;
+  description?: string;
+  requirements?: string;
+  benefits?: string[];
+  selectionProcess?: string;
+}
+
+export interface JobListResponse {
+  data: Job[];
+  meta: PaginationMeta;
+}
+
+export type ApplicationStatus = typeof ApplicationStatus[keyof typeof ApplicationStatus];
+
+
+export const ApplicationStatus = {
+  saved: 'saved',
+  applied: 'applied',
+  oa_pending: 'oa_pending',
+  oa_completed: 'oa_completed',
+  interview_pending: 'interview_pending',
+  interview_completed: 'interview_completed',
+  offered: 'offered',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+} as const;
+
+export interface Application {
+  id: string;
+  clerkId: string;
+  jobId: string;
+  status: ApplicationStatus;
+  /** @nullable */
+  appliedDate?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  resumeVersion?: string | null;
+  /** @nullable */
+  referralName?: string | null;
+  /** @nullable */
+  followUpDate?: string | null;
+  /** @nullable */
+  offerAmount?: number | null;
+  job?: Job;
+  createdAt: string;
+  /** @nullable */
+  updatedAt?: string | null;
+}
+
+export type ApplicationInputStatus = typeof ApplicationInputStatus[keyof typeof ApplicationInputStatus];
+
+
+export const ApplicationInputStatus = {
+  saved: 'saved',
+  applied: 'applied',
+  oa_pending: 'oa_pending',
+  oa_completed: 'oa_completed',
+  interview_pending: 'interview_pending',
+  interview_completed: 'interview_completed',
+  offered: 'offered',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+} as const;
+
+export interface ApplicationInput {
+  jobId: string;
+  status?: ApplicationInputStatus;
+  notes?: string;
+  resumeVersion?: string;
+  referralName?: string;
+}
+
+export type ApplicationUpdateInputStatus = typeof ApplicationUpdateInputStatus[keyof typeof ApplicationUpdateInputStatus];
+
+
+export const ApplicationUpdateInputStatus = {
+  saved: 'saved',
+  applied: 'applied',
+  oa_pending: 'oa_pending',
+  oa_completed: 'oa_completed',
+  interview_pending: 'interview_pending',
+  interview_completed: 'interview_completed',
+  offered: 'offered',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+} as const;
+
+export interface ApplicationUpdateInput {
+  status?: ApplicationUpdateInputStatus;
+  notes?: string;
+  resumeVersion?: string;
+  referralName?: string;
+  followUpDate?: string;
+  appliedDate?: string;
+  offerAmount?: number;
+}
+
+export interface ApplicationListResponse {
+  data: Application[];
+  meta: PaginationMeta;
+}
+
+export interface Bookmark {
+  id: string;
+  clerkId: string;
+  jobId: string;
+  job?: Job;
+  createdAt: string;
+}
+
+export interface BookmarkInput {
+  jobId: string;
+}
+
+export type SavedSearchFilters = { [key: string]: unknown };
+
+export interface SavedSearch {
+  id: string;
+  clerkId: string;
+  name: string;
+  filters: SavedSearchFilters;
+  createdAt: string;
+  /** @nullable */
+  updatedAt?: string | null;
+}
+
+export type SavedSearchInputFilters = { [key: string]: unknown };
+
+export interface SavedSearchInput {
+  name: string;
+  filters: SavedSearchInputFilters;
+}
+
+export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
+
+
+export const NotificationType = {
+  deadline_reminder: 'deadline_reminder',
+  new_job: 'new_job',
+  status_update: 'status_update',
+  system: 'system',
+} as const;
+
+/**
+ * @nullable
+ */
+export type NotificationMetadata = { [key: string]: unknown } | null;
+
+export interface Notification {
+  id: string;
+  clerkId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  isRead: boolean;
+  /** @nullable */
+  relatedJobId?: string | null;
+  /** @nullable */
+  metadata?: NotificationMetadata;
+  createdAt: string;
+}
+
+export type ListCompaniesParams = {
+search?: string;
+industry?: string;
+page?: number;
+limit?: number;
+};
+
+export type ListJobsParams = {
+search?: string;
+companyId?: string;
+workMode?: ListJobsWorkMode;
+jobType?: ListJobsJobType;
+status?: ListJobsStatus;
+eligibleBatch?: number;
+minCgpaLte?: number;
+deadlineBefore?: string;
+page?: number;
+limit?: number;
+};
+
+export type ListJobsWorkMode = typeof ListJobsWorkMode[keyof typeof ListJobsWorkMode];
+
+
+export const ListJobsWorkMode = {
+  remote: 'remote',
+  hybrid: 'hybrid',
+  onsite: 'onsite',
+} as const;
+
+export type ListJobsJobType = typeof ListJobsJobType[keyof typeof ListJobsJobType];
+
+
+export const ListJobsJobType = {
+  internship: 'internship',
+  full_time: 'full_time',
+} as const;
+
+export type ListJobsStatus = typeof ListJobsStatus[keyof typeof ListJobsStatus];
+
+
+export const ListJobsStatus = {
+  active: 'active',
+  closed: 'closed',
+  draft: 'draft',
+} as const;
+
+export type GetJobsClosingSoonParams = {
+days?: number;
+};
+
+export type ListApplicationsParams = {
+status?: ListApplicationsStatus;
+jobType?: ListApplicationsJobType;
+page?: number;
+limit?: number;
+};
+
+export type ListApplicationsStatus = typeof ListApplicationsStatus[keyof typeof ListApplicationsStatus];
+
+
+export const ListApplicationsStatus = {
+  saved: 'saved',
+  applied: 'applied',
+  oa_pending: 'oa_pending',
+  oa_completed: 'oa_completed',
+  interview_pending: 'interview_pending',
+  interview_completed: 'interview_completed',
+  offered: 'offered',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+} as const;
+
+export type ListApplicationsJobType = typeof ListApplicationsJobType[keyof typeof ListApplicationsJobType];
+
+
+export const ListApplicationsJobType = {
+  internship: 'internship',
+  full_time: 'full_time',
+} as const;
 

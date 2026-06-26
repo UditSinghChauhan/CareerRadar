@@ -3,13 +3,12 @@
  * Do not edit manually.
  * Api
  * CareerRadar API — personal placement OS for CS students
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import * as zod from 'zod';
 
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -119,7 +118,1016 @@ export const GetDashboardSummaryResponse = zod.object({
   "appliedCount": zod.number(),
   "upcomingDeadlines": zod.number(),
   "recentActivity": zod.number(),
-  "profileCompleteness": zod.number().optional().describe('Percentage 0-100')
+  "profileCompleteness": zod.number(),
+  "bookmarksCount": zod.number().optional(),
+  "activeJobsCount": zod.number().optional(),
+  "byStatus": zod.record(zod.string(), zod.number()).optional()
 })
+
+
+/**
+ * @summary List all companies
+ */
+export const listCompaniesQueryPageDefault = 1;
+export const listCompaniesQueryLimitDefault = 20;
+
+export const ListCompaniesQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "industry": zod.coerce.string().optional(),
+  "page": zod.coerce.number().default(listCompaniesQueryPageDefault),
+  "limit": zod.coerce.number().default(listCompaniesQueryLimitDefault)
+})
+
+export const ListCompaniesResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})),
+  "meta": zod.object({
+  "page": zod.number(),
+  "limit": zod.number(),
+  "total": zod.number(),
+  "totalPages": zod.number()
+})
+})
+
+
+/**
+ * @summary Create a company
+ */
+export const CreateCompanyBody = zod.object({
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().optional(),
+  "website": zod.string().optional(),
+  "industry": zod.string().optional(),
+  "description": zod.string().optional(),
+  "headquarters": zod.string().optional(),
+  "size": zod.enum(['startup', 'small', 'medium', 'large', 'enterprise']).optional(),
+  "type": zod.enum(['product', 'service', 'consulting', 'startup']).optional(),
+  "linkedinUrl": zod.string().optional()
+})
+
+export const CreateCompanyResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Get a company by ID
+ */
+export const GetCompanyParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetCompanyResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary List jobs with filters
+ */
+export const listJobsQueryPageDefault = 1;
+export const listJobsQueryLimitDefault = 20;
+
+export const ListJobsQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "companyId": zod.coerce.string().optional(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']).optional(),
+  "jobType": zod.enum(['internship', 'full_time']).optional(),
+  "status": zod.enum(['active', 'closed', 'draft']).optional(),
+  "eligibleBatch": zod.coerce.number().optional(),
+  "minCgpaLte": zod.coerce.number().optional(),
+  "deadlineBefore": zod.date().optional(),
+  "page": zod.coerce.number().default(listJobsQueryPageDefault),
+  "limit": zod.coerce.number().default(listJobsQueryLimitDefault)
+})
+
+export const ListJobsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})),
+  "meta": zod.object({
+  "page": zod.number(),
+  "limit": zod.number(),
+  "total": zod.number(),
+  "totalPages": zod.number()
+})
+})
+
+
+/**
+ * @summary Create a job listing
+ */
+export const CreateJobBody = zod.object({
+  "companyId": zod.string(),
+  "sourceId": zod.string().optional(),
+  "title": zod.string(),
+  "department": zod.string().optional(),
+  "location": zod.string().optional(),
+  "country": zod.string().optional(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().optional(),
+  "salaryMax": zod.number().optional(),
+  "stipend": zod.number().optional(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().optional(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().optional(),
+  "experienceMax": zod.number().optional(),
+  "deadline": zod.coerce.date().optional(),
+  "applyUrl": zod.string().optional(),
+  "sourcePlatform": zod.string().optional(),
+  "sourceUrl": zod.string().optional(),
+  "postedDate": zod.coerce.date().optional(),
+  "status": zod.enum(['active', 'closed', 'draft']).optional(),
+  "description": zod.string().optional(),
+  "requirements": zod.string().optional(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().optional()
+})
+
+export const CreateJobResponse = zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Get jobs closing within N days
+ */
+export const getJobsClosingSoonQueryDaysDefault = 7;
+
+export const GetJobsClosingSoonQueryParams = zod.object({
+  "days": zod.coerce.number().default(getJobsClosingSoonQueryDaysDefault)
+})
+
+export const GetJobsClosingSoonResponseItem = zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+export const GetJobsClosingSoonResponse = zod.array(GetJobsClosingSoonResponseItem)
+
+
+/**
+ * @summary Get a job by ID
+ */
+export const GetJobParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetJobResponse = zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Update a job listing
+ */
+export const UpdateJobParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateJobBody = zod.object({
+  "title": zod.string().optional(),
+  "department": zod.string().optional(),
+  "location": zod.string().optional(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']).optional(),
+  "jobType": zod.enum(['internship', 'full_time']).optional(),
+  "salaryMin": zod.number().optional(),
+  "salaryMax": zod.number().optional(),
+  "stipend": zod.number().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().optional(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "deadline": zod.coerce.date().optional(),
+  "applyUrl": zod.string().optional(),
+  "status": zod.enum(['active', 'closed', 'draft']).optional(),
+  "description": zod.string().optional(),
+  "requirements": zod.string().optional(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().optional()
+})
+
+export const UpdateJobResponse = zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Close/deactivate a job listing
+ */
+export const DeleteJobParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteJobResponse = zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary List user's applications
+ */
+export const listApplicationsQueryPageDefault = 1;
+export const listApplicationsQueryLimitDefault = 20;
+
+export const ListApplicationsQueryParams = zod.object({
+  "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']).optional(),
+  "jobType": zod.enum(['internship', 'full_time']).optional(),
+  "page": zod.coerce.number().default(listApplicationsQueryPageDefault),
+  "limit": zod.coerce.number().default(listApplicationsQueryLimitDefault)
+})
+
+export const ListApplicationsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "jobId": zod.string(),
+  "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']),
+  "appliedDate": zod.coerce.date().nullish(),
+  "notes": zod.string().nullish(),
+  "resumeVersion": zod.string().nullish(),
+  "referralName": zod.string().nullish(),
+  "followUpDate": zod.coerce.date().nullish(),
+  "offerAmount": zod.number().nullish(),
+  "job": zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})),
+  "meta": zod.object({
+  "page": zod.number(),
+  "limit": zod.number(),
+  "total": zod.number(),
+  "totalPages": zod.number()
+})
+})
+
+
+/**
+ * @summary Create an application
+ */
+export const CreateApplicationBody = zod.object({
+  "jobId": zod.string(),
+  "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']).optional(),
+  "notes": zod.string().optional(),
+  "resumeVersion": zod.string().optional(),
+  "referralName": zod.string().optional()
+})
+
+export const CreateApplicationResponse = zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "jobId": zod.string(),
+  "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']),
+  "appliedDate": zod.coerce.date().nullish(),
+  "notes": zod.string().nullish(),
+  "resumeVersion": zod.string().nullish(),
+  "referralName": zod.string().nullish(),
+  "followUpDate": zod.coerce.date().nullish(),
+  "offerAmount": zod.number().nullish(),
+  "job": zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Get an application by ID
+ */
+export const GetApplicationParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetApplicationResponse = zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "jobId": zod.string(),
+  "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']),
+  "appliedDate": zod.coerce.date().nullish(),
+  "notes": zod.string().nullish(),
+  "resumeVersion": zod.string().nullish(),
+  "referralName": zod.string().nullish(),
+  "followUpDate": zod.coerce.date().nullish(),
+  "offerAmount": zod.number().nullish(),
+  "job": zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Update application status or notes
+ */
+export const UpdateApplicationParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateApplicationBody = zod.object({
+  "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']).optional(),
+  "notes": zod.string().optional(),
+  "resumeVersion": zod.string().optional(),
+  "referralName": zod.string().optional(),
+  "followUpDate": zod.coerce.date().optional(),
+  "appliedDate": zod.coerce.date().optional(),
+  "offerAmount": zod.number().optional()
+})
+
+export const UpdateApplicationResponse = zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "jobId": zod.string(),
+  "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']),
+  "appliedDate": zod.coerce.date().nullish(),
+  "notes": zod.string().nullish(),
+  "resumeVersion": zod.string().nullish(),
+  "referralName": zod.string().nullish(),
+  "followUpDate": zod.coerce.date().nullish(),
+  "offerAmount": zod.number().nullish(),
+  "job": zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Delete an application
+ */
+export const DeleteApplicationParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteApplicationResponse = zod.void()
+
+
+/**
+ * @summary List user's bookmarked jobs
+ */
+export const ListBookmarksResponseItem = zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "jobId": zod.string(),
+  "job": zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date()
+})
+export const ListBookmarksResponse = zod.array(ListBookmarksResponseItem)
+
+
+/**
+ * @summary Bookmark a job
+ */
+export const CreateBookmarkBody = zod.object({
+  "jobId": zod.string()
+})
+
+export const CreateBookmarkResponse = zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "jobId": zod.string(),
+  "job": zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Remove a bookmark
+ */
+export const DeleteBookmarkParams = zod.object({
+  "jobId": zod.coerce.string()
+})
+
+export const DeleteBookmarkResponse = zod.void()
+
+
+/**
+ * @summary List user's saved searches
+ */
+export const ListSavedSearchesResponseItem = zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "name": zod.string(),
+  "filters": zod.record(zod.string(), zod.unknown()),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+export const ListSavedSearchesResponse = zod.array(ListSavedSearchesResponseItem)
+
+
+/**
+ * @summary Save a search
+ */
+export const CreateSavedSearchBody = zod.object({
+  "name": zod.string(),
+  "filters": zod.record(zod.string(), zod.unknown())
+})
+
+export const CreateSavedSearchResponse = zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "name": zod.string(),
+  "filters": zod.record(zod.string(), zod.unknown()),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Delete a saved search
+ */
+export const DeleteSavedSearchParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteSavedSearchResponse = zod.void()
 
 
