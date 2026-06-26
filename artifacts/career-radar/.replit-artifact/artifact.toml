@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "CareerRadar"
+version = "1.0.0"
+id = "artifacts/career-radar"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24260
+
+[services.development]
+run = "pnpm --filter @workspace/career-radar run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/career-radar", "run", "build" ]
+publicDir = "artifacts/career-radar/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24260"
+BASE_PATH = "/"

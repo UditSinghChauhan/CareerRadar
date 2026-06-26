@@ -1,0 +1,1 @@
+- [CareerRadar stack decisions](careerradar-stack.md) — Drizzle not Prisma; Clerk cookie auth; auto-provision on first GET; lib rebuild order matters

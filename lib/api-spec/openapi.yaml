@@ -3,13 +3,20 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: CareerRadar API — personal placement OS for CS students
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profile
+    description: User profile management
+  - name: settings
+    description: User settings management
+  - name: dashboard
+    description: Dashboard summary and stats
+
 paths:
   /healthz:
     get:
@@ -24,7 +31,106 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get current user's profile
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Unauthorized
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update current user's profile
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Unauthorized
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get current user's settings
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: User settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "401":
+          description: Unauthorized
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update current user's settings
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "401":
+          description: Unauthorized
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          description: Unauthorized
+
 components:
+  securitySchemes:
+    clerkAuth:
+      type: http
+      scheme: bearer
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +140,120 @@ components:
       required:
         - status
 
+    Profile:
+      type: object
+      required: [id, clerkId, name, email, createdAt]
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        college:
+          type: ["string", "null"]
+        degree:
+          type: ["string", "null"]
+        branch:
+          type: ["string", "null"]
+        graduationYear:
+          type: ["integer", "null"]
+        cgpa:
+          type: ["number", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        resumeUrl:
+          type: ["string", "null"]
+        linkedinUrl:
+          type: ["string", "null"]
+        githubUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    ProfileInput:
+      type: object
+      properties:
+        name:
+          type: string
+        college:
+          type: string
+        degree:
+          type: string
+        branch:
+          type: string
+        graduationYear:
+          type: integer
+        cgpa:
+          type: number
+        skills:
+          type: array
+          items:
+            type: string
+        resumeUrl:
+          type: string
+        linkedinUrl:
+          type: string
+        githubUrl:
+          type: string
+
+    Settings:
+      type: object
+      required: [id, clerkId, emailNotifications, theme]
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        emailNotifications:
+          type: boolean
+        deadlineAlertDays:
+          type: integer
+        theme:
+          type: string
+          enum: [light, dark, system]
+        timezone:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    SettingsInput:
+      type: object
+      properties:
+        emailNotifications:
+          type: boolean
+        deadlineAlertDays:
+          type: integer
+        theme:
+          type: string
+          enum: [light, dark, system]
+        timezone:
+          type: string
+
+    DashboardSummary:
+      type: object
+      required: [totalApplications, appliedCount, upcomingDeadlines, recentActivity]
+      properties:
+        totalApplications:
+          type: integer
+        appliedCount:
+          type: integer
+        upcomingDeadlines:
+          type: integer
+        recentActivity:
+          type: integer
+        profileCompleteness:
+          type: integer
+          description: Percentage 0-100
