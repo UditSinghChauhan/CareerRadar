@@ -8,3 +8,4 @@ export * from "./applications";
 export * from "./bookmarks";
 export * from "./savedSearches";
 export * from "./notifications";
+export * from "./providerSyncLogs";

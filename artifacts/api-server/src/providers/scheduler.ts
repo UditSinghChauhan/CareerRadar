@@ -26,12 +26,43 @@
  */
 
 import { logger } from "../lib/logger";
+import { db, providerSyncLogsTable } from "@workspace/db";
 import { providerRegistry } from "./registry";
 import { getEnabledConfigs } from "./config";
 import { jobNormalizer } from "./normalizer";
 import { deduplicationService } from "./deduplication";
 import { metrics } from "./metrics";
 import type { SchedulerRunResult, FetchResult } from "./types";
+
+async function writeSyncLog(entry: {
+  providerName: string;
+  companySlug: string;
+  status: "success" | "failure" | "skipped";
+  jobsFetched?: number;
+  jobsInserted?: number;
+  jobsUpdated?: number;
+  jobsSkipped?: number;
+  errorMessage?: string;
+  startedAt: Date;
+  finishedAt?: Date;
+}): Promise<void> {
+  try {
+    await db.insert(providerSyncLogsTable).values({
+      providerName: entry.providerName,
+      companySlug: entry.companySlug,
+      status: entry.status,
+      jobsFetched: entry.jobsFetched ?? 0,
+      jobsInserted: entry.jobsInserted ?? 0,
+      jobsUpdated: entry.jobsUpdated ?? 0,
+      jobsSkipped: entry.jobsSkipped ?? 0,
+      errorMessage: entry.errorMessage,
+      startedAt: entry.startedAt,
+      finishedAt: entry.finishedAt ?? new Date(),
+    });
+  } catch (err) {
+    logger.warn({ err }, "Failed to write sync log to DB — continuing");
+  }
+}
 
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
@@ -167,6 +198,18 @@ export class SchedulerService {
           skipped,
         );
 
+        await writeSyncLog({
+          providerName: config.providerName,
+          companySlug: config.companySlug,
+          status: "success",
+          jobsFetched: rawJobs.length,
+          jobsInserted: inserted,
+          jobsUpdated: updated,
+          jobsSkipped: skipped,
+          startedAt: new Date(fetchStart),
+          finishedAt: new Date(),
+        });
+
         logger.info(
           { companySlug: config.companySlug, provider: config.providerName, inserted, updated, skipped },
           "Provider run complete",
@@ -175,6 +218,15 @@ export class SchedulerService {
         errors++;
         const errorMsg = err instanceof Error ? err.message : String(err);
         metrics.recordFailure(config.providerName, config.companySlug, errorMsg);
+
+        await writeSyncLog({
+          providerName: config.providerName,
+          companySlug: config.companySlug,
+          status: "failure",
+          errorMessage: errorMsg,
+          startedAt: new Date(fetchStart),
+          finishedAt: new Date(),
+        });
 
         result = {
           companySlug: config.companySlug,
@@ -265,6 +317,18 @@ export class SchedulerService {
     const skipped = upsertResults.filter((r) => r.action === "skip").length;
 
     metrics.recordSuccess(providerName, companySlug, rawJobs.length, inserted, updated, skipped);
+
+    await writeSyncLog({
+      providerName,
+      companySlug,
+      status: "success",
+      jobsFetched: rawJobs.length,
+      jobsInserted: inserted,
+      jobsUpdated: updated,
+      jobsSkipped: skipped,
+      startedAt: new Date(start),
+      finishedAt: new Date(),
+    });
 
     return {
       companySlug,
