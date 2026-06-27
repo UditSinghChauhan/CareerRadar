@@ -11,6 +11,7 @@ import savedSearchesRouter from "./savedSearches";
 import providersRouter from "./providers";
 import syncRouter from "./sync";
 import catalogRouter from "./catalog";
+import sourcesRouter from "./sources";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(savedSearchesRouter);
 router.use(providersRouter);
 router.use(syncRouter);
 router.use(catalogRouter);
+router.use(sourcesRouter);
 
 export default router;
