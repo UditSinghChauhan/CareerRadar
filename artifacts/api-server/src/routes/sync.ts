@@ -1,39 +1,21 @@
 /**
  * Sync Routes
  * ───────────
- * POST /api/sync/all                        — trigger a full scheduler run (non-blocking)
- * POST /api/sync/provider/:provider         — trigger all configs for one provider
- * POST /api/sync/provider/:provider/company/:company — trigger a single config
- * GET  /api/sync/status                     — latest sync logs + scheduler state
- * GET  /api/providers                       — list all registered providers (with config info)
+ * POST /api/sync/all                                   — trigger a full scheduler run (non-blocking)
+ * POST /api/sync/provider/:provider                    — trigger all configs for one provider
+ * POST /api/sync/provider/:provider/company/:company   — trigger a single config
+ * GET  /api/sync/status                                — latest sync logs + scheduler state
  */
 
 import { Router } from "express";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import { db, providerSyncLogsTable } from "@workspace/db";
 import { providerRegistry } from "../providers/registry";
 import { schedulerService } from "../providers/scheduler";
 import { metrics } from "../providers/metrics";
-import { getEnabledConfigs, getAllConfigs } from "../providers/config";
+import { getEnabledConfigs } from "../providers/config";
 
 const router = Router();
-
-// ─── GET /api/providers ───────────────────────────────────────────────────────
-// List all registered providers with their current enabled configs.
-
-router.get("/providers", (_req, res) => {
-  const allConfigs = getAllConfigs();
-  const registered = providerRegistry.list();
-
-  const providers = registered.map((p) => ({
-    ...p,
-    configs: allConfigs
-      .filter((c) => c.providerName === p.name)
-      .map(({ providerName: _pn, extra: _e, ...rest }) => rest),
-  }));
-
-  res.json({ providers });
-});
 
 // ─── GET /api/sync/status ─────────────────────────────────────────────────────
 // Returns the last 50 sync log entries from DB + live in-memory scheduler state.
