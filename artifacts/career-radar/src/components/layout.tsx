@@ -14,6 +14,7 @@ import { useState } from "react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Jobs", href: "/jobs", icon: Briefcase },
   { label: "Profile", href: "/profile", icon: UserCircle },
   { label: "Settings", href: "/settings", icon: SettingsIcon },
 ];

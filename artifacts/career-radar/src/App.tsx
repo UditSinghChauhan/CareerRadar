@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { LandingPage } from "@/pages/landing";
 import { DashboardPage } from "@/pages/dashboard";
+import { JobsPage } from "@/pages/jobs";
 import { ProfilePage } from "@/pages/profile";
 import { SettingsPage } from "@/pages/settings";
 import NotFound from "@/pages/not-found";
@@ -192,6 +193,9 @@ function ClerkProviderWithRoutes() {
           <Route path="/sign-up/*?" component={SignUpPage} />
           <Route path="/dashboard">
             <ProtectedRoute component={DashboardPage} />
+          </Route>
+          <Route path="/jobs">
+            <ProtectedRoute component={JobsPage} />
           </Route>
           <Route path="/profile">
             <ProtectedRoute component={ProfilePage} />
