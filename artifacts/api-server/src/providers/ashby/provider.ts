@@ -1,14 +1,22 @@
 /**
  * AshbyProvider
  * ─────────────
- * Fetches open jobs via Ashby's public Job Posting API.
+ * Fetches open jobs via Ashby's job posting API.
  *
  * API endpoint: POST https://api.ashbyhq.com/posting-public/jobs
- * No authentication required for published postings.
+ *
+ * ACCESS STATUS (verified 2025-06-27): HTTP 401 UNAUTHORIZED
+ * Ashby's /posting-public/jobs endpoint previously allowed unauthenticated
+ * access and is documented as public. As of 2025-06-27, it returns HTTP 401
+ * from non-browser environments. All Ashby company configs in config.ts are
+ * disabled until this is resolved.
+ *
+ * If Ashby restores public access or provides an API key mechanism, re-enable
+ * entries in config.ts. The implementation below is correct and ready to use.
  *
  * ToS note: Ashby's posting-public API is the documented, publicly supported
- * way to list open roles from Ashby-hosted job boards. This is fully
- * permitted.
+ * way to list open roles from Ashby-hosted job boards. Fetching it is
+ * fully permitted when accessible.
  *
  * HOW TO ADD A COMPANY
  * ─────────────────────

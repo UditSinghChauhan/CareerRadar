@@ -62,6 +62,7 @@ import wellfoundProvider from "./wellfound/provider";
 import internshalaProvider from "./internshala/provider";
 import unstopProvider from "./unstop/provider";
 import { SmartRecruitersProvider } from "./company-careers/provider";
+import workdayProvider from "./workday/provider";
 
 providerRegistry.register(greenhouseProvider);
 providerRegistry.register(leverProvider);
@@ -70,3 +71,4 @@ providerRegistry.register(wellfoundProvider);
 providerRegistry.register(internshalaProvider);
 providerRegistry.register(unstopProvider);
 providerRegistry.register(new SmartRecruitersProvider());
+providerRegistry.register(workdayProvider);

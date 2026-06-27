@@ -14,6 +14,7 @@ import { providerRegistry } from "../providers/registry";
 import { schedulerService } from "../providers/scheduler";
 import { metrics } from "../providers/metrics";
 import { getEnabledConfigs } from "../providers/config";
+import { runVerification } from "../providers/verify";
 
 const router = Router();
 
@@ -143,6 +144,39 @@ router.post("/sync/provider/:provider/company/:company", async (req, res) => {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     req.log.error({ err, providerName, companySlug }, "Single provider sync failed");
+    res.status(500).json({ error: msg });
+  }
+});
+
+// ─── GET /api/sync/verify ─────────────────────────────────────────────────────
+// Runs live HTTP checks against all configured endpoints and returns a report.
+// WARNING: makes real outbound requests to ATS APIs. Do not call in a tight loop.
+
+router.get("/sync/verify", async (_req, res) => {
+  try {
+    const { results, summary } = await runVerification();
+    res.json({
+      runAt: new Date(),
+      totals: {
+        configured: results.length,
+        working: summary.working.length,
+        empty: summary.empty.length,
+        broken: summary.broken.length,
+        authRequired: summary.authRequired.length,
+        noPublicApi: summary.noPublicApi.length,
+        totalJobsDiscoverable: summary.working.reduce(
+          (s, r) => s + (r.jobCount ?? 0),
+          0,
+        ),
+      },
+      working: summary.working,
+      empty: summary.empty,
+      broken: summary.broken,
+      authRequired: summary.authRequired,
+      noPublicApi: summary.noPublicApi,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     res.status(500).json({ error: msg });
   }
 });

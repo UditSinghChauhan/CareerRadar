@@ -147,6 +147,85 @@ async function main() {
         type: "product",
         linkedinUrl: "https://linkedin.com/company/atlassian",
       },
+      // ── Live-ingested companies (Greenhouse / Lever ATS) ──────────────────
+      {
+        name: "Postman",
+        slug: "postman",
+        logoUrl: "https://cdn.simpleicons.org/postman/FF6C37",
+        website: "https://postman.com",
+        industry: "Developer Tools",
+        description:
+          "Postman is the world's leading API platform used by 30M+ developers to design, test, and document APIs.",
+        headquarters: "San Francisco, CA",
+        size: "large",
+        type: "product",
+        linkedinUrl: "https://linkedin.com/company/postman-platform",
+      },
+      {
+        name: "Rubrik",
+        slug: "rubrik",
+        logoUrl: null,
+        website: "https://rubrik.com",
+        industry: "Cloud Security",
+        description:
+          "Rubrik is a cloud security company delivering data protection and cyber resilience for the multi-cloud era.",
+        headquarters: "Palo Alto, CA",
+        size: "large",
+        type: "product",
+        linkedinUrl: "https://linkedin.com/company/rubrik-inc",
+      },
+      {
+        name: "Thoughtworks",
+        slug: "thoughtworks",
+        logoUrl: null,
+        website: "https://thoughtworks.com",
+        industry: "Technology Services",
+        description:
+          "Thoughtworks is a global technology consultancy that integrates strategy, design, and engineering.",
+        headquarters: "Chicago, IL",
+        size: "enterprise",
+        type: "service",
+        linkedinUrl: "https://linkedin.com/company/thoughtworks",
+      },
+      {
+        name: "Meesho",
+        slug: "meesho",
+        logoUrl: null,
+        website: "https://meesho.com",
+        industry: "E-Commerce",
+        description:
+          "Meesho is India's fastest-growing e-commerce platform enabling small businesses and individuals to sell online.",
+        headquarters: "Bengaluru, India",
+        size: "large",
+        type: "product",
+        linkedinUrl: "https://linkedin.com/company/meesho",
+      },
+      {
+        name: "CRED",
+        slug: "cred",
+        logoUrl: null,
+        website: "https://cred.club",
+        industry: "Fintech",
+        description:
+          "CRED is a members-only credit card bill payment platform rewarding users for financial discipline.",
+        headquarters: "Bengaluru, India",
+        size: "medium",
+        type: "product",
+        linkedinUrl: "https://linkedin.com/company/cred-club",
+      },
+      {
+        name: "Dream Sports (Dream11)",
+        slug: "dream11",
+        logoUrl: null,
+        website: "https://dreamsports.group",
+        industry: "Sports Tech",
+        description:
+          "Dream Sports is India's leading sports technology company powering Dream11, the country's biggest fantasy sports platform.",
+        headquarters: "Mumbai, India",
+        size: "large",
+        type: "product",
+        linkedinUrl: "https://linkedin.com/company/dream-sports",
+      },
     ])
     .onConflictDoNothing()
     .returning();
