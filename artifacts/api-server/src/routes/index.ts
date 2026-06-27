@@ -8,6 +8,7 @@ import jobsRouter from "./jobs";
 import applicationsRouter from "./applications";
 import bookmarksRouter from "./bookmarks";
 import savedSearchesRouter from "./savedSearches";
+import providersRouter from "./providers";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(jobsRouter);
 router.use(applicationsRouter);
 router.use(bookmarksRouter);
 router.use(savedSearchesRouter);
+router.use(providersRouter);
 
 export default router;
