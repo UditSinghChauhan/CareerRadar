@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, LayoutGrid, List, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, AlertCircle, RefreshCw } from "lucide-react";
 import {
   useListJobs,
   useListBookmarks,
@@ -185,7 +185,12 @@ export function JobsPage() {
   useEffect(() => { setPage(1); }, [debouncedSearch, filters, sort]);
 
   // ── Data fetching ─────────────────────────────────────────────────────────
-  const { data: jobsData, isLoading: jobsLoading } = useListJobs({
+  const {
+    data: jobsData,
+    isLoading: jobsLoading,
+    isError: jobsError,
+    refetch: refetchJobs,
+  } = useListJobs({
     status: "active",
     search: debouncedSearch || undefined,
     companyId: filters.companyId || undefined,
@@ -349,6 +354,25 @@ export function JobsPage() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <JobCardSkeleton key={i} />
               ))}
+            </div>
+          ) : jobsError ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground mb-1">
+                Failed to load jobs
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-xs">
+                Could not connect to the server. Check your connection and try again.
+              </p>
+              <button
+                onClick={() => void refetchJobs()}
+                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </button>
             </div>
           ) : pagedJobs.length === 0 ? (
             <EmptyState

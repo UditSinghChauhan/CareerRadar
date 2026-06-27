@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { ExternalLink, Bookmark, BookmarkCheck, MapPin, Building2, Calendar, Zap, BadgeCheck, Clock } from "lucide-react";
+import { ExternalLink, Bookmark, BookmarkCheck, MapPin, Building2, Zap, BadgeCheck, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import type { Job } from "@workspace/api-client-react";
 
 interface JobCardProps {
@@ -23,9 +24,18 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-function isNew(createdAt: string): boolean {
+function isNewToday(createdAt: string): boolean {
   const ageMs = Date.now() - new Date(createdAt).getTime();
-  return ageMs < 48 * 60 * 60 * 1000;
+  return ageMs < 24 * 60 * 60 * 1000;
+}
+
+function formatRelativeTime(iso: string | null | undefined): string {
+  if (!iso) return "";
+  try {
+    return formatDistanceToNow(parseISO(iso), { addSuffix: true });
+  } catch {
+    return "";
+  }
 }
 
 function formatCompensation(job: Job): string | null {
@@ -107,7 +117,7 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
 
   const compensation = formatCompensation(job);
   const deadline = parseDeadline(job.deadline);
-  const jobIsNew = isNew(job.createdAt);
+  const jobIsNewToday = isNewToday(job.createdAt);
   const isVerified = Boolean(job.sourceUrl);
   const platform = job.sourcePlatform ?? null;
   const platformLabel = platform ? (sourcePlatformLabels[platform] ?? platform) : null;
@@ -174,9 +184,9 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
 
         {/* Top-right actions */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {jobIsNew && (
+          {jobIsNewToday && (
             <Badge className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-0 font-semibold">
-              New
+              New Today
             </Badge>
           )}
           <Tooltip>
@@ -232,6 +242,11 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
             </TooltipContent>
           </Tooltip>
         )}
+        {batches.length === 0 && branches.length === 0 && (
+          <Badge variant="outline" className="text-xs text-muted-foreground/60 italic">
+            Open to all
+          </Badge>
+        )}
       </div>
 
       {/* Compensation + Deadline */}
@@ -282,7 +297,7 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
           {job.updatedAt && (
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3 opacity-60" />
-              Updated {formatDate(job.updatedAt)}
+              Updated {formatRelativeTime(job.updatedAt)}
             </span>
           )}
           {platformLabel && (
