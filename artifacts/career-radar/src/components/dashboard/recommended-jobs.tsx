@@ -60,8 +60,8 @@ function JobCard({ job }: { job: Job }) {
             {job.location}
           </span>
         )}
-        <span className="flex items-center gap-1 capitalize">
-          {job.workMode}
+        <span>
+          {(({ remote: "Remote", hybrid: "Hybrid", onsite: "On-site" } as Record<string, string>)[job.workMode]) ?? job.workMode}
         </span>
         {salary && <span className="font-medium text-foreground">{salary}</span>}
       </div>
@@ -88,7 +88,7 @@ function JobCard({ job }: { job: Job }) {
             href={job.applyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="text-xs text-primary flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100"
           >
             Apply
             <ExternalLink className="h-3 w-3" />

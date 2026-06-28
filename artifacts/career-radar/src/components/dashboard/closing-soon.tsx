@@ -52,7 +52,8 @@ function ClosingSoonCard({ job }: { job: Job }) {
             href={job.applyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-primary"
+            className="text-primary transition-opacity md:opacity-0 md:group-hover:opacity-100"
+            aria-label={`Apply for ${job.title}`}
           >
             <ExternalLink className="h-3.5 w-3.5" />
           </a>

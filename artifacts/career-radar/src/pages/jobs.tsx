@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, AlertCircle, RefreshCw } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, AlertCircle, RefreshCw, X } from "lucide-react";
 import {
   useListJobs,
   useListBookmarks,
@@ -169,11 +169,25 @@ export function JobsPage() {
   // ── Search ────────────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchInput), 400);
+    const t = setTimeout(() => setDebouncedSearch(searchInput), 300);
     return () => clearTimeout(t);
   }, [searchInput]);
+
+  // Keyboard shortcut: "/" focuses search, Escape clears + blurs
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName;
+      if (e.key === "/" && tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // ── Filters & sort ────────────────────────────────────────────────────────
   const [filters, setFilters] = useState<JobFiltersState>(DEFAULT_FILTERS);
@@ -283,48 +297,91 @@ export function JobsPage() {
         {/* Main content */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
           {/* Toolbar */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Search */}
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Search roles, companies, skills..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-8 h-9 text-sm"
-              />
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Search */}
+              <div className="relative flex-1 min-w-[180px]">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  ref={searchInputRef}
+                  placeholder="Search roles, companies, skills..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setSearchInput("");
+                      searchInputRef.current?.blur();
+                    }
+                  }}
+                  className="pl-8 pr-8 h-9 text-sm"
+                />
+                {searchInput ? (
+                  <button
+                    onClick={() => { setSearchInput(""); searchInputRef.current?.focus(); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:flex h-5 items-center rounded border border-border bg-muted px-1 text-[10px] font-mono text-muted-foreground select-none pointer-events-none">
+                    /
+                  </kbd>
+                )}
+              </div>
+
+              {/* Sort */}
+              <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+                <SelectTrigger className="h-9 w-32 text-sm gap-1">
+                  <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map(({ value, label }) => (
+                    <SelectItem key={value} value={value} className="text-sm">
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Mobile filter button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden h-9 gap-1.5"
+                onClick={() => setFiltersOpen(true)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <Badge className="h-4 px-1.5 text-[10px] bg-primary/10 text-primary border-0">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
             </div>
 
-            {/* Sort */}
-            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-              <SelectTrigger className="h-9 w-36 text-sm gap-1">
-                <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_OPTIONS.map(({ value, label }) => (
-                  <SelectItem key={value} value={value} className="text-sm">
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Mobile filter button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="lg:hidden h-9 gap-1.5"
-              onClick={() => setFiltersOpen(true)}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-              {activeFilterCount > 0 && (
-                <Badge className="h-4 px-1.5 text-[10px] bg-primary/10 text-primary border-0">
-                  {activeFilterCount}
-                </Badge>
-              )}
-            </Button>
+            {/* Quick type chips — one-click filter for the most common case */}
+            <div className="flex items-center gap-1.5">
+              {([
+                { value: "all", label: "All" },
+                { value: "internship", label: "Internship" },
+                { value: "full_time", label: "Full-Time" },
+              ] as const).map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setFilters((f) => ({ ...f, jobType: value }))}
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors ${
+                    filters.jobType === value
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Results meta */}

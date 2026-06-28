@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, Bookmark, BookmarkCheck, MapPin, Building2, Zap, BadgeCheck, Clock } from "lucide-react";
+import { ExternalLink, Bookmark, BookmarkCheck, MapPin, Building2, BadgeCheck, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -286,41 +286,28 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
       )}
 
       {/* Footer */}
-      <div className="mt-auto border-t border-border/60 px-4 py-3 flex items-center justify-between gap-2 bg-muted/20">
-        <div className="flex flex-col gap-0.5 text-[11px] text-muted-foreground">
-          {job.postedDate && (
-            <span className="flex items-center gap-1">
-              <Zap className="h-3 w-3" />
-              Posted {formatDate(job.postedDate)}
-            </span>
-          )}
-          {job.updatedAt && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3 opacity-60" />
-              Updated {formatRelativeTime(job.updatedAt)}
-            </span>
-          )}
+      <div className="mt-auto border-t border-border/60 px-4 py-2.5 flex items-center justify-between gap-2 bg-muted/20">
+        <div className="text-[11px] text-muted-foreground">
           {platformLabel && (
             <span className="flex items-center gap-1">
-              <Building2 className="h-3 w-3 opacity-60" />
+              <Building2 className="h-3 w-3 opacity-50" />
               via {platformLabel}
             </span>
           )}
         </div>
 
-        {job.applyUrl && (
+        {job.applyUrl ? (
           <Button
             size="sm"
-            variant="outline"
-            className="text-xs h-7 gap-1 flex-shrink-0"
+            className="text-xs h-8 gap-1 flex-shrink-0 px-3"
             asChild
           >
             <a href={job.applyUrl} target="_blank" rel="noopener noreferrer">
-              Official Apply
+              Apply
               <ExternalLink className="h-3 w-3" />
             </a>
           </Button>
-        )}
+        ) : null}
       </div>
     </article>
   );

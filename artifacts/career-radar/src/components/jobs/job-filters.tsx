@@ -50,13 +50,6 @@ const WORK_MODES: Array<{ value: "remote" | "hybrid" | "onsite"; label: string }
 const SOURCE_PLATFORMS = [
   { value: "greenhouse", label: "Greenhouse" },
   { value: "lever", label: "Lever" },
-  { value: "ashby", label: "Ashby" },
-  { value: "smartrecruiters", label: "SmartRecruiters" },
-  { value: "linkedin", label: "LinkedIn" },
-  { value: "naukri", label: "Naukri" },
-  { value: "internshala", label: "Internshala" },
-  { value: "unstop", label: "Unstop" },
-  { value: "wellfound", label: "Wellfound" },
 ];
 
 // ─── Active filter count ──────────────────────────────────────────────────────
@@ -256,7 +249,29 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
       <Separator />
 
       {/* Deadline */}
-      <FilterSection title="Deadline Before">
+      <FilterSection title="Deadline">
+        <div className="flex gap-1.5 mb-2">
+          {([
+            { label: "7 days", days: 7 },
+            { label: "30 days", days: 30 },
+          ] as const).map(({ label, days }) => {
+            const dateStr = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+            const active = filters.deadlineBefore === dateStr;
+            return (
+              <button
+                key={days}
+                onClick={() => set("deadlineBefore", active ? "" : dateStr)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
         <div className="flex items-center gap-2">
           <input
             type="date"

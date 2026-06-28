@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { 
   useGetProfile, 
   useUpdateProfile, 
@@ -43,7 +43,7 @@ export function ProfilePage() {
   const queryClient = useQueryClient();
   const { data: profile, isLoading, isError, refetch } = useGetProfile();
   const updateProfile = useUpdateProfile();
-  
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -76,6 +76,24 @@ export function ProfilePage() {
       });
     }
   }, [profile, form]);
+
+  const formValues = form.watch();
+  const completeness = useMemo(() => {
+    const fields = [
+      formValues.name,
+      formValues.college,
+      formValues.degree,
+      formValues.branch,
+      formValues.graduationYear,
+      formValues.cgpa,
+      formValues.skills,
+      formValues.resumeUrl,
+      formValues.linkedinUrl,
+      formValues.githubUrl,
+    ];
+    const filled = fields.filter((v) => v !== undefined && v !== "" && v !== null).length;
+    return Math.round((filled / fields.length) * 100);
+  }, [formValues]);
 
   const onSubmit = (data: ProfileFormValues) => {
     const skillsArray = data.skills 
@@ -154,6 +172,38 @@ export function ProfilePage() {
             Update your academic records and resume. These will be used to track your completeness.
           </CardDescription>
         </CardHeader>
+
+        {/* Completeness bar */}
+        <div className="mx-6 mb-2 rounded-lg border border-border bg-muted/40 p-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-muted-foreground">Profile completeness</span>
+            <span className={`text-xs font-semibold ${completeness === 100 ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
+              {completeness}%
+            </span>
+          </div>
+          <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${
+                completeness === 100
+                  ? "bg-emerald-500"
+                  : completeness >= 60
+                    ? "bg-primary"
+                    : "bg-amber-500"
+              }`}
+              style={{ width: `${completeness}%` }}
+            />
+          </div>
+          {completeness < 100 && (
+            <p className="text-[11px] text-muted-foreground mt-1.5">
+              {completeness < 40
+                ? "Add your details to get personalised job recommendations."
+                : completeness < 80
+                  ? "Almost there — fill remaining fields to unlock full recommendations."
+                  : "Just a few more fields to complete your profile."}
+            </p>
+          )}
+        </div>
+
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
