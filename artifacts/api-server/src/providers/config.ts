@@ -91,12 +91,22 @@ const ALL_CONFIGS: EnabledConfig[] = [
     note: "Google uses custom ATS (careers.google.com). Not on Greenhouse.",
   },
   {
-    // BROKEN 2025-06-27: returns "Job not found".
+    // Confirmed 2026-06-27: Greenhouse board exists (boards-api.greenhouse.io/v1/boards/groww/jobs → HTTP 200)
+    // but 0 active postings. Groww migrated from Lever. Enable when postings appear.
+    companySlug: "groww",
+    providerName: "greenhouse",
+    providerId: "groww",
+    enabled: false,
+    note: "Greenhouse board confirmed 2026-06-27 — 0 active postings. Monitor and enable when Groww posts new roles.",
+  },
+  {
+    // BROKEN 2025-06-27, Reverified 2026-06-27: still 404. Freshworks migrated away from Greenhouse.
+    // Freshworks confirmed on Lever (api.lever.co/v0/postings/freshworks) with 0 active postings as of 2026-06-27.
     companySlug: "freshworks",
     providerName: "greenhouse",
     providerId: "freshworks",
     enabled: false,
-    note: "BROKEN 2025-06-27 — boards.greenhouse.io/freshworks returns 404. Freshworks likely migrated ATS. Reverify.",
+    note: "BROKEN 2026-06-27 — boards.greenhouse.io/freshworks still returns 404. Freshworks migrated to Lever (see Lever section).",
   },
   {
     companySlug: "flipkart",
@@ -186,6 +196,16 @@ const ALL_CONFIGS: EnabledConfig[] = [
     note: "BROKEN 2025-06-27 — boards.greenhouse.io/mphasis returns 404. Reverify Mphasis's current ATS.",
   },
 
+  {
+    // Confirmed 2026-06-27: Lever board exists (api.lever.co/v0/postings/freshworks → HTTP 200)
+    // but 0 active postings. Freshworks migrated from Greenhouse. Enable when postings appear.
+    companySlug: "freshworks",
+    providerName: "lever",
+    providerId: "freshworks",
+    enabled: false,
+    note: "Lever board confirmed 2026-06-27 — 0 active postings. Monitor and enable when Freshworks posts new roles.",
+  },
+
   // ═══════════════════════════════════════════════════════════════════════════
   // LEVER — api.lever.co/v0/postings
   // Verify: curl -s "https://api.lever.co/v0/postings/<slug>?mode=json&limit=1"
@@ -249,12 +269,13 @@ const ALL_CONFIGS: EnabledConfig[] = [
     note: "Microsoft uses custom ATS (careers.microsoft.com). Not on Lever.",
   },
   {
-    // BROKEN 2025-06-27: returns "Document not found".
+    // BROKEN 2025-06-27, Reverified 2026-06-27: still 404. Groww migrated away from Lever.
+    // Groww confirmed on Greenhouse (boards-api.greenhouse.io/v1/boards/groww/jobs) with 0 active postings as of 2026-06-27.
     companySlug: "groww",
     providerName: "lever",
     providerId: "groww",
     enabled: false,
-    note: "BROKEN 2025-06-27 — api.lever.co/v0/postings/groww returns 404. Reverify Groww's current ATS.",
+    note: "BROKEN 2026-06-27 — api.lever.co/v0/postings/groww still returns 404. Groww migrated to Greenhouse (see Greenhouse section).",
   },
   {
     // BROKEN 2025-06-27: returns "Document not found".
