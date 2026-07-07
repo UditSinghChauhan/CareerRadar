@@ -60,10 +60,10 @@ app.use("/api", router);
 
 // Serve static React frontend in production
 if (process.env.NODE_ENV === "production") {
-  // Path: artifacts/career-radar/dist/public (Vite outDir)
+  // __dirname in the esbuild bundle = artifacts/api-server/dist/
+  // 3× ".." reaches the workspace root
   const frontendDist = path.resolve(
     __dirname,
-    "..",
     "..",
     "..",
     "..",
@@ -75,8 +75,15 @@ if (process.env.NODE_ENV === "production") {
 
   app.use(express.static(frontendDist));
 
-  // SPA fallback — all unmatched routes serve index.html
-  app.get("*", (_req, res) => {
+  // SPA fallback — unmatched GET requests serve index.html for client-side routing.
+  // Express 5 rejects bare "*"; use a named wildcard "/{*splat}" instead.
+  // Skip /api/* so unknown API routes return a JSON 404, not index.html.
+  // Non-GET methods that miss the API routes fall through to Express's default 404.
+  app.get("/{*splat}", (req, res) => {
+    if (req.path.startsWith("/api/") || req.path === "/api") {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
     res.sendFile(path.join(frontendDist, "index.html"));
   });
 }

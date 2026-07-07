@@ -1,1 +1,2 @@
 - [CareerRadar stack decisions](careerradar-stack.md) — Drizzle not Prisma; Clerk cookie auth; auto-provision on first GET; lib rebuild order matters
+- [Express 5 wildcard routes](express5-wildcard.md) — app.get("*") throws on init in production; use "/{*splat}" for SPA catch-all
