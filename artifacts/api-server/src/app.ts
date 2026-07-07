@@ -3,6 +3,8 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
+import path from "path";
+import { fileURLToPath } from "url";
 import {
   CLERK_PROXY_PATH,
   clerkProxyMiddleware,
@@ -10,6 +12,8 @@ import {
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app: Express = express();
 
@@ -49,5 +53,28 @@ app.use(
 );
 
 app.use("/api", router);
+
+// Serve static React frontend in production
+if (process.env.NODE_ENV === "production") {
+  // Path: artifacts/career-radar/dist/public (Vite outDir)
+  const frontendDist = path.resolve(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "..",
+    "artifacts",
+    "career-radar",
+    "dist",
+    "public",
+  );
+
+  app.use(express.static(frontendDist));
+
+  // SPA fallback — all unmatched routes serve index.html
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+}
 
 export default app;
