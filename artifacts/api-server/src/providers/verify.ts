@@ -44,8 +44,8 @@ async function checkLever(slug: string, leverSlug: string): Promise<{ count: num
   });
   if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
   const data = await res.json();
-  if (typeof data === "string" || data?.message) {
-    throw new Error(String(data?.message ?? data));
+  if (typeof data === "string" || (data !== null && typeof data === "object" && "message" in data)) {
+    throw new Error(String((data as { message?: unknown }).message ?? data));
   }
   if (!Array.isArray(data)) throw new Error("Unexpected response shape");
   return { count: data.length };
