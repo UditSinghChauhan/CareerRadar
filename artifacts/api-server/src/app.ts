@@ -39,6 +39,10 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
+// Health check routes — must be BEFORE Clerk middleware so deploy healthcheck passes
+app.get("/api", (_req, res) => res.json({ ok: true, status: "running" }));
+app.get("/api/health", (_req, res) => res.json({ ok: true, status: "running" }));
+
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
