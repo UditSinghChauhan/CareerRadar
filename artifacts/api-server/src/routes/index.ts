@@ -15,6 +15,10 @@ import sourcesRouter from "./sources";
 
 const router: IRouter = Router();
 
+router.get("/", (_req, res) => {
+  res.json({ ok: true, status: "running" });
+});
+
 router.use(healthRouter);
 router.use(profileRouter);
 router.use(settingsRouter);
