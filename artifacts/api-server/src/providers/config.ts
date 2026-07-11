@@ -41,30 +41,167 @@ const ALL_CONFIGS: EnabledConfig[] = [
   // ═══════════════════════════════════════════════════════════════════════════
 
   {
-    // VERIFIED 2025-06-27: 120 jobs returned.
+    // VERIFIED 2025-06-27: 120 jobs returned. REVERIFIED 2026-07-10: 119 jobs.
+    // filterCountry: "India" — Postman is US-HQ'd, most roles are US/global.
+    // We keep only Bengaluru + Remote roles to avoid flooding with US noise.
     companySlug: "postman",
     providerName: "greenhouse",
     providerId: "postman",
     enabled: true,
-    note: "Verified 2025-06-27 — 120 jobs live on boards-api.greenhouse.io/postman",
+    extra: { filterCountry: "India" },
+    note: "Verified 2026-07-10 — 119 jobs live. filterCountry=India to surface Bengaluru + Remote roles only.",
   },
   {
-    // VERIFIED 2025-06-27: 105 jobs returned.
+    // VERIFIED 2025-06-27: 105 jobs. REVERIFIED 2026-07-10: 97 jobs.
+    // filterCountry: "India" — Rubrik is US-HQ'd. Keep Bengaluru + Remote only.
     companySlug: "rubrik",
     providerName: "greenhouse",
     providerId: "rubrik",
     enabled: true,
-    note: "Verified 2025-06-27 — 105 jobs live on boards-api.greenhouse.io/rubrik",
+    extra: { filterCountry: "India" },
+    note: "Verified 2026-07-10 — 97 jobs live. filterCountry=India — Bengaluru engineering center.",
   },
   {
-    // VERIFIED 2025-06-27: 77 jobs returned.
+    // VERIFIED 2025-06-27: 77 jobs. REVERIFIED 2026-07-10: 62 jobs.
+    // filterCountry: "India" — ThoughtWorks posts heavily to US/UK. Keep India.
     companySlug: "thoughtworks",
     providerName: "greenhouse",
     providerId: "thoughtworks",
     enabled: true,
-    note: "Verified 2025-06-27 — 77 jobs live on boards-api.greenhouse.io/thoughtworks",
+    extra: { filterCountry: "India" },
+    note: "Verified 2026-07-10 — 62 jobs live. filterCountry=India. Offices in Chennai, Bengaluru, Pune, Hyderabad.",
   },
 
+  {
+    // NEW 2026-07-10: PhonePe confirmed 53 jobs — ALL in Bengaluru, India.
+    // No filterCountry needed: PhonePe is India-only by nature.
+    companySlug: "phonepe",
+    providerName: "greenhouse",
+    providerId: "phonepe",
+    enabled: true,
+    note: "VERIFIED 2026-07-10 — 53 Bengaluru jobs live on boards-api.greenhouse.io/phonepe.",
+  },
+
+  {
+    // NEW 2026-07-10: Groww confirmed 15 jobs — all India (Bengaluru + Mumbai).
+    // Previously this entry showed 0 postings (June 2026); now live again.
+    companySlug: "groww",
+    providerName: "greenhouse",
+    providerId: "groww",
+    enabled: true,
+    note: "VERIFIED 2026-07-10 — 15 jobs live (Bengaluru + Mumbai). All India roles.",
+  },
+
+  {
+    // NEW 2026-07-10: Naukri/InfoEdge confirmed 3 jobs on Greenhouse.
+    companySlug: "naukri",
+    providerName: "greenhouse",
+    providerId: "naukri",
+    enabled: true,
+    note: "VERIFIED 2026-07-10 — 3 jobs live on boards-api.greenhouse.io/naukri. InfoEdge platform.",
+  },
+
+  // ─── Global companies with India engineering offices (VERIFIED 2026-07-10) ───
+
+  {
+    // VERIFIED 2026-07-10: 787 total jobs, 74 in India (Bengaluru, Pune, Hyderabad).
+    companySlug: "databricks",
+    providerName: "greenhouse",
+    providerId: "databricks",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 787 total, 74 India jobs. filterCountry=India. Major data/AI platform, Bengaluru engineering.",
+  },
+  {
+    // VERIFIED 2026-07-10: 385 total jobs, 51 in India.
+    companySlug: "mongodb",
+    providerName: "greenhouse",
+    providerId: "mongodb",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 385 total, 51 India jobs. filterCountry=India. Strong Bengaluru/Gurugram offices.",
+  },
+  {
+    // VERIFIED 2026-07-10: 511 total jobs, 37 in India.
+    companySlug: "stripe",
+    providerName: "greenhouse",
+    providerId: "stripe",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 511 total, 37 India jobs. filterCountry=India. Bengaluru engineering hub.",
+  },
+  {
+    // VERIFIED 2026-07-10: 154 total jobs, 23 in India.
+    companySlug: "twilio",
+    providerName: "greenhouse",
+    providerId: "twilio",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 154 total, 23 India jobs. filterCountry=India. Delhi/Bengaluru offices.",
+  },
+  {
+    // VERIFIED 2026-07-10: 185 total jobs, 20 in India.
+    companySlug: "elastic",
+    providerName: "greenhouse",
+    providerId: "elastic",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 185 total, 20 India jobs. filterCountry=India. Pune/Bengaluru engineering.",
+  },
+  {
+    // VERIFIED 2026-07-10: 147 total jobs, 16 in India.
+    companySlug: "gitlab",
+    providerName: "greenhouse",
+    providerId: "gitlab",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 147 total, 16 India jobs. filterCountry=India. All-remote company, India-eligible roles.",
+  },
+  {
+    // VERIFIED 2026-07-10: 427 total jobs, 12 in India.
+    companySlug: "datadog",
+    providerName: "greenhouse",
+    providerId: "datadog",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 427 total, 12 India jobs. filterCountry=India. Hyderabad engineering office.",
+  },
+  {
+    // VERIFIED 2026-07-10: 132 total jobs, 10 in India.
+    companySlug: "coinbase",
+    providerName: "greenhouse",
+    providerId: "coinbase",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 132 total, 10 India jobs. filterCountry=India. India remote-eligible roles.",
+  },
+  {
+    // VERIFIED 2026-07-10: 247 total jobs, 3 in India.
+    companySlug: "cloudflare",
+    providerName: "greenhouse",
+    providerId: "cloudflare",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 247 total, 3 India jobs. filterCountry=India. Small India footprint.",
+  },
+  {
+    // VERIFIED 2026-07-10: 41 total jobs, 16 in India (Bengaluru, Pune).
+    companySlug: "6sense",
+    providerName: "greenhouse",
+    providerId: "6sense",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 41 total, 16 India jobs. filterCountry=India. AI/MarTech with India R&D.",
+  },
+  {
+    // VERIFIED 2026-07-10: 212 total jobs, 42 in India (Bengaluru, Pune, Delhi).
+    companySlug: "alphasense",
+    providerName: "greenhouse",
+    providerId: "alphasense",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-07-10 — 212 total, 42 India jobs. filterCountry=India. AI/Market Intelligence, India R&D.",
+  },
   {
     // BROKEN 2025-06-27: returns "Job not found". Atlassian migrated to Workday.
     // Workday tenant: atlassian.wd5.myworkdayjobs.com — requires session auth (401).
@@ -89,15 +226,6 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerId: "google",
     enabled: false,
     note: "Google uses custom ATS (careers.google.com). Not on Greenhouse.",
-  },
-  {
-    // Confirmed 2026-06-27: Greenhouse board exists (boards-api.greenhouse.io/v1/boards/groww/jobs → HTTP 200)
-    // but 0 active postings. Groww migrated from Lever. Enable when postings appear.
-    companySlug: "groww",
-    providerName: "greenhouse",
-    providerId: "groww",
-    enabled: false,
-    note: "Greenhouse board confirmed 2026-06-27 — 0 active postings. Monitor and enable when Groww posts new roles.",
   },
   {
     // BROKEN 2025-06-27, Reverified 2026-06-27: still 404. Freshworks migrated away from Greenhouse.
@@ -197,13 +325,14 @@ const ALL_CONFIGS: EnabledConfig[] = [
   },
 
   {
-    // Confirmed 2026-06-27: Lever board exists (api.lever.co/v0/postings/freshworks → HTTP 200)
-    // but 0 active postings. Freshworks migrated from Greenhouse. Enable when postings appear.
+    // REVERIFIED 2026-07-10: Lever board exists (HTTP 200) but 0 active postings.
+    // Freshworks is now LIVE on SmartRecruiters with 121 total / 41 India jobs.
+    // See SmartRecruiters section below.
     companySlug: "freshworks",
     providerName: "lever",
     providerId: "freshworks",
     enabled: false,
-    note: "Lever board confirmed 2026-06-27 — 0 active postings. Monitor and enable when Freshworks posts new roles.",
+    note: "Lever board 0 postings as of 2026-07-10. Freshworks active on SmartRecruiters — see SR section.",
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -234,6 +363,24 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerId: "dreamsports",
     enabled: true,
     note: "Verified 2025-06-27 — jobs.lever.co/dreamsports returns live postings.",
+  },
+
+  {
+    // NEW 2026-07-10: Paytm confirmed 5 live postings on Lever.
+    // Catalog had Paytm as "custom" — Lever is the actual ATS.
+    companySlug: "paytm",
+    providerName: "lever",
+    providerId: "paytm",
+    enabled: true,
+    note: "VERIFIED 2026-07-10 — 5 live jobs on api.lever.co/v0/postings/paytm. Noida fintech.",
+  },
+  {
+    // NEW 2026-07-10: Hevo Data confirmed 5 live postings on Lever.
+    companySlug: "hevodata",
+    providerName: "lever",
+    providerId: "hevodata",
+    enabled: true,
+    note: "VERIFIED 2026-07-10 — 5 live jobs on Lever. Bengaluru data integration startup.",
   },
 
   {
@@ -454,58 +601,86 @@ const ALL_CONFIGS: EnabledConfig[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   // SMARTRECRUITERS — api.smartrecruiters.com/v1/companies
   //
-  // STATUS AS OF 2025-06-27: Company accounts exist but 0 active postings.
-  // Keeping disabled until companies post new roles.
+  // REVERIFIED 2026-07-10:
+  //   Freshworks: 121 total jobs, ~41 in India (Bengaluru, Chennai, Hyderabad) ✅
+  //   Swiggy:     2 jobs live ✅
+  //   All others: 0 postings — kept enabled so scheduler picks them up when live.
   // ═══════════════════════════════════════════════════════════════════════════
 
   {
+    // LIVE 2026-07-10: 121 total jobs; ~41 in India (Bengaluru, Chennai, Hyderabad).
+    // SmartRecruiters provider already sets country from location.country field.
+    companySlug: "freshworks",
+    providerName: "smartrecruiters",
+    providerId: "Freshworks",
+    enabled: true,
+    note: "VERIFIED 2026-07-10 — 121 live jobs on SmartRecruiters, ~41 in India. Chennai/Bengaluru/Hyderabad.",
+  },
+
+  {
+    // LIVE 2026-07-10: 2 jobs (Sales Manager - Bangalore).
+    companySlug: "swiggy",
+    providerName: "smartrecruiters",
+    providerId: "Swiggy",
+    enabled: true,
+    note: "VERIFIED 2026-07-10 — 2 jobs live on SmartRecruiters. Monitor for tech role ramp-up.",
+  },
+
+  {
+    // REVERIFIED 2026-07-10: 0 postings. Keep enabled to auto-capture when live.
     companySlug: "delhivery",
     providerName: "smartrecruiters",
     providerId: "Delhivery",
-    enabled: false,
-    note: "Verified 2025-06-27 — SmartRecruiters account exists but 0 active postings.",
+    enabled: true,
+    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
   },
   {
+    // REVERIFIED 2026-07-10: 0 postings.
     companySlug: "juspay",
     providerName: "smartrecruiters",
     providerId: "Juspay",
-    enabled: false,
-    note: "Verified 2025-06-27 — SmartRecruiters account exists but 0 active postings.",
+    enabled: true,
+    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
   },
   {
+    // REVERIFIED 2026-07-10: 0 postings.
     companySlug: "inmobi",
     providerName: "smartrecruiters",
     providerId: "InMobi",
-    enabled: false,
-    note: "Verified 2025-06-27 — SmartRecruiters account exists but 0 active postings.",
+    enabled: true,
+    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
   },
   {
+    // REVERIFIED 2026-07-10: 0 postings.
     companySlug: "ola",
     providerName: "smartrecruiters",
     providerId: "Ola",
-    enabled: false,
-    note: "Verified 2025-06-27 — SmartRecruiters account exists but 0 active postings.",
+    enabled: true,
+    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
   },
   {
+    // REVERIFIED 2026-07-10: 0 postings.
     companySlug: "zs-associates",
     providerName: "smartrecruiters",
     providerId: "ZSAssociates",
-    enabled: false,
-    note: "Verified 2025-06-27 — SmartRecruiters account exists but 0 active postings.",
+    enabled: true,
+    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
   },
   {
+    // REVERIFIED 2026-07-10: 0 postings.
     companySlug: "kpmg-india",
     providerName: "smartrecruiters",
     providerId: "KPMGIndia",
-    enabled: false,
-    note: "Verified 2025-06-27 — SmartRecruiters account exists but 0 active postings.",
+    enabled: true,
+    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
   },
   {
+    // REVERIFIED 2026-07-10: 0 postings.
     companySlug: "nielsen",
     providerName: "smartrecruiters",
     providerId: "Nielsen",
-    enabled: false,
-    note: "Verified 2025-06-27 — SmartRecruiters account exists but 0 active postings.",
+    enabled: true,
+    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
   },
 
   // ═══════════════════════════════════════════════════════════════════════════

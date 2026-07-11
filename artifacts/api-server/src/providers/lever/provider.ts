@@ -55,6 +55,8 @@ export class LeverProvider extends AbstractProvider {
         ? this.stripHtml(posting.description)
         : undefined;
 
+    const country = this.inferCountry(locationStr);
+
     return {
       externalId: posting.id,
       sourceProvider: this.name,
@@ -62,6 +64,7 @@ export class LeverProvider extends AbstractProvider {
       title: posting.text,
       department: posting.categories.department || posting.categories.team,
       location: locationStr || undefined,
+      country,
       workMode: this.inferWorkMode(locationStr + " " + commitment),
       jobType: this.inferJobType(posting.text + " " + commitment),
       description,

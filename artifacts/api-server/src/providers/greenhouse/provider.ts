@@ -39,7 +39,18 @@ export class GreenhouseProvider extends AbstractProvider {
       { label: `greenhouse:${config.companySlug}`, maxAttempts: 3 },
     );
 
-    return data.jobs.map((job) => this.normalize(job, config));
+    const filterCountry = config.extra?.filterCountry as string | undefined;
+
+    const jobs = data.jobs.map((job) => this.normalize(job, config));
+
+    if (!filterCountry) return jobs;
+
+    // When filterCountry is set (e.g. "India"), keep jobs that match OR are remote.
+    return jobs.filter((j) => {
+      if (j.workMode === "remote") return true;
+      if (!j.country) return false;
+      return j.country.toLowerCase() === filterCountry.toLowerCase();
+    });
   }
 
   private normalize(job: GreenhouseJob, config: CompanyProviderConfig): ProviderJob {
@@ -47,6 +58,7 @@ export class GreenhouseProvider extends AbstractProvider {
     const department = job.departments?.[0]?.name;
 
     const description = job.content ? this.stripHtml(job.content) : undefined;
+    const country = this.inferCountry(locationStr);
 
     return {
       externalId: String(job.id),
@@ -55,6 +67,7 @@ export class GreenhouseProvider extends AbstractProvider {
       title: job.title,
       department,
       location: locationStr || undefined,
+      country,
       workMode: this.inferWorkMode(locationStr),
       jobType: this.inferJobType(job.title + " " + (department ?? "")),
       description,

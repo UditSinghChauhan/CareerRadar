@@ -98,6 +98,37 @@ export abstract class AbstractProvider implements JobProvider {
   }
 
   /**
+   * Infer country from a location string.
+   * Returns "India" if any major Indian city or the word "india" is found.
+   * Returns undefined for remote or unrecognized locations — callers can
+   * fall back to a catalog-level country if needed.
+   */
+  protected inferCountry(location: string): string | undefined {
+    if (!location) return undefined;
+    const l = location.toLowerCase();
+    const indiaCities = [
+      "bengaluru", "bangalore",
+      "mumbai", "bombay",
+      "pune",
+      "hyderabad",
+      "chennai", "madras",
+      "delhi", "new delhi",
+      "noida",
+      "gurugram", "gurgaon",
+      "kolkata", "calcutta",
+      "ahmedabad",
+      "jaipur",
+      "chandigarh",
+      "indore",
+      "coimbatore",
+      "kochi",
+      "india",
+    ];
+    if (indiaCities.some((city) => l.includes(city))) return "India";
+    return undefined;
+  }
+
+  /**
    * Strip HTML tags from a description string. Quick-and-dirty — for
    * production quality, swap with a proper sanitiser library.
    */
