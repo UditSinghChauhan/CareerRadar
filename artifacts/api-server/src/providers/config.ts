@@ -723,6 +723,38 @@ const ALL_CONFIGS: EnabledConfig[] = [
     extra: { wd: "wd5", board: "Nutanixjobs", tenant: "nutanix" },
     note: "Workday tenant likely nutanix.wd5.myworkdayjobs.com. Disabled — CXS API returns HTTP 401.",
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // JOB AGGREGATORS — multi-company sources
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    companySlug: "__remoteok__",
+    providerName: "remoteok",
+    providerId: "all",
+    enabled: true,
+    note: "RemoteOK free API — ~100 remote tech jobs, no API key needed.",
+  },
+  {
+    companySlug: "__remotive__",
+    providerName: "remotive",
+    providerId: "software-dev",
+    enabled: true,
+    note: "Remotive free API — ~30 remote software dev jobs, no API key needed.",
+  },
+  {
+    companySlug: "__adzuna__",
+    providerName: "adzuna",
+    providerId: "india",
+    enabled: true,
+    note: "Adzuna India API — intern-focused queries. Needs ADZUNA_APP_ID and ADZUNA_APP_KEY.",
+  },
+  {
+    companySlug: "__jsearch__",
+    providerName: "jsearch",
+    providerId: "google-jobs-india",
+    enabled: true,
+    note: "JSearch/Google Jobs — intern-focused India queries. Needs JSEARCH_API_KEY.",
+  },
 ];
 
 /** Returns only enabled configurations. */

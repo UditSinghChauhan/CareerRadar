@@ -1,3 +1,4 @@
 - [CareerRadar stack decisions](careerradar-stack.md) — Drizzle not Prisma; Clerk cookie auth; auto-provision on first GET; lib rebuild order matters
 - [Express 5 wildcard routes](express5-wildcard.md) — app.get("*") throws on init in production; use "/{*splat}" for SPA catch-all
 - [Vite build vs serve env requirements](vite-build-vs-serve-env.md) — don't require PORT/BASE_PATH at build time, only for dev/preview servers
+- [CareerRadar aggregator provider pattern](careerradar-aggregator-providers.md) — multi-company providers need per-job companySlug/companyName; normalize() is async and auto-creates companies

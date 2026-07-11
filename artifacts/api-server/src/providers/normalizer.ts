@@ -18,6 +18,8 @@ export type NormalizedJob = InsertJob;
 export class JobNormalizer {
   private companyCache = new Map<string, string>();
   private sourceCache = new Map<string, string>();
+  /** In-flight company creations, keyed by slug — collapses concurrent inserts for the same new company. */
+  private pendingCompanyCreates = new Map<string, Promise<string | null>>();
 
   /** Warm up caches to avoid repeated DB round-trips during a scheduler run. */
   async warmUp(): Promise<void> {
@@ -36,15 +38,69 @@ export class JobNormalizer {
   }
 
   /**
-   * Normalize a ProviderJob into an InsertJob.
-   * Returns null if the company slug is unknown (job is skipped).
+   * Resolve a company slug to a DB id, auto-creating the company row when
+   * it doesn't exist yet and a display name is available. Used by
+   * multi-company aggregator providers (RemoteOK, Remotive, Adzuna,
+   * JSearch) which pull jobs from employers not pre-seeded in the DB.
+   * Concurrent lookups for the same new slug collapse onto one insert.
    */
-  normalize(job: ProviderJob): NormalizedJob | null {
-    const companyId = this.companyCache.get(job.companySlug);
+  private async resolveCompanyId(slug: string, companyName?: string): Promise<string | null> {
+    const cached = this.companyCache.get(slug);
+    if (cached) return cached;
+
+    if (!companyName) return null;
+
+    const pending = this.pendingCompanyCreates.get(slug);
+    if (pending) return pending;
+
+    const creation = (async () => {
+      try {
+        const [inserted] = await db
+          .insert(companiesTable)
+          .values({ slug, name: companyName })
+          .onConflictDoNothing({ target: companiesTable.slug })
+          .returning({ id: companiesTable.id });
+
+        if (inserted) {
+          this.companyCache.set(slug, inserted.id);
+          return inserted.id;
+        }
+
+        // Row already existed (race with a concurrent insert) — fetch it.
+        const [existing] = await db
+          .select({ id: companiesTable.id })
+          .from(companiesTable)
+          .where(eq(companiesTable.slug, slug));
+
+        if (existing) {
+          this.companyCache.set(slug, existing.id);
+          return existing.id;
+        }
+
+        return null;
+      } catch (err) {
+        logger.error({ err, slug, companyName }, "Failed to auto-create company for aggregator job");
+        return null;
+      } finally {
+        this.pendingCompanyCreates.delete(slug);
+      }
+    })();
+
+    this.pendingCompanyCreates.set(slug, creation);
+    return creation;
+  }
+
+  /**
+   * Normalize a ProviderJob into an InsertJob.
+   * Returns null if the company slug can't be resolved (unknown, and no
+   * companyName was provided to auto-create it).
+   */
+  async normalize(job: ProviderJob): Promise<NormalizedJob | null> {
+    const companyId = await this.resolveCompanyId(job.companySlug, job.companyName);
     if (!companyId) {
       logger.warn(
         { companySlug: job.companySlug, provider: job.sourceProvider },
-        "Skipping job — companySlug not found in DB. Add the company first.",
+        "Skipping job — companySlug not found in DB and no companyName to auto-create it.",
       );
       return null;
     }

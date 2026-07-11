@@ -63,6 +63,10 @@ import internshalaProvider from "./internshala/provider";
 import unstopProvider from "./unstop/provider";
 import { SmartRecruitersProvider } from "./company-careers/provider";
 import workdayProvider from "./workday/provider";
+import remoteOkProvider from "./remoteok/provider";
+import remotiveProvider from "./remotive/provider";
+import adzunaProvider from "./adzuna/provider";
+import jSearchProvider from "./jsearch/provider";
 
 providerRegistry.register(greenhouseProvider);
 providerRegistry.register(leverProvider);
@@ -72,3 +76,7 @@ providerRegistry.register(internshalaProvider);
 providerRegistry.register(unstopProvider);
 providerRegistry.register(new SmartRecruitersProvider());
 providerRegistry.register(workdayProvider);
+providerRegistry.register(remoteOkProvider);
+providerRegistry.register(remotiveProvider);
+providerRegistry.register(adzunaProvider);
+providerRegistry.register(jSearchProvider);

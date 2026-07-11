@@ -165,10 +165,12 @@ export class SchedulerService {
       try {
         const rawJobs = await provider.fetchJobs(config);
 
-        // Normalize
-        const normalizedJobs = rawJobs
-          .map((j) => jobNormalizer.normalize(j))
-          .filter((j): j is NonNullable<typeof j> => j !== null);
+        // Normalize (sequential — auto company-creation must not race within a batch)
+        const normalizedJobs: NonNullable<Awaited<ReturnType<typeof jobNormalizer.normalize>>>[] = [];
+        for (const j of rawJobs) {
+          const normalized = await jobNormalizer.normalize(j);
+          if (normalized !== null) normalizedJobs.push(normalized);
+        }
 
         // Deduplicate + persist
         const upsertResults = await deduplicationService.upsertBatch(normalizedJobs);
@@ -306,9 +308,11 @@ export class SchedulerService {
     const start = Date.now();
     const rawJobs = await provider.fetchJobs(config);
 
-    const normalizedJobs = rawJobs
-      .map((j) => jobNormalizer.normalize(j))
-      .filter((j): j is NonNullable<typeof j> => j !== null);
+    const normalizedJobs: NonNullable<Awaited<ReturnType<typeof jobNormalizer.normalize>>>[] = [];
+    for (const j of rawJobs) {
+      const normalized = await jobNormalizer.normalize(j);
+      if (normalized !== null) normalizedJobs.push(normalized);
+    }
 
     const upsertResults = await deduplicationService.upsertBatch(normalizedJobs);
 

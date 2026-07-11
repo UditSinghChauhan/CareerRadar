@@ -22,6 +22,15 @@ export interface ProviderJob {
   /** Slug of the company in our DB, e.g. "google". */
   companySlug: string;
 
+  /**
+   * Human-readable employer name, used by multi-company aggregator providers
+   * (RemoteOK, Remotive, Adzuna, JSearch) to auto-create a company record
+   * when `companySlug` doesn't already exist in the DB. Single-company
+   * providers (Greenhouse, Lever, ...) can omit this — their companySlug is
+   * always pre-seeded.
+   */
+  companyName?: string;
+
   title: string;
 
   department?: string;

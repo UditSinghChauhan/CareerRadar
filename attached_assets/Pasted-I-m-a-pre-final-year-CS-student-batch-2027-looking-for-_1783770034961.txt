@@ -1,0 +1,123 @@
+I'm a pre-final year CS student (batch 2027) looking for software engineering internships in India with PPO potential. I need you to maximize this app's India internship coverage by adding 4 new job aggregator providers and improving the frontend. Here's exactly what to do:
+
+## PART A: RemoteOK Provider (no API key needed)
+
+Create `artifacts/api-server/src/providers/remoteok/provider.ts`
+
+- API: GET https://remoteok.com/api
+- No auth needed. MUST include User-Agent header or you get 403.
+- Response is a JSON array. First element is metadata — skip it. Rest are job objects with fields: id, company, position, description (HTML), location, tags (array), url, apply_url, date.
+- Extend AbstractProvider. Set hasPublicApi = true.
+- Map each job to ProviderJob. Use inferJobType(), inferWorkMode(), inferCountry() from the base class.
+- Create types file at remoteok/types.ts for the response shape.
+- This provider fetches ALL jobs at once (not per-company). Use a single config entry.
+- Export default instance.
+
+## PART B: Remotive Provider (no API key needed)
+
+Create `artifacts/api-server/src/providers/remotive/provider.ts`
+
+- API: GET https://remotive.com/api/remote-jobs?category=software-dev&limit=100
+- No auth needed.
+- Response: { jobs: [...] } where each job has: id, url, title, company_name, candidate_required_location, description (HTML), publication_date, salary, job_type.
+- Same pattern as RemoteOK. Extend AbstractProvider.
+- Create types file at remotive/types.ts.
+- Export default instance.
+
+## PART C: Adzuna India Provider (uses env var API key)
+
+Create `artifacts/api-server/src/providers/adzuna/provider.ts`
+
+I've already added my API keys as Replit Secrets: ADZUNA_APP_ID and ADZUNA_APP_KEY.
+
+- API: GET https://api.adzuna.com/v1/api/jobs/in/search/{page}
+- The /in/ means India — this is the dedicated India endpoint.
+- Auth: query params app_id and app_key from env vars.
+- Free tier: 250 requests/day.
+- Response: { results: [...], count: N }
+- Each result has: id, title, description, redirect_url, created, company.display_name, location.display_name, location.area (array), category.label, salary_min, salary_max, contract_time.
+
+Key implementation details:
+- Read keys from process.env.ADZUNA_APP_ID and process.env.ADZUNA_APP_KEY
+- If keys are missing, log a warning and return [] — do NOT crash.
+- Run these INTERNSHIP-FOCUSED queries (one API call each, deduplicate results by id):
+  1. what=software+intern&category=it-jobs&max_days_old=30&results_per_page=50
+  2. what=SDE+intern&category=it-jobs&max_days_old=30&results_per_page=50
+  3. what=developer+trainee&category=it-jobs&max_days_old=30&results_per_page=50
+  4. what=fresher+software+engineer&category=it-jobs&max_days_old=30&results_per_page=50
+  5. what=graduate+engineer+trainee&category=it-jobs&max_days_old=30&results_per_page=50
+  6. what=backend+developer+entry+level&category=it-jobs&max_days_old=30&results_per_page=50
+- Map location.display_name to ProviderJob.location, use inferCountry() for country.
+- Create types file at adzuna/types.ts.
+- Export default instance.
+
+## PART D: JSearch Provider (uses env var API key)
+
+Create `artifacts/api-server/src/providers/jsearch/provider.ts`
+
+I've already added my API key as Replit Secret: JSEARCH_API_KEY.
+
+- API: GET https://jsearch.p.rapidapi.com/search
+- Auth: Headers x-rapidapi-key (from env) and x-rapidapi-host: jsearch.p.rapidapi.com
+- Free tier: 200 requests/month, so budget carefully — max 6 queries per sync.
+- Response: { data: [...] }
+- Each item has: job_id, job_title, employer_name, employer_logo, job_city, job_state, job_country, job_description, job_apply_link, job_posted_at_datetime_utc, job_employment_type, job_is_remote, job_min_salary, job_max_salary.
+
+THIS IS THE MOST IMPORTANT PROVIDER — Google Jobs indexes Internshala, LinkedIn, Naukri, Unstop, and all company career sites.
+
+Key implementation details:
+- Read key from process.env.JSEARCH_API_KEY
+- If key is missing, log warning and return [].
+- Run these 6 INTERNSHIP-TARGETED queries (deduplicate by job_id):
+  1. query=software+engineering+intern+India&country=IN&date_posted=month&num_pages=1
+  2. query=SDE+intern+Bangalore+Hyderabad+Pune&country=IN&date_posted=month&num_pages=1
+  3. query=backend+developer+intern+India&country=IN&date_posted=month&num_pages=1
+  4. query=full+stack+intern+India&country=IN&date_posted=month&num_pages=1
+  5. query=data+engineer+intern+India&country=IN&date_posted=month&num_pages=1
+  6. query=software+developer+fresher+India&country=IN&date_posted=month&num_pages=1
+- Map job_country "IN" → country "India"
+- Map job_employment_type "INTERN" → jobType "internship"
+- Map job_is_remote true → workMode "remote"
+- Create types file at jsearch/types.ts.
+- Export default instance.
+
+## PART E: Register All Providers
+
+In `artifacts/api-server/src/providers/registry.ts`, import and register all 4 new providers.
+
+## PART F: Add Config Entries
+
+In `artifacts/api-server/src/providers/config.ts`, add these to the ALL_CONFIGS array at the end (before the closing bracket):
+
+```ts
+// ═══════════════════════════════════════════════════════════════════════════
+// JOB AGGREGATORS — multi-company sources
+// ═══════════════════════════════════════════════════════════════════════════
+{
+  companySlug: "__remoteok__",
+  providerName: "remoteok",
+  providerId: "all",
+  enabled: true,
+  note: "RemoteOK free API — ~100 remote tech jobs, no API key needed.",
+},
+{
+  companySlug: "__remotive__",
+  providerName: "remotive",
+  providerId: "software-dev",
+  enabled: true,
+  note: "Remotive free API — ~30 remote software dev jobs, no API key needed.",
+},
+{
+  companySlug: "__adzuna__",
+  providerName: "adzuna",
+  providerId: "india",
+  enabled: true,
+  note: "Adzuna India API — intern-focused queries. Needs ADZUNA_APP_ID and ADZUNA_APP_KEY.",
+},
+{
+  companySlug: "__jsearch__",
+  providerName: "jsearch",
+  providerId: "google-jobs-india",
+  enabled: true,
+  note: "JSearch/Google Jobs — intern-focused India queries. Needs JSEARCH_API_KEY.",
+},
