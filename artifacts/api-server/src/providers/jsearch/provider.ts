@@ -23,7 +23,7 @@ import { slugify } from "../../lib/slugify";
 import { logger } from "../../lib/logger";
 import type { JSearchResponse, JSearchJob } from "./types";
 
-const API_URL = "https://jsearch.p.rapidapi.com/search";
+const API_URL = "https://jsearch.p.rapidapi.com/search-v2";
 const RAPIDAPI_HOST = "jsearch.p.rapidapi.com";
 
 // Budgeted to the 200 req/month free tier — 6 queries per sync, 1 page each.
@@ -72,7 +72,7 @@ export class JSearchProvider extends AbstractProvider {
           { label: `jsearch:google-jobs-india:${query}`, maxAttempts: 2 },
         );
 
-        for (const job of data.data ?? []) {
+        for (const job of data.data?.jobs ?? []) {
           if (!byId.has(job.job_id)) byId.set(job.job_id, job);
         }
       } catch (err) {

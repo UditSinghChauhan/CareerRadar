@@ -19,5 +19,7 @@ export interface JSearchJob {
 
 export interface JSearchResponse {
   status?: string;
-  data: JSearchJob[];
+  data: {
+    jobs: JSearchJob[];
+  };
 }
