@@ -13,7 +13,7 @@
   </p>
 
   <p>
-    <a href="https://careerradar.up.railway.app"><strong>🌐 Live Demo</strong></a> ·
+    <a href="https://career-radar--uditcodes.replit.app/"><strong>🌐 Live Demo</strong></a> ·
     <a href="#features"><strong>Features</strong></a> ·
     <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
     <a href="#getting-started"><strong>Getting Started</strong></a>
@@ -49,41 +49,37 @@ CareerRadar is a **personal placement operating system** designed for Indian CS 
 ```
 CareerRadar/
 ├── artifacts/
-│   ├── career-radar/          # React 18 + Vite frontend
+│   ├── career-radar/             # React 18 + Vite frontend
 │   │   └── src/
-│   │       ├── App.tsx        # Router root (Wouter)
-│   │       ├── pages/         # Dashboard, Applications, Catalog, etc.
-│   │       └── components/    # Radix UI + shadcn/ui components
-│   └── api-server/            # Express 5 API server
+│   │       ├── App.tsx           # Router root (Wouter)
+│   │       ├── pages/            # Dashboard, Applications, Catalog, etc.
+│   │       └── components/       # Radix UI + shadcn/ui components
+│   └── api-server/               # Express 5 API server
 │       └── src/
-│           ├── routes/        # REST endpoints (applications, jobs, catalog…)
-│           ├── middlewares/   # Clerk auth, proxy
-│           └── providers/     # Scheduler service
+│           ├── routes/           # REST endpoints (applications, jobs, catalog…)
+│           ├── middlewares/      # Clerk auth, proxy
+│           └── providers/        # Scheduler service
 ├── lib/
-│   ├── api-spec/              # OpenAPI YAML (single source of truth)
-│   ├── api-client-react/      # Generated React Query hooks (Orval)
-│   ├── api-zod/               # Generated Zod schemas for server validation
-│   └── db/                    # Drizzle ORM schema + migrations
-└── railway.json               # Deployment config
+│   ├── api-spec/                 # OpenAPI YAML (single source of truth)
+│   ├── api-client-react/         # Generated React Query hooks (Orval)
+│   ├── api-zod/                  # Generated Zod schemas for server validation
+│   └── db/                       # Drizzle ORM schema + migrations
+├── .replit                       # Replit deployment config
+└── railway.json                  # Alternative Railway deployment config
 ```
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Language** | TypeScript 5.9 (strict, full-stack) |
-| **Frontend** | React 18, Vite, Tailwind CSS v4, Wouter, next-themes |
-| **UI Components** | Radix UI Primitives + shadcn/ui pattern |
-| **Backend** | Express 5, Node.js 24 |
-| **Auth** | Clerk (`@clerk/react` + `@clerk/express`) |
-| **Database** | PostgreSQL 16 + Drizzle ORM + `drizzle-zod` |
-| **Validation** | Zod (`zod/v4`) |
-| **API Contracts** | OpenAPI YAML → Orval codegen (React Query + Zod) |
-| **Build** | Vite (frontend), esbuild (server CJS bundle) |
-| **Package Manager** | pnpm workspaces |
-| **Deployment** | Railway (auto-deploy from GitHub) |
+| Layer | Technologies |
+|---|---|
+| **Frontend** | React 18, Vite, Wouter, Radix UI, shadcn/ui, Tailwind CSS v4, React Query |
+| **Backend** | Express 5, Node.js, TypeScript |
+| **Database** | PostgreSQL 16, Drizzle ORM |
+| **Auth** | Clerk (Google OAuth, Email/Password, RBAC) |
+| **API Contract** | OpenAPI 3.1 YAML → Orval codegen (Zod validators + React Query hooks) |
+| **Deployment** | Replit Deployments (primary), Railway (alternative) |
 
 ---
 
@@ -91,12 +87,12 @@ CareerRadar/
 
 ### Prerequisites
 
-- Node.js 24+
-- pnpm (`npm install -g pnpm`)
+- [Node.js](https://nodejs.org/) 18+
+- [pnpm](https://pnpm.io/) 9+
 - PostgreSQL instance (local or [Neon](https://neon.tech)/[Supabase](https://supabase.com) free tier)
 - [Clerk](https://clerk.com) account (free tier)
 
-### 1. Clone & Install
+### Installation
 
 ```bash
 git clone https://github.com/UditSinghChauhan/CareerRadar.git
@@ -104,9 +100,9 @@ cd CareerRadar
 pnpm install
 ```
 
-### 2. Environment Variables
+### Environment Variables
 
-Create a `.env` file at the root:
+Create a `.env` file in the root:
 
 ```env
 # Database
@@ -123,13 +119,7 @@ NODE_ENV=development
 BASE_PATH=/
 ```
 
-### 3. Push Database Schema
-
-```bash
-pnpm --filter @workspace/db run push
-```
-
-### 4. Run Development Servers
+### Run Locally
 
 ```bash
 # Terminal 1: API server (port 8080)
@@ -139,41 +129,38 @@ pnpm --filter @workspace/api-server run dev
 pnpm --filter @workspace/career-radar run dev
 ```
 
-### 5. Regenerate API Client (after OpenAPI spec changes)
-
-```bash
-pnpm --filter @workspace/api-spec run codegen
-```
-
 ---
 
-## 🌐 Deployment (Railway)
+## 🌐 Deployment
 
-This project is configured for one-click deploy on Railway:
+This project is deployed on **Replit Deployments** for always-on hosting.
 
-1. Fork/clone this repo
+**Live URL:** [career-radar--uditcodes.replit.app](https://career-radar--uditcodes.replit.app/)
+
+### Alternative: Railway
+
+A `railway.json` config is also included for deploying on [Railway](https://railway.app):
+
+1. Fork this repo
 2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
-3. Add a **PostgreSQL** database addon
+3. Add a PostgreSQL addon
 4. Set environment variables:
    - `DATABASE_URL` (auto-filled by Railway PostgreSQL addon)
    - `CLERK_SECRET_KEY`
    - `CLERK_PUBLISHABLE_KEY`
    - `VITE_CLERK_PUBLISHABLE_KEY`
-   - `NODE_ENV=production`
-   - `PORT=8080`
 5. Deploy! Railway auto-deploys on every `git push` to `main`.
 
 ---
 
-## 📁 Key Files
+## 📂 Key Files
 
-| File | Purpose |
-|------|---------|
-| [`lib/api-spec/openapi.yaml`](lib/api-spec/openapi.yaml) | Single source of truth for all API contracts |
-| [`lib/db/src/schema/`](lib/db/src/schema/) | Drizzle table definitions |
+| File | Description |
+|---|---|
+| [`lib/api-spec/openapi.yaml`](lib/api-spec/openapi.yaml) | OpenAPI 3.1 spec — single source of truth |
+| [`lib/db/src/schema/`](lib/db/src/schema) | Drizzle ORM schema & migrations |
 | [`artifacts/career-radar/src/App.tsx`](artifacts/career-radar/src/App.tsx) | Frontend router root |
-| [`artifacts/api-server/src/routes/`](artifacts/api-server/src/routes/) | Express route handlers |
-| [`railway.json`](railway.json) | Railway deployment config |
+| [`artifacts/api-server/src/routes/`](artifacts/api-server/src/routes) | Express REST route handlers |
 
 ---
 
