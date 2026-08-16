@@ -1,10 +1,15 @@
 /**
  * Sync Routes
  * ───────────
- * POST /api/sync/all                                   — trigger a full scheduler run (non-blocking)
- * POST /api/sync/provider/:provider                    — trigger all configs for one provider
- * POST /api/sync/provider/:provider/company/:company   — trigger a single config
- * GET  /api/sync/status                                — latest sync logs + scheduler state
+ * Every route here that causes outbound traffic requires an authenticated
+ * session, matching the boundary already applied to routes/providers.ts: read
+ * only status is public, anything that triggers work is not.
+ *
+ * POST /api/sync/all                                   — trigger a full scheduler run (non-blocking) — requires auth
+ * POST /api/sync/provider/:provider                    — trigger all configs for one provider — requires auth
+ * POST /api/sync/provider/:provider/company/:company   — trigger a single config — requires auth
+ * GET  /api/sync/verify                                — live HTTP checks against every ATS API — requires auth
+ * GET  /api/sync/status                                — latest sync logs + scheduler state (public, read only)
  */
 
 import { Router } from "express";
@@ -15,6 +20,7 @@ import { schedulerService } from "../providers/scheduler";
 import { metrics } from "../providers/metrics";
 import { getEnabledConfigs } from "../providers/config";
 import { runVerification } from "../providers/verify";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
 
@@ -52,7 +58,7 @@ router.get("/sync/status", async (_req, res) => {
 // ─── POST /api/sync/all ───────────────────────────────────────────────────────
 // Fire and forget — triggers a full scheduler pass.
 
-router.post("/sync/all", (req, res) => {
+router.post("/sync/all", requireAuth, (req, res) => {
   const enabled = getEnabledConfigs();
 
   if (enabled.length === 0) {
@@ -77,7 +83,7 @@ router.post("/sync/all", (req, res) => {
 // ─── POST /api/sync/provider/:provider ───────────────────────────────────────
 // Trigger all enabled configs for a specific provider.
 
-router.post("/sync/provider/:provider", async (req, res) => {
+router.post("/sync/provider/:provider", requireAuth, async (req, res) => {
   const providerName = req.params["provider"] as string;
 
   if (!providerRegistry.has(providerName)) {
@@ -123,7 +129,7 @@ router.post("/sync/provider/:provider", async (req, res) => {
 // ─── POST /api/sync/provider/:provider/company/:company ──────────────────────
 // Trigger a single provider+company combination.
 
-router.post("/sync/provider/:provider/company/:company", async (req, res) => {
+router.post("/sync/provider/:provider/company/:company", requireAuth, async (req, res) => {
   const providerName = req.params["provider"] as string;
   const companySlug = req.params["company"] as string;
 
@@ -152,7 +158,7 @@ router.post("/sync/provider/:provider/company/:company", async (req, res) => {
 // Runs live HTTP checks against all configured endpoints and returns a report.
 // WARNING: makes real outbound requests to ATS APIs. Do not call in a tight loop.
 
-router.get("/sync/verify", async (_req, res) => {
+router.get("/sync/verify", requireAuth, async (_req, res) => {
   try {
     const { results, summary } = await runVerification();
     res.json({
