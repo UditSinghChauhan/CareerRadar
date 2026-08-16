@@ -104,14 +104,20 @@ export class SchedulerService {
 
     if (this.runOnStart) {
       // Small delay so the server finishes booting first
-      setTimeout(() => this.runAll(), 5_000);
+      setTimeout(() => {
+        this.runAll().catch((err) => {
+          logger.error({ err }, "Unhandled error in scheduler run — server remains up");
+        });
+      }, 5_000);
     }
 
     const nextRunAt = new Date(Date.now() + this.intervalMs);
     metrics.setNextRun(nextRunAt);
 
     this.timer = setInterval(() => {
-      void this.runAll();
+      this.runAll().catch((err) => {
+        logger.error({ err }, "Unhandled error in scheduler run — server remains up");
+      });
     }, this.intervalMs);
   }
 
@@ -137,7 +143,13 @@ export class SchedulerService {
     const startedAt = new Date();
     logger.info("Scheduler run started");
 
-    await jobNormalizer.warmUp();
+    try {
+      await jobNormalizer.warmUp();
+    } catch (err) {
+      logger.error({ err }, "Scheduler run aborted — failed to warm up normalizer cache (DB unreachable?)");
+      this.isRunning = false;
+      return this.emptyResult();
+    }
 
     const configs = getEnabledConfigs();
     logger.info({ count: configs.length }, `Processing ${configs.length} provider configs`);
