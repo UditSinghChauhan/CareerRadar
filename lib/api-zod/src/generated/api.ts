@@ -1131,3 +1131,35 @@ export const DeleteSavedSearchParams = zod.object({
 export const DeleteSavedSearchResponse = zod.void()
 
 
+/**
+ * @summary Check if AI matching features are available
+ */
+export const GetAIStatusResponse = zod.object({
+  "available": zod.boolean(),
+  "provider": zod.string(),
+  "description": zod.string().optional()
+})
+
+
+/**
+ * @summary Get AI match score between user profile and a job
+ */
+export const GetJobMatchScoreParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const getJobMatchScoreResponseScoreMin = 0;
+export const getJobMatchScoreResponseScoreMax = 100;
+
+
+
+export const GetJobMatchScoreResponse = zod.object({
+  "jobId": zod.string(),
+  "score": zod.number().min(getJobMatchScoreResponseScoreMin).max(getJobMatchScoreResponseScoreMax),
+  "summary": zod.string(),
+  "matchingSkills": zod.array(zod.string()),
+  "missingSkills": zod.array(zod.string()),
+  "recommendations": zod.array(zod.string())
+})
+
+

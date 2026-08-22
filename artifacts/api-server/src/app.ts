@@ -1,5 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
@@ -16,6 +18,25 @@ import { logger } from "./lib/logger";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app: Express = express();
+
+// ─── Security Headers ────────────────────────────────────────────────────────
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Disable CSP to avoid breaking the SPA
+    crossOriginEmbedderPolicy: false,
+  }),
+);
+
+// ─── Rate Limiting ───────────────────────────────────────────────────────────
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+});
+
+app.use("/api", generalLimiter);
 
 app.use(
   pinoHttp({
@@ -55,6 +76,38 @@ app.use(
     ),
   })),
 );
+
+// ─── API Documentation (Scalar) ──────────────────────────────────────────────
+app.get("/api/docs", (_req, res) => {
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>CareerRadar API Docs</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <script id="api-reference" data-url="/api/docs/openapi.yaml"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>`;
+  res.setHeader("Content-Type", "text/html");
+  res.send(html);
+});
+
+// Serve the OpenAPI spec file
+app.get("/api/docs/openapi.yaml", (_req, res) => {
+  const specPath = path.resolve(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "lib",
+    "api-spec",
+    "openapi.yaml",
+  );
+  res.sendFile(specPath);
+});
 
 app.use("/api", router);
 

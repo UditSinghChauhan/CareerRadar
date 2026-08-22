@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.2.0
  */
 
+export * from './aIStatus';
 export * from './application';
 export * from './applicationInput';
 export * from './applicationInputStatus';
@@ -33,6 +34,7 @@ export * from './jobInputStatus';
 export * from './jobInputWorkMode';
 export * from './jobJobType';
 export * from './jobListResponse';
+export * from './jobMatchScore';
 export * from './jobSource';
 export * from './jobStatus';
 export * from './jobUpdateInput';

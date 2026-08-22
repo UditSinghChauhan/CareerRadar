@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AIStatus,
   Application,
   ApplicationInput,
   ApplicationListResponse,
@@ -35,6 +36,7 @@ import type {
   Job,
   JobInput,
   JobListResponse,
+  JobMatchScore,
   JobUpdateInput,
   ListApplicationsParams,
   ListCompaniesParams,
@@ -2014,4 +2016,158 @@ export const useDeleteSavedSearch = <TError = ErrorType<void>,
       > => {
       return useMutation(getDeleteSavedSearchMutationOptions(options));
     }
+
+export const getGetAIStatusUrl = () => {
+
+
+
+
+  return `/api/ai/status`
+}
+
+/**
+ * @summary Check if AI matching features are available
+ */
+export const getAIStatus = async ( options?: RequestInit): Promise<AIStatus> => {
+
+  return customFetch<AIStatus>(getGetAIStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAIStatusQueryKey = () => {
+    return [
+    `/api/ai/status`
+    ] as const;
+    }
+
+
+export const getGetAIStatusQueryOptions = <TData = Awaited<ReturnType<typeof getAIStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAIStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAIStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAIStatus>>> = ({ signal }) => getAIStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAIStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAIStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getAIStatus>>>
+export type GetAIStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Check if AI matching features are available
+ */
+
+export function useGetAIStatus<TData = Awaited<ReturnType<typeof getAIStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAIStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAIStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetJobMatchScoreUrl = (id: string,) => {
+
+
+
+
+  return `/api/ai/jobs/${id}/match`
+}
+
+/**
+ * @summary Get AI match score between user profile and a job
+ */
+export const getJobMatchScore = async (id: string, options?: RequestInit): Promise<JobMatchScore> => {
+
+  return customFetch<JobMatchScore>(getGetJobMatchScoreUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetJobMatchScoreQueryKey = (id: string,) => {
+    return [
+    `/api/ai/jobs/${id}/match`
+    ] as const;
+    }
+
+
+export const getGetJobMatchScoreQueryOptions = <TData = Awaited<ReturnType<typeof getJobMatchScore>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobMatchScore>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetJobMatchScoreQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobMatchScore>>> = ({ signal }) => getJobMatchScore(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getJobMatchScore>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetJobMatchScoreQueryResult = NonNullable<Awaited<ReturnType<typeof getJobMatchScore>>>
+export type GetJobMatchScoreQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get AI match score between user profile and a job
+ */
+
+export function useGetJobMatchScore<TData = Awaited<ReturnType<typeof getJobMatchScore>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobMatchScore>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetJobMatchScoreQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 

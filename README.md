@@ -11,6 +11,12 @@
     <img src="https://img.shields.io/badge/Clerk-Auth-6C47FF?style=for-the-badge&logo=clerk&logoColor=white" alt="Clerk" />
     <img src="https://img.shields.io/badge/Drizzle-ORM-C5F74F?style=for-the-badge&logo=drizzle&logoColor=black" alt="Drizzle ORM" />
   </p>
+  
+  <p>
+    ![CI](https://github.com/UditSinghChauhan/CareerRadar/actions/workflows/ci.yml/badge.svg)
+    ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+    ![AI Powered](https://img.shields.io/badge/AI-Gemini_Powered-4285F4?style=for-the-badge&logo=google&logoColor=white)
+  </p>
 
   <p>
     <a href="https://career-radar--uditcodes.replit.app/"><strong>🌐 Live Demo</strong></a> ·
@@ -38,6 +44,7 @@ CareerRadar is a **personal placement operating system** designed for Indian CS 
 - **🏢 Company Profiles** — Dedicated pages with placement history and application stats
 - **📈 Dashboard Analytics** — Visual breakdown of your placement pipeline: response rates, stage conversion, timeline
 - **⚙️ Sync Engine** — Background job scheduler to pull fresh listings from configured sources
+- **🤖 AI Matching** — Powered by Gemini to intelligently match your profile against job descriptions
 - **🔐 Auth** — Secure sign-in/sign-up via Clerk (Google OAuth, Email/Password)
 - **🌙 Dark Mode** — Full light/dark theme support via `next-themes`
 - **📱 Responsive** — Mobile-first UI built with Radix UI + shadcn/ui components + Tailwind CSS v4
@@ -46,26 +53,13 @@ CareerRadar is a **personal placement operating system** designed for Indian CS 
 
 ## 🏗️ Architecture
 
-```
-CareerRadar/
-├── artifacts/
-│   ├── career-radar/             # React 18 + Vite frontend
-│   │   └── src/
-│   │       ├── App.tsx           # Router root (Wouter)
-│   │       ├── pages/            # Dashboard, Applications, Catalog, etc.
-│   │       └── components/       # Radix UI + shadcn/ui components
-│   └── api-server/               # Express 5 API server
-│       └── src/
-│           ├── routes/           # REST endpoints (applications, jobs, catalog…)
-│           ├── middlewares/      # Clerk auth, proxy
-│           └── providers/        # Scheduler service
-├── lib/
-│   ├── api-spec/                 # OpenAPI YAML (single source of truth)
-│   ├── api-client-react/         # Generated React Query hooks (Orval)
-│   ├── api-zod/                  # Generated Zod schemas for server validation
-│   └── db/                       # Drizzle ORM schema + migrations
-├── .replit                       # Replit deployment config
-└── railway.json                  # Alternative Railway deployment config
+```mermaid
+graph LR
+    A[Frontend UI\nReact/Vite] -->|React Query| B(API Server\nExpress)
+    B --> C[(Data Layer\nPostgreSQL + Drizzle)]
+    D[Sync Engine\nScheduler] -->|Fetches Listings| C
+    D -->|Calls| E[External APIs]
+    B -->|Auth| F[Clerk]
 ```
 
 ---
@@ -77,9 +71,11 @@ CareerRadar/
 | **Frontend** | React 18, Vite, Wouter, Radix UI, shadcn/ui, Tailwind CSS v4, React Query |
 | **Backend** | Express 5, Node.js, TypeScript |
 | **Database** | PostgreSQL 16, Drizzle ORM |
-| **Auth** | Clerk (Google OAuth, Email/Password, RBAC) |
+| **Auth & Security** | Clerk (Google OAuth, Email/Password, RBAC), Helmet, CORS |
+| **AI Integration** | Google Gemini API for smart job matching |
+| **Testing** | Vitest, React Testing Library, jsdom |
+| **CI/CD** | GitHub Actions (Lint, Typecheck, Test, Build), Replit Deployments |
 | **API Contract** | OpenAPI 3.1 YAML → Orval codegen (Zod validators + React Query hooks) |
-| **Deployment** | Replit Deployments (primary), Railway (alternative) |
 
 ---
 
@@ -102,7 +98,7 @@ pnpm install
 
 ### Environment Variables
 
-Create a `.env` file in the root:
+Copy `.env.example` to `.env` or create a `.env` file in the root:
 
 ```env
 # Database
@@ -112,6 +108,9 @@ DATABASE_URL=postgresql://user:password@localhost:5432/careerradar
 CLERK_SECRET_KEY=sk_test_...
 CLERK_PUBLISHABLE_KEY=pk_test_...
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+
+# AI
+GEMINI_API_KEY=AIzaSy...
 
 # Server
 PORT=8080
@@ -131,6 +130,14 @@ pnpm --filter @workspace/career-radar run dev
 
 ---
 
+## 📖 API Documentation
+
+API documentation is generated using OpenAPI and Swagger UI. When running the development server, you can view the interactive docs at:
+
+`http://localhost:8080/api/docs`
+
+---
+
 ## 🌐 Deployment
 
 This project is deployed on **Replit Deployments** for always-on hosting.
@@ -144,23 +151,19 @@ A `railway.json` config is also included for deploying on [Railway](https://rail
 1. Fork this repo
 2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
 3. Add a PostgreSQL addon
-4. Set environment variables:
-   - `DATABASE_URL` (auto-filled by Railway PostgreSQL addon)
-   - `CLERK_SECRET_KEY`
-   - `CLERK_PUBLISHABLE_KEY`
-   - `VITE_CLERK_PUBLISHABLE_KEY`
+4. Set environment variables
 5. Deploy! Railway auto-deploys on every `git push` to `main`.
 
 ---
 
-## 📂 Key Files
+## 🤝 Contributing
 
-| File | Description |
-|---|---|
-| [`lib/api-spec/openapi.yaml`](lib/api-spec/openapi.yaml) | OpenAPI 3.1 spec — single source of truth |
-| [`lib/db/src/schema/`](lib/db/src/schema) | Drizzle ORM schema & migrations |
-| [`artifacts/career-radar/src/App.tsx`](artifacts/career-radar/src/App.tsx) | Frontend router root |
-| [`artifacts/api-server/src/routes/`](artifacts/api-server/src/routes) | Express REST route handlers |
+We welcome contributions! 
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { companiesService } from "../services/companies.service";
 import { CreateCompanyBody } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.get("/companies", async (req, res) => {
   }
 });
 
-router.post("/companies", async (req, res) => {
+router.post("/companies", requireAuth, async (req, res) => {
   const parsed = CreateCompanyBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input", details: parsed.error.issues });

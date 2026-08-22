@@ -5,6 +5,7 @@ import {
   UpdateJobBody,
   GetJobsClosingSoonQueryParams,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
 
@@ -47,7 +48,7 @@ router.get("/jobs/:id", async (req, res) => {
   }
 });
 
-router.post("/jobs", async (req, res) => {
+router.post("/jobs", requireAuth, async (req, res) => {
   const parsed = CreateJobBody.safeParse(req.body);
   if (!parsed.success) {
     res
@@ -77,7 +78,7 @@ router.post("/jobs", async (req, res) => {
   }
 });
 
-router.put("/jobs/:id", async (req, res) => {
+router.put("/jobs/:id", requireAuth, async (req, res) => {
   const id = req.params["id"] as string;
   const parsed = UpdateJobBody.safeParse(req.body);
   if (!parsed.success) {
@@ -100,7 +101,7 @@ router.put("/jobs/:id", async (req, res) => {
   }
 });
 
-router.delete("/jobs/:id", async (req, res) => {
+router.delete("/jobs/:id", requireAuth, async (req, res) => {
   const id = req.params["id"] as string;
   try {
     const job = await jobsService.close(id);

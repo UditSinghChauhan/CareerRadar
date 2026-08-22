@@ -26,6 +26,8 @@ tags:
     description: Bookmarked jobs
   - name: saved-searches
     description: Saved search filters
+  - name: ai
+    description: AI-powered matching and recommendations
 
 paths:
   /healthz:
@@ -619,6 +621,48 @@ paths:
         "401":
           description: Unauthorized
 
+  # ─── AI Matching ──────────────────────────────────────────────────────────────
+
+  /ai/status:
+    get:
+      operationId: getAIStatus
+      tags: [ai]
+      summary: Check if AI matching features are available
+      responses:
+        "200":
+          description: AI status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIStatus"
+
+  /ai/jobs/{id}/match:
+    get:
+      operationId: getJobMatchScore
+      tags: [ai]
+      summary: Get AI match score between user profile and a job
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Match score result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobMatchScore"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Job or profile not found
+        "503":
+          description: AI matching not configured
+
 components:
   securitySchemes:
     clerkAuth:
@@ -626,6 +670,44 @@ components:
       scheme: bearer
 
   schemas:
+    # ─── AI ──────────────────────────────────────────────────────────────────────
+
+    AIStatus:
+      type: object
+      required: [available, provider]
+      properties:
+        available:
+          type: boolean
+        provider:
+          type: string
+        description:
+          type: string
+
+    JobMatchScore:
+      type: object
+      required: [jobId, score, summary, matchingSkills, missingSkills, recommendations]
+      properties:
+        jobId:
+          type: string
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        summary:
+          type: string
+        matchingSkills:
+          type: array
+          items:
+            type: string
+        missingSkills:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+
     # ─── Shared ─────────────────────────────────────────────────────────────────
 
     HealthStatus:

@@ -5,6 +5,25 @@
  * CareerRadar API — personal placement OS for CS students
  * OpenAPI spec version: 0.2.0
  */
+export interface AIStatus {
+  available: boolean;
+  provider: string;
+  description?: string;
+}
+
+export interface JobMatchScore {
+  jobId: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  score: number;
+  summary: string;
+  matchingSkills: string[];
+  missingSkills: string[];
+  recommendations: string[];
+}
+
 export interface HealthStatus {
   status: string;
 }

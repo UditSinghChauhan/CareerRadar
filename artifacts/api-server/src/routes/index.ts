@@ -12,6 +12,7 @@ import providersRouter from "./providers";
 import syncRouter from "./sync";
 import catalogRouter from "./catalog";
 import sourcesRouter from "./sources";
+import aiRouter from "./ai";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(providersRouter);
 router.use(syncRouter);
 router.use(catalogRouter);
 router.use(sourcesRouter);
+router.use(aiRouter);
 
 export default router;
