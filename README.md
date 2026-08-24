@@ -13,17 +13,39 @@
   </p>
   
   <p>
-    ![CI](https://github.com/UditSinghChauhan/CareerRadar/actions/workflows/ci.yml/badge.svg)
-    ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-    ![AI Powered](https://img.shields.io/badge/AI-Gemini_Powered-4285F4?style=for-the-badge&logo=google&logoColor=white)
+
+  ![CI](https://github.com/UditSinghChauhan/CareerRadar/actions/workflows/ci.yml/badge.svg)
+  ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+  ![AI Powered](https://img.shields.io/badge/AI-Gemini_Powered-4285F4?style=for-the-badge&logo=google&logoColor=white)
+
   </p>
 
   <p>
-    <a href="https://career-radar--uditcodes.replit.app/"><strong>🌐 Live Demo</strong></a> ·
+    <a href="https://careerradar-34ec.onrender.com/"><strong>🌐 Live Demo</strong></a> ·
     <a href="#features"><strong>Features</strong></a> ·
     <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
     <a href="#getting-started"><strong>Getting Started</strong></a>
   </p>
+</div>
+
+---
+
+## 📸 Screenshots
+
+<div align="center">
+
+### Landing Page
+<img src="docs/screenshots/landing.png" alt="CareerRadar Landing Page" width="800" />
+
+### Dashboard
+<img src="docs/screenshots/dashboard.png" alt="Dashboard — stats, recommendations, closing deadlines" width="800" />
+
+### Jobs Explorer
+<img src="docs/screenshots/jobs.png" alt="Jobs Explorer — filters, search, job cards" width="800" />
+
+### Profile
+<img src="docs/screenshots/profile.png" alt="Profile — academic details, skills, resume" width="800" />
+
 </div>
 
 ---
@@ -140,19 +162,9 @@ API documentation is generated using OpenAPI and Swagger UI. When running the de
 
 ## 🌐 Deployment
 
-This project is deployed on **Replit Deployments** for always-on hosting.
+This project is deployed on **Render** for always-on hosting.
 
-**Live URL:** [career-radar--uditcodes.replit.app](https://career-radar--uditcodes.replit.app/)
-
-### Alternative: Railway
-
-A `railway.json` config is also included for deploying on [Railway](https://railway.app):
-
-1. Fork this repo
-2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
-3. Add a PostgreSQL addon
-4. Set environment variables
-5. Deploy! Railway auto-deploys on every `git push` to `main`.
+**Live URL:** [careerradar-34ec.onrender.com](https://careerradar-34ec.onrender.com/)
 
 ---
 
