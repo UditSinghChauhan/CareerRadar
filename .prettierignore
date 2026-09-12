@@ -1,0 +1,5 @@
+node_modules
+dist
+**/generated/**
+**/.generated/**
+pnpm-lock.yaml
