@@ -36,7 +36,9 @@ export class UnstopProvider extends AbstractProvider {
   readonly displayName = "Unstop";
   readonly hasPublicApi = false;
 
-  protected async doFetch(_config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    _config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     return [];
   }
 }

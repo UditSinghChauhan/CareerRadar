@@ -6,25 +6,57 @@ import { Badge } from "@/components/ui/badge";
 import { Building2 } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
-const STATUS_META: Record<
-  string,
-  { label: string; className: string }
-> = {
-  saved: { label: "Saved", className: "bg-secondary text-muted-foreground border-border" },
-  applied: { label: "Applied", className: "bg-primary/10 text-primary border-primary/20" },
-  oa_pending: { label: "OA Pending", className: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20" },
-  oa_completed: { label: "OA Done", className: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20" },
-  interview_pending: { label: "Interview", className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20" },
-  interview_completed: { label: "Interviewed", className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20" },
-  offered: { label: "Offered", className: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20" },
-  rejected: { label: "Rejected", className: "bg-destructive/10 text-destructive border-destructive/20" },
-  withdrawn: { label: "Withdrawn", className: "bg-secondary text-muted-foreground border-border" },
+const STATUS_META: Record<string, { label: string; className: string }> = {
+  saved: {
+    label: "Saved",
+    className: "bg-secondary text-muted-foreground border-border",
+  },
+  applied: {
+    label: "Applied",
+    className: "bg-primary/10 text-primary border-primary/20",
+  },
+  oa_pending: {
+    label: "OA Pending",
+    className:
+      "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
+  },
+  oa_completed: {
+    label: "OA Done",
+    className:
+      "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
+  },
+  interview_pending: {
+    label: "Interview",
+    className:
+      "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+  },
+  interview_completed: {
+    label: "Interviewed",
+    className:
+      "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+  },
+  offered: {
+    label: "Offered",
+    className:
+      "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+  },
+  rejected: {
+    label: "Rejected",
+    className: "bg-destructive/10 text-destructive border-destructive/20",
+  },
+  withdrawn: {
+    label: "Withdrawn",
+    className: "bg-secondary text-muted-foreground border-border",
+  },
 };
 
 function ApplicationRow({ application }: { application: Application }) {
   const job = application.job;
   const company = job?.company;
-  const statusMeta = STATUS_META[application.status] ?? { label: application.status, className: "" };
+  const statusMeta = STATUS_META[application.status] ?? {
+    label: application.status,
+    className: "",
+  };
   const timeAgo = formatDistanceToNow(parseISO(application.createdAt), {
     addSuffix: true,
   });
@@ -73,20 +105,27 @@ export function RecentApplications() {
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Recent Applications</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            Recent Applications
+          </CardTitle>
           {data?.meta && data.meta.total > 0 && (
             <span className="text-xs text-muted-foreground">
               {data.meta.total} total
             </span>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">Your latest application activity</p>
+        <p className="text-xs text-muted-foreground">
+          Your latest application activity
+        </p>
       </CardHeader>
       <CardContent className="pb-4">
         {isLoading ? (
           <div>
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 py-3 border-b border-border last:border-0">
+              <div
+                key={i}
+                className="flex items-center gap-3 py-3 border-b border-border last:border-0"
+              >
                 <Skeleton className="h-8 w-8 rounded-md" />
                 <div className="flex-1 space-y-1.5">
                   <Skeleton className="h-3.5 w-3/4" />
@@ -104,7 +143,9 @@ export function RecentApplications() {
             <p className="text-sm text-muted-foreground text-center">
               No applications tracked yet.
               <br />
-              <span className="text-xs">Start by saving jobs you're interested in.</span>
+              <span className="text-xs">
+                Start by saving jobs you're interested in.
+              </span>
             </p>
           </div>
         ) : (

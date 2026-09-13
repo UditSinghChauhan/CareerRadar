@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Company } from "@workspace/api-client-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -18,6 +24,7 @@ export interface JobFiltersState {
   sourcePlatform: string;
   companyId: string;
   deadlineBefore: string;
+  hideApplied: boolean;
 }
 
 export const DEFAULT_FILTERS: JobFiltersState = {
@@ -29,19 +36,39 @@ export const DEFAULT_FILTERS: JobFiltersState = {
   sourcePlatform: "",
   companyId: "",
   deadlineBefore: "",
+  // On by default: the jobs list should never re-offer something already done.
+  hideApplied: true,
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CURRENT_YEAR = new Date().getFullYear();
-const BATCH_YEARS = [CURRENT_YEAR, CURRENT_YEAR + 1, CURRENT_YEAR + 2, CURRENT_YEAR + 3];
-
-const BRANCHES = [
-  "CSE", "IT", "ECE", "EEE", "ME", "CE", "Chem E",
-  "Mathematics", "Physics", "BCA", "MCA", "MBA",
+const BATCH_YEARS = [
+  CURRENT_YEAR,
+  CURRENT_YEAR + 1,
+  CURRENT_YEAR + 2,
+  CURRENT_YEAR + 3,
 ];
 
-const WORK_MODES: Array<{ value: "remote" | "hybrid" | "onsite"; label: string }> = [
+const BRANCHES = [
+  "CSE",
+  "IT",
+  "ECE",
+  "EEE",
+  "ME",
+  "CE",
+  "Chem E",
+  "Mathematics",
+  "Physics",
+  "BCA",
+  "MCA",
+  "MBA",
+];
+
+const WORK_MODES: Array<{
+  value: "remote" | "hybrid" | "onsite";
+  label: string;
+}> = [
   { value: "remote", label: "Remote" },
   { value: "hybrid", label: "Hybrid" },
   { value: "onsite", label: "On-site" },
@@ -64,15 +91,25 @@ export function countActiveFilters(filters: JobFiltersState): number {
   if (filters.sourcePlatform) n++;
   if (filters.companyId) n++;
   if (filters.deadlineBefore) n++;
+  // hideApplied is deliberately not counted. It is on by default, so counting
+  // it would show a permanent "1 active filter" badge on an untouched page.
   return n;
 }
 
 // ─── Filter section ──────────────────────────────────────────────────────────
 
-function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
+function FilterSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+      </p>
       {children}
     </div>
   );
@@ -87,8 +124,10 @@ interface JobFiltersProps {
 }
 
 export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
-  const set = <K extends keyof JobFiltersState>(key: K, value: JobFiltersState[K]) =>
-    onChange({ ...filters, [key]: value });
+  const set = <K extends keyof JobFiltersState>(
+    key: K,
+    value: JobFiltersState[K],
+  ) => onChange({ ...filters, [key]: value });
 
   const toggleArray = <T extends string | number>(
     key: keyof JobFiltersState,
@@ -131,6 +170,23 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
 
       <Separator />
 
+      {/* My applications */}
+      <FilterSection title="My Applications">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="filter-hide-applied"
+            checked={filters.hideApplied}
+            onCheckedChange={(checked) => set("hideApplied", checked === true)}
+          />
+          <Label
+            htmlFor="filter-hide-applied"
+            className="text-xs font-normal cursor-pointer"
+          >
+            Hide jobs I've applied to
+          </Label>
+        </div>
+      </FilterSection>
+
       {/* Company */}
       {companies.length > 0 && (
         <FilterSection title="Company">
@@ -163,7 +219,9 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
           ].map(({ value, label }) => (
             <button
               key={value}
-              onClick={() => set("jobType", value as JobFiltersState["jobType"])}
+              onClick={() =>
+                set("jobType", value as JobFiltersState["jobType"])
+              }
               className={`flex items-center gap-2 text-sm rounded px-2 py-1 transition-colors w-full text-left ${
                 filters.jobType === value
                   ? "bg-primary/10 text-primary font-medium"
@@ -193,10 +251,15 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
               <Checkbox
                 id={`wm-${value}`}
                 checked={filters.workModes.includes(value)}
-                onCheckedChange={() => toggleArray("workModes", value, filters.workModes)}
+                onCheckedChange={() =>
+                  toggleArray("workModes", value, filters.workModes)
+                }
                 className="h-4 w-4"
               />
-              <Label htmlFor={`wm-${value}`} className="text-sm font-normal cursor-pointer">
+              <Label
+                htmlFor={`wm-${value}`}
+                className="text-sm font-normal cursor-pointer"
+              >
                 {label}
               </Label>
             </div>
@@ -251,11 +314,15 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
       {/* Deadline */}
       <FilterSection title="Deadline">
         <div className="flex gap-1.5 mb-2">
-          {([
-            { label: "7 days", days: 7 },
-            { label: "30 days", days: 30 },
-          ] as const).map(({ label, days }) => {
-            const dateStr = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+          {(
+            [
+              { label: "7 days", days: 7 },
+              { label: "30 days", days: 30 },
+            ] as const
+          ).map(({ label, days }) => {
+            const dateStr = new Date(Date.now() + days * 86400000)
+              .toISOString()
+              .slice(0, 10);
             const active = filters.deadlineBefore === dateStr;
             return (
               <button

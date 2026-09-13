@@ -28,9 +28,7 @@ function StatCard({ label, value, highlight, sub }: StatCard) {
         >
           {value ?? 0}
         </p>
-        {sub && (
-          <p className="text-xs text-muted-foreground mt-1">{sub}</p>
-        )}
+        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
       </CardContent>
     </Card>
   );

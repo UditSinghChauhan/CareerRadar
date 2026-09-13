@@ -24,6 +24,7 @@ import type {
   Application,
   ApplicationInput,
   ApplicationListResponse,
+  ApplicationStatusMap,
   ApplicationUpdateInput,
   Bookmark,
   BookmarkInput,
@@ -1364,6 +1365,84 @@ export const useCreateApplication = <TError = ErrorType<void>,
       > => {
       return useMutation(getCreateApplicationMutationOptions(options));
     }
+
+export const getGetApplicationStatusMapUrl = () => {
+
+
+
+
+  return `/api/applications/status-map`
+}
+
+/**
+ * Returns every job the authenticated user has an application row for, keyed by job ID. Used by the jobs list to avoid offering a clean Apply button for something already applied to.
+ * @summary Map of jobId to application status for the current user
+ */
+export const getApplicationStatusMap = async ( options?: RequestInit): Promise<ApplicationStatusMap> => {
+
+  return customFetch<ApplicationStatusMap>(getGetApplicationStatusMapUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetApplicationStatusMapQueryKey = () => {
+    return [
+    `/api/applications/status-map`
+    ] as const;
+    }
+
+
+export const getGetApplicationStatusMapQueryOptions = <TData = Awaited<ReturnType<typeof getApplicationStatusMap>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getApplicationStatusMap>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApplicationStatusMapQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApplicationStatusMap>>> = ({ signal }) => getApplicationStatusMap({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApplicationStatusMap>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetApplicationStatusMapQueryResult = NonNullable<Awaited<ReturnType<typeof getApplicationStatusMap>>>
+export type GetApplicationStatusMapQueryError = ErrorType<void>
+
+
+/**
+ * @summary Map of jobId to application status for the current user
+ */
+
+export function useGetApplicationStatusMap<TData = Awaited<ReturnType<typeof getApplicationStatusMap>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getApplicationStatusMap>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetApplicationStatusMapQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetApplicationUrl = (id: string,) => {
 

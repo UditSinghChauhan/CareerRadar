@@ -383,7 +383,18 @@ paths:
           name: status
           schema:
             type: string
-            enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+            enum:
+              [
+                saved,
+                applied,
+                oa_pending,
+                oa_completed,
+                interview_pending,
+                interview_completed,
+                offered,
+                rejected,
+                withdrawn,
+              ]
         - in: query
           name: jobType
           schema:
@@ -427,6 +438,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Application"
+        "401":
+          description: Unauthorized
+
+  # Declared before /applications/{id} so the literal path wins over the
+  # path parameter when a router matches routes in declaration order.
+  /applications/status-map:
+    get:
+      operationId: getApplicationStatusMap
+      tags: [applications]
+      summary: Map of jobId to application status for the current user
+      description: >
+        Returns every job the authenticated user has an application row for,
+        keyed by job ID. Used by the jobs list to avoid offering a clean Apply
+        button for something already applied to.
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: Job ID to application status map
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationStatusMap"
         "401":
           description: Unauthorized
 
@@ -685,7 +719,8 @@ components:
 
     JobMatchScore:
       type: object
-      required: [jobId, score, summary, matchingSkills, missingSkills, recommendations]
+      required:
+        [jobId, score, summary, matchingSkills, missingSkills, recommendations]
       properties:
         jobId:
           type: string
@@ -836,7 +871,14 @@ components:
 
     DashboardSummary:
       type: object
-      required: [totalApplications, appliedCount, upcomingDeadlines, recentActivity, profileCompleteness]
+      required:
+        [
+          totalApplications,
+          appliedCount,
+          upcomingDeadlines,
+          recentActivity,
+          profileCompleteness,
+        ]
       properties:
         totalApplications:
           type: integer
@@ -1191,7 +1233,18 @@ components:
           type: string
         status:
           type: string
-          enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+          enum:
+            [
+              saved,
+              applied,
+              oa_pending,
+              oa_completed,
+              interview_pending,
+              interview_completed,
+              offered,
+              rejected,
+              withdrawn,
+            ]
         appliedDate:
           type: ["string", "null"]
           format: date-time
@@ -1223,7 +1276,21 @@ components:
           type: string
         status:
           type: string
-          enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+          enum:
+            [
+              saved,
+              applied,
+              oa_pending,
+              oa_completed,
+              interview_pending,
+              interview_completed,
+              offered,
+              rejected,
+              withdrawn,
+            ]
+        appliedDate:
+          type: string
+          format: date-time
         notes:
           type: string
         resumeVersion:
@@ -1236,7 +1303,18 @@ components:
       properties:
         status:
           type: string
-          enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+          enum:
+            [
+              saved,
+              applied,
+              oa_pending,
+              oa_completed,
+              interview_pending,
+              interview_completed,
+              offered,
+              rejected,
+              withdrawn,
+            ]
         notes:
           type: string
         resumeVersion:
@@ -1251,6 +1329,24 @@ components:
           format: date-time
         offerAmount:
           type: integer
+
+    ApplicationStatusMap:
+      type: object
+      description: Job ID keyed map of the current user's application statuses.
+      additionalProperties:
+        type: string
+        enum:
+          [
+            saved,
+            applied,
+            oa_pending,
+            oa_completed,
+            interview_pending,
+            interview_completed,
+            offered,
+            rejected,
+            withdrawn,
+          ]
 
     ApplicationListResponse:
       type: object

@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { savedSearchesService } from "../services/savedSearches.service";
-import { requireAuth, type AuthenticatedRequest } from "../middlewares/requireAuth";
+import {
+  requireAuth,
+  type AuthenticatedRequest,
+} from "../middlewares/requireAuth";
 import { CreateSavedSearchBody } from "@workspace/api-zod";
 
 const router = Router();
@@ -20,7 +23,9 @@ router.post("/saved-searches", requireAuth, async (req, res) => {
   const { clerkUserId } = req as AuthenticatedRequest;
   const parsed = CreateSavedSearchBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    res
+      .status(400)
+      .json({ error: "Invalid input", details: parsed.error.issues });
     return;
   }
 

@@ -37,7 +37,9 @@ function JobCard({ job }: { job: Job }) {
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-tight truncate">{job.title}</p>
+            <p className="text-sm font-semibold leading-tight truncate">
+              {job.title}
+            </p>
             <p className="text-xs text-muted-foreground truncate">
               {company?.name ?? "Unknown"}
             </p>
@@ -61,9 +63,16 @@ function JobCard({ job }: { job: Job }) {
           </span>
         )}
         <span>
-          {(({ remote: "Remote", hybrid: "Hybrid", onsite: "On-site" } as Record<string, string>)[job.workMode]) ?? job.workMode}
+          {(
+            { remote: "Remote", hybrid: "Hybrid", onsite: "On-site" } as Record<
+              string,
+              string
+            >
+          )[job.workMode] ?? job.workMode}
         </span>
-        {salary && <span className="font-medium text-foreground">{salary}</span>}
+        {salary && (
+          <span className="font-medium text-foreground">{salary}</span>
+        )}
       </div>
 
       <div className="flex items-center justify-between mt-0.5">
@@ -124,7 +133,9 @@ export function RecommendedJobs() {
   const params = {
     status: "active" as const,
     limit: 6,
-    ...(profile?.graduationYear ? { eligibleBatch: profile.graduationYear } : {}),
+    ...(profile?.graduationYear
+      ? { eligibleBatch: profile.graduationYear }
+      : {}),
   };
 
   const { data, isLoading } = useListJobs(params);
@@ -134,7 +145,9 @@ export function RecommendedJobs() {
     <Card className="flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Recommended for You</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            Recommended for You
+          </CardTitle>
           {data?.meta && (
             <span className="text-xs text-muted-foreground">
               {data.meta.total} matching

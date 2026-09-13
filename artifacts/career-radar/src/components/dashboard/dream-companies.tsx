@@ -26,7 +26,9 @@ function CompanyCard({
       )}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium leading-tight">{company.name}</p>
-        <p className="text-xs text-muted-foreground">{jobCount} open role{jobCount !== 1 ? "s" : ""}</p>
+        <p className="text-xs text-muted-foreground">
+          {jobCount} open role{jobCount !== 1 ? "s" : ""}
+        </p>
       </div>
       {company.website && (
         <a
@@ -52,7 +54,10 @@ export function DreamCompanies() {
   const isLoading = bookmarksLoading || jobsLoading;
 
   // Build company→jobCount map from bookmarked jobs
-  const bookmarkedCompanyMap = new Map<string, { company: Company; count: number }>();
+  const bookmarkedCompanyMap = new Map<
+    string,
+    { company: Company; count: number }
+  >();
   (bookmarks ?? []).forEach((bookmark) => {
     const company = bookmark.job?.company;
     if (!company) return;
@@ -72,12 +77,16 @@ export function DreamCompanies() {
   // Fallback: if no bookmarks, derive top companies from active jobs
   const fallbackCompanies: { company: Company; jobCount: number }[] = [];
   if (companies.length === 0 && allJobs?.data) {
-    const companyJobCount = new Map<string, { company: Company; count: number }>();
+    const companyJobCount = new Map<
+      string,
+      { company: Company; count: number }
+    >();
     allJobs.data.forEach((job) => {
       if (!job.company) return;
       const existing = companyJobCount.get(job.company.id);
       if (existing) existing.count += 1;
-      else companyJobCount.set(job.company.id, { company: job.company, count: 1 });
+      else
+        companyJobCount.set(job.company.id, { company: job.company, count: 1 });
     });
     fallbackCompanies.push(
       ...Array.from(companyJobCount.values())
@@ -108,7 +117,10 @@ export function DreamCompanies() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <div
+                key={i}
+                className="flex items-center gap-3 p-3 rounded-lg border border-border"
+              >
                 <Skeleton className="h-9 w-9 rounded-lg" />
                 <div className="flex-1 space-y-1.5">
                   <Skeleton className="h-3.5 w-3/4" />
@@ -119,12 +131,18 @@ export function DreamCompanies() {
           </div>
         ) : displayItems.length === 0 ? (
           <div className="h-24 flex items-center justify-center rounded-lg border border-dashed border-border">
-            <p className="text-sm text-muted-foreground">No companies to show yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No companies to show yet.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {displayItems.map(({ company, jobCount }) => (
-              <CompanyCard key={company.id} company={company} jobCount={jobCount} />
+              <CompanyCard
+                key={company.id}
+                company={company}
+                jobCount={jobCount}
+              />
             ))}
           </div>
         )}

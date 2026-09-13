@@ -1,9 +1,4 @@
-import {
-  db,
-  companiesTable,
-  jobSourcesTable,
-  jobsTable,
-} from "@workspace/db";
+import { db, companiesTable, jobSourcesTable, jobsTable } from "@workspace/db";
 import { logger } from "../lib/logger";
 
 async function main() {
@@ -269,7 +264,13 @@ async function main() {
         eligibleBatch: [2026, 2027],
         eligibleBranches: ["CSE", "IT", "ECE", "EEE"],
         minCgpa: 7.5,
-        requiredSkills: ["Data Structures", "Algorithms", "C++", "Python", "System Design"],
+        requiredSkills: [
+          "Data Structures",
+          "Algorithms",
+          "C++",
+          "Python",
+          "System Design",
+        ],
         deadline: future(14),
         applyUrl: "https://careers.google.com",
         sourcePlatform: "LinkedIn",
@@ -279,8 +280,14 @@ async function main() {
           "Join Google as a Software Engineering Intern and work on real-world problems at scale. You'll be matched to a team based on your skills and interests.",
         requirements:
           "Currently enrolled in a B.Tech/M.Tech program in CS or related field. Strong problem-solving skills and knowledge of algorithms and data structures.",
-        benefits: ["Competitive stipend", "Accommodation assistance", "Mentorship from senior engineers", "Return offer potential"],
-        selectionProcess: "Online coding test → Technical phone screen → 2 virtual interviews",
+        benefits: [
+          "Competitive stipend",
+          "Accommodation assistance",
+          "Mentorship from senior engineers",
+          "Return offer potential",
+        ],
+        selectionProcess:
+          "Online coding test → Technical phone screen → 2 virtual interviews",
       },
       {
         companyId: bySlug["google"].id,
@@ -296,7 +303,14 @@ async function main() {
         eligibleBatch: [2025],
         eligibleBranches: ["CSE", "IT", "ECE"],
         minCgpa: 8.0,
-        requiredSkills: ["Algorithms", "Data Structures", "Distributed Systems", "Go", "Java", "Python"],
+        requiredSkills: [
+          "Algorithms",
+          "Data Structures",
+          "Distributed Systems",
+          "Go",
+          "Java",
+          "Python",
+        ],
         deadline: future(21),
         applyUrl: "https://careers.google.com",
         sourcePlatform: "LinkedIn",
@@ -306,8 +320,14 @@ async function main() {
           "Google is looking for new grad Software Engineers to join our Hyderabad campus. You will be part of a team that builds systems powering billions of users.",
         requirements:
           "B.Tech/M.Tech/PhD in Computer Science or related field (2025 grad). Outstanding problem-solving skills and passion for building scalable software.",
-        benefits: ["Health insurance", "Generous PTO", "Learning & development budget", "Google perks"],
-        selectionProcess: "Resume screen → Online assessment → 5 technical interviews",
+        benefits: [
+          "Health insurance",
+          "Generous PTO",
+          "Learning & development budget",
+          "Google perks",
+        ],
+        selectionProcess:
+          "Resume screen → Online assessment → 5 technical interviews",
       },
 
       // Microsoft
@@ -322,9 +342,21 @@ async function main() {
         stipend: 80000,
         currency: "INR",
         eligibleBatch: [2026, 2027],
-        eligibleBranches: ["CSE", "IT", "ECE", "EEE", "Mathematics & Computing"],
+        eligibleBranches: [
+          "CSE",
+          "IT",
+          "ECE",
+          "EEE",
+          "Mathematics & Computing",
+        ],
         minCgpa: 7.0,
-        requiredSkills: ["C#", "Azure", "Distributed Systems", "REST APIs", "Problem Solving"],
+        requiredSkills: [
+          "C#",
+          "Azure",
+          "Distributed Systems",
+          "REST APIs",
+          "Problem Solving",
+        ],
         deadline: future(7),
         applyUrl: "https://careers.microsoft.com",
         sourcePlatform: "LinkedIn",
@@ -334,8 +366,14 @@ async function main() {
           "Work on Azure's core infrastructure serving millions of enterprise customers. You'll design, implement, and ship features used globally.",
         requirements:
           "Pursuing B.Tech/M.Tech in CSE or related discipline. Passion for cloud computing and distributed systems.",
-        benefits: ["Competitive stipend", "Housing allowance", "Microsoft 365 license", "Full-time conversion opportunity"],
-        selectionProcess: "Online coding test → HR screen → 2 technical interviews",
+        benefits: [
+          "Competitive stipend",
+          "Housing allowance",
+          "Microsoft 365 license",
+          "Full-time conversion opportunity",
+        ],
+        selectionProcess:
+          "Online coding test → HR screen → 2 technical interviews",
       },
       {
         companyId: bySlug["microsoft"].id,
@@ -351,7 +389,14 @@ async function main() {
         eligibleBatch: [2025],
         eligibleBranches: ["CSE", "IT"],
         minCgpa: 7.5,
-        requiredSkills: ["TypeScript", "React", "Node.js", "Azure", "REST APIs", "SQL"],
+        requiredSkills: [
+          "TypeScript",
+          "React",
+          "Node.js",
+          "Azure",
+          "REST APIs",
+          "SQL",
+        ],
         deadline: future(30),
         applyUrl: "https://careers.microsoft.com",
         sourcePlatform: "LinkedIn",
@@ -361,8 +406,13 @@ async function main() {
           "Build the next generation of Microsoft 365 productivity tools. You'll work across the stack from client-side React applications to cloud-native backend services.",
         requirements:
           "Fresh graduates with strong knowledge of React and Node.js. Experience with TypeScript is a plus.",
-        benefits: ["Comprehensive health coverage", "Employee stock purchase plan", "Gym & wellness allowance"],
-        selectionProcess: "Resume shortlist → Online test → 3 rounds (2 coding + 1 HM)",
+        benefits: [
+          "Comprehensive health coverage",
+          "Employee stock purchase plan",
+          "Gym & wellness allowance",
+        ],
+        selectionProcess:
+          "Resume shortlist → Online test → 3 rounds (2 coding + 1 HM)",
       },
 
       // Flipkart
@@ -380,7 +430,14 @@ async function main() {
         eligibleBatch: [2025],
         eligibleBranches: ["CSE", "IT", "ECE"],
         minCgpa: 7.0,
-        requiredSkills: ["Java", "Spring Boot", "Microservices", "Kafka", "MySQL", "Redis"],
+        requiredSkills: [
+          "Java",
+          "Spring Boot",
+          "Microservices",
+          "Kafka",
+          "MySQL",
+          "Redis",
+        ],
         deadline: future(10),
         applyUrl: "https://flipkartcareers.com",
         sourcePlatform: "LinkedIn",
@@ -390,8 +447,14 @@ async function main() {
           "Join Flipkart's Platform Engineering team and build systems that power India's largest e-commerce platform. You'll work on highly scalable, low-latency backend services.",
         requirements:
           "B.Tech 2025 graduate with strong fundamentals in Java and system design. Experience with microservices architecture preferred.",
-        benefits: ["Stock options (ESOPs)", "Health & accident insurance", "Flexible hours", "Food coupons"],
-        selectionProcess: "Online test (DSA) → Technical interview 1 → Technical interview 2 → HR",
+        benefits: [
+          "Stock options (ESOPs)",
+          "Health & accident insurance",
+          "Flexible hours",
+          "Food coupons",
+        ],
+        selectionProcess:
+          "Online test (DSA) → Technical interview 1 → Technical interview 2 → HR",
       },
       {
         companyId: bySlug["flipkart"].id,
@@ -415,7 +478,11 @@ async function main() {
         description:
           "2-month internship working on Flipkart's supply chain optimization systems. Real ownership, real impact.",
         requirements: "Pre-final year B.Tech student with strong DSA skills.",
-        benefits: ["Competitive stipend", "PPO for top performers", "Mentorship"],
+        benefits: [
+          "Competitive stipend",
+          "PPO for top performers",
+          "Mentorship",
+        ],
         selectionProcess: "Coding test → 1 technical interview",
       },
 
@@ -443,7 +510,12 @@ async function main() {
           "Work on Swiggy's payments infrastructure processing millions of transactions daily. You'll build features used by 40M+ customers.",
         requirements:
           "Pre-final or final year student. Familiarity with one backend language (Go, Python, Java).",
-        benefits: ["Free Swiggy credits", "Stipend", "Flexible hours", "PPO opportunity"],
+        benefits: [
+          "Free Swiggy credits",
+          "Stipend",
+          "Flexible hours",
+          "PPO opportunity",
+        ],
         selectionProcess: "Online coding test → 2 technical rounds",
       },
       {
@@ -469,8 +541,14 @@ async function main() {
           "Build the Instamart platform that delivers groceries in 10 minutes. You'll work on inventory, catalog, and order management systems.",
         requirements:
           "Fresh 2025 graduate with strong CS fundamentals. Experience with distributed systems is a plus.",
-        benefits: ["ESOPs", "Health coverage", "Swiggy One membership", "Annual learning budget"],
-        selectionProcess: "Resume screen → Coding test → 3 technical interviews → HR",
+        benefits: [
+          "ESOPs",
+          "Health coverage",
+          "Swiggy One membership",
+          "Annual learning budget",
+        ],
+        selectionProcess:
+          "Resume screen → Coding test → 3 technical interviews → HR",
       },
 
       // Zomato
@@ -497,8 +575,14 @@ async function main() {
           "Build the user-facing features of Zomato's consumer app used by millions daily. Work alongside senior engineers on A/B experiments and new product features.",
         requirements:
           "Pre-final year student with hands-on React/TypeScript experience. Portfolio of web projects preferred.",
-        benefits: ["Stipend", "Zomato Gold subscription", "Mentorship", "PPO potential"],
-        selectionProcess: "Portfolio review → Take-home assignment → 2 technical interviews",
+        benefits: [
+          "Stipend",
+          "Zomato Gold subscription",
+          "Mentorship",
+          "PPO potential",
+        ],
+        selectionProcess:
+          "Portfolio review → Take-home assignment → 2 technical interviews",
       },
       {
         companyId: bySlug["zomato"].id,
@@ -514,7 +598,14 @@ async function main() {
         eligibleBatch: [2025],
         eligibleBranches: ["CSE", "IT", "ECE"],
         minCgpa: 7.0,
-        requiredSkills: ["Python", "Django", "PostgreSQL", "Redis", "AWS", "Celery"],
+        requiredSkills: [
+          "Python",
+          "Django",
+          "PostgreSQL",
+          "Redis",
+          "AWS",
+          "Celery",
+        ],
         deadline: future(35),
         applyUrl: "https://careers.zomato.com",
         sourcePlatform: "Unstop",
@@ -522,8 +613,14 @@ async function main() {
         status: "active",
         description:
           "Zomato Hyperpure is building India's largest food supply chain. Join us to build backend systems for B2B procurement at scale.",
-        requirements: "2025 graduate in CSE/IT with strong Python and SQL skills.",
-        benefits: ["ESOPs", "Health insurance", "Learning stipend", "Food allowance"],
+        requirements:
+          "2025 graduate in CSE/IT with strong Python and SQL skills.",
+        benefits: [
+          "ESOPs",
+          "Health insurance",
+          "Learning stipend",
+          "Food allowance",
+        ],
         selectionProcess: "Coding test → Technical interview → Manager round",
       },
 
@@ -542,7 +639,14 @@ async function main() {
         eligibleBatch: [2025],
         eligibleBranches: ["CSE", "IT", "Mathematics & Computing"],
         minCgpa: 7.5,
-        requiredSkills: ["Java", "Go", "Microservices", "MySQL", "Kafka", "AWS"],
+        requiredSkills: [
+          "Java",
+          "Go",
+          "Microservices",
+          "MySQL",
+          "Kafka",
+          "AWS",
+        ],
         deadline: future(20),
         applyUrl: "https://razorpay.com/jobs",
         sourcePlatform: "LinkedIn",
@@ -552,8 +656,14 @@ async function main() {
           "Work on India's leading payments infrastructure handling ₹10L+ crore in annual payment volume. Build fault-tolerant, high-throughput systems.",
         requirements:
           "2025 B.Tech graduate with excellent DSA and system design fundamentals.",
-        benefits: ["Competitive CTC + ESOPs", "Flexible work", "Insurance", "Unlimited PTO"],
-        selectionProcess: "Coding round → System design → 2 technical interviews → Culture fit",
+        benefits: [
+          "Competitive CTC + ESOPs",
+          "Flexible work",
+          "Insurance",
+          "Unlimited PTO",
+        ],
+        selectionProcess:
+          "Coding round → System design → 2 technical interviews → Culture fit",
       },
 
       // Adobe
@@ -570,7 +680,13 @@ async function main() {
         eligibleBatch: [2026, 2027],
         eligibleBranches: ["CSE", "AI/ML", "Mathematics & Computing"],
         minCgpa: 8.0,
-        requiredSkills: ["Python", "PyTorch", "Computer Vision", "LLMs", "ML Research"],
+        requiredSkills: [
+          "Python",
+          "PyTorch",
+          "Computer Vision",
+          "LLMs",
+          "ML Research",
+        ],
         deadline: future(9),
         applyUrl: "https://adobe.com/careers",
         sourcePlatform: "LinkedIn",
@@ -580,8 +696,14 @@ async function main() {
           "Intern with Adobe's Firefly AI team to push the boundaries of generative AI for creative professionals. Publish research, build prototypes, and influence product.",
         requirements:
           "Pre-final year student with strong ML fundamentals and ideally prior research experience or publications.",
-        benefits: ["Highest-tier stipend", "Adobe CC license", "Research mentor", "Relocation support"],
-        selectionProcess: "Resume + research statement → Technical interview → Research presentation",
+        benefits: [
+          "Highest-tier stipend",
+          "Adobe CC license",
+          "Research mentor",
+          "Relocation support",
+        ],
+        selectionProcess:
+          "Resume + research statement → Technical interview → Research presentation",
       },
 
       // Atlassian
@@ -599,7 +721,14 @@ async function main() {
         eligibleBatch: [2025],
         eligibleBranches: ["CSE", "IT"],
         minCgpa: 7.5,
-        requiredSkills: ["Java", "TypeScript", "React", "GraphQL", "AWS", "Distributed Systems"],
+        requiredSkills: [
+          "Java",
+          "TypeScript",
+          "React",
+          "GraphQL",
+          "AWS",
+          "Distributed Systems",
+        ],
         deadline: future(28),
         applyUrl: "https://atlassian.com/company/careers",
         sourcePlatform: "LinkedIn",
@@ -609,8 +738,14 @@ async function main() {
           "Build the core Jira platform that 250,000+ companies rely on for project management. Fully remote-first team with engineering excellence culture.",
         requirements:
           "2025 graduate with strong full-stack skills and a passion for developer tooling.",
-        benefits: ["Top-of-market comp", "Annual $1000 learning budget", "Remote-first culture", "Team rituals budget"],
-        selectionProcess: "Take-home project → 3 technical rounds → Value interview",
+        benefits: [
+          "Top-of-market comp",
+          "Annual $1000 learning budget",
+          "Remote-first culture",
+          "Team rituals budget",
+        ],
+        selectionProcess:
+          "Take-home project → 3 technical rounds → Value interview",
       },
     ])
     .returning();

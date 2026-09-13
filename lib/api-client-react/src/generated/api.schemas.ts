@@ -473,6 +473,7 @@ export const ApplicationInputStatus = {
 export interface ApplicationInput {
   jobId: string;
   status?: ApplicationInputStatus;
+  appliedDate?: string;
   notes?: string;
   resumeVersion?: string;
   referralName?: string;
@@ -502,6 +503,11 @@ export interface ApplicationUpdateInput {
   appliedDate?: string;
   offerAmount?: number;
 }
+
+/**
+ * Job ID keyed map of the current user's application statuses.
+ */
+export interface ApplicationStatusMap {[key: string]: 'saved' | 'applied' | 'oa_pending' | 'oa_completed' | 'interview_pending' | 'interview_completed' | 'offered' | 'rejected' | 'withdrawn'}
 
 export interface ApplicationListResponse {
   data: Application[];

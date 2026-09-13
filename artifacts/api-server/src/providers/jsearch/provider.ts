@@ -41,11 +41,15 @@ export class JSearchProvider extends AbstractProvider {
   readonly displayName = "JSearch (Google Jobs)";
   readonly hasPublicApi = true;
 
-  protected async doFetch(_config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    _config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const apiKey = process.env["JSEARCH_API_KEY"];
 
     if (!apiKey) {
-      logger.warn("[jsearch:google-jobs-india] JSEARCH_API_KEY not set — skipping JSearch sync.");
+      logger.warn(
+        "[jsearch:google-jobs-india] JSEARCH_API_KEY not set — skipping JSearch sync.",
+      );
       return [];
     }
 
@@ -77,7 +81,10 @@ export class JSearchProvider extends AbstractProvider {
         }
       } catch (err) {
         // One bad query shouldn't burn the whole monthly budget on retries elsewhere.
-        logger.warn({ err, query }, "[jsearch:google-jobs-india] Query failed — continuing with remaining queries");
+        logger.warn(
+          { err, query },
+          "[jsearch:google-jobs-india] Query failed — continuing with remaining queries",
+        );
       }
 
       // Polite pause between queries.
@@ -91,7 +98,9 @@ export class JSearchProvider extends AbstractProvider {
     const companyName = job.employer_name || "Unknown Company";
     const locationParts = [job.job_city, job.job_state].filter(Boolean);
     const locationStr = locationParts.join(", ") || job.job_country || "India";
-    const description = job.job_description ? this.stripHtml(job.job_description) : undefined;
+    const description = job.job_description
+      ? this.stripHtml(job.job_description)
+      : undefined;
     const employmentType = job.job_employment_type ?? "";
 
     return {
@@ -101,7 +110,8 @@ export class JSearchProvider extends AbstractProvider {
       companyName,
       title: job.job_title,
       location: locationStr,
-      country: job.job_country === "IN" ? "India" : this.inferCountry(locationStr),
+      country:
+        job.job_country === "IN" ? "India" : this.inferCountry(locationStr),
       workMode: job.job_is_remote ? "remote" : this.inferWorkMode(locationStr),
       jobType: employmentType.toUpperCase().includes("INTERN")
         ? "internship"
@@ -109,7 +119,9 @@ export class JSearchProvider extends AbstractProvider {
       description,
       sourceUrl: job.job_apply_link ?? "",
       applyUrl: job.job_apply_link,
-      postedDate: job.job_posted_at_datetime_utc ? new Date(job.job_posted_at_datetime_utc) : undefined,
+      postedDate: job.job_posted_at_datetime_utc
+        ? new Date(job.job_posted_at_datetime_utc)
+        : undefined,
       salaryMin: job.job_min_salary,
       salaryMax: job.job_max_salary,
       rawText: description,

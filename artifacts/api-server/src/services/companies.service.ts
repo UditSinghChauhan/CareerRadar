@@ -5,7 +5,10 @@ import {
 import { paginate, type PaginationParams } from "../lib/pagination";
 
 export const companiesService = {
-  async list(rawFilters: Record<string, unknown>, rawPagination: Record<string, unknown>) {
+  async list(
+    rawFilters: Record<string, unknown>,
+    rawPagination: Record<string, unknown>,
+  ) {
     const filters: CompanyFilters = {
       search: rawFilters.search as string | undefined,
       industry: rawFilters.industry as string | undefined,

@@ -13,16 +13,29 @@
  */
 
 import { eq, sql, and } from "drizzle-orm";
-import { db, companiesTable, jobsTable, providerSyncLogsTable } from "@workspace/db";
+import {
+  db,
+  companiesTable,
+  jobsTable,
+  providerSyncLogsTable,
+} from "@workspace/db";
 import { getAllConfigs } from "../providers/config";
 import { COMPANY_CATALOG } from "../providers/catalog";
-import type { SourceRecord, SourceStatus, SourceHealth, SourceSummary } from "./types";
+import type {
+  SourceRecord,
+  SourceStatus,
+  SourceHealth,
+  SourceSummary,
+} from "./types";
 
 // ─── Internal helpers ────────────────────────────────────────────────────────
 
 /** Human-readable sync frequency label derived from the interval env var. */
 function syncFrequencyLabel(): string {
-  const ms = parseInt(process.env["PROVIDER_SYNC_INTERVAL_MS"] ?? "21600000", 10);
+  const ms = parseInt(
+    process.env["PROVIDER_SYNC_INTERVAL_MS"] ?? "21600000",
+    10,
+  );
   const hours = ms / (1000 * 60 * 60);
   if (hours === 1) return "every hour";
   if (Number.isInteger(hours)) return `every ${hours} hours`;
@@ -84,7 +97,10 @@ async function fetchSyncStats(): Promise<Map<string, SyncLogRow>> {
       `,
     })
     .from(providerSyncLogsTable)
-    .groupBy(providerSyncLogsTable.providerName, providerSyncLogsTable.companySlug);
+    .groupBy(
+      providerSyncLogsTable.providerName,
+      providerSyncLogsTable.companySlug,
+    );
 
   const map = new Map<string, SyncLogRow>();
   for (const row of rows) {
@@ -207,10 +223,16 @@ export async function getSourceHealth(): Promise<SourceHealth> {
 
   const active = sources.filter((s) => s.status === "active").map(toSummary);
   const failing = sources.filter((s) => s.status === "failing").map(toSummary);
-  const disabled = sources.filter((s) => s.status === "disabled").map(toSummary);
+  const disabled = sources
+    .filter((s) => s.status === "disabled")
+    .map(toSummary);
   const broken = sources.filter((s) => s.status === "broken").map(toSummary);
-  const authRequired = sources.filter((s) => s.status === "auth-required").map(toSummary);
-  const noPublicApi = sources.filter((s) => s.status === "no-public-api").map(toSummary);
+  const authRequired = sources
+    .filter((s) => s.status === "auth-required")
+    .map(toSummary);
+  const noPublicApi = sources
+    .filter((s) => s.status === "no-public-api")
+    .map(toSummary);
 
   const jobsPerSource = [...sources]
     .sort((a, b) => b.jobsInDb - a.jobsInDb)

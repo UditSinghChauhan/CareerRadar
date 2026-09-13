@@ -40,7 +40,9 @@ export class AshbyProvider extends AbstractProvider {
   readonly displayName = "Ashby";
   readonly hasPublicApi = true;
 
-  protected async doFetch(config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const allJobs: AshbyJobPosting[] = [];
     let cursor: string | undefined;
 
@@ -89,11 +91,12 @@ export class AshbyProvider extends AbstractProvider {
     }
   }
 
-  private normalize(job: AshbyJobPosting, config: CompanyProviderConfig): ProviderJob {
+  private normalize(
+    job: AshbyJobPosting,
+    config: CompanyProviderConfig,
+  ): ProviderJob {
     const locationStr = job.locationName ?? "";
-    const workMode = job.isRemote
-      ? "remote"
-      : this.inferWorkMode(locationStr);
+    const workMode = job.isRemote ? "remote" : this.inferWorkMode(locationStr);
 
     const description = job.descriptionPlain
       ? job.descriptionPlain

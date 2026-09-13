@@ -4,7 +4,11 @@ export const workModeEnum = pgEnum("work_mode", ["remote", "hybrid", "onsite"]);
 
 export const jobTypeEnum = pgEnum("job_type", ["internship", "full_time"]);
 
-export const jobStatusEnum = pgEnum("job_status", ["active", "closed", "draft"]);
+export const jobStatusEnum = pgEnum("job_status", [
+  "active",
+  "closed",
+  "draft",
+]);
 
 export const applicationStatusEnum = pgEnum("application_status", [
   "saved",

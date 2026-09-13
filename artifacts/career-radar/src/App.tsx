@@ -2,8 +2,18 @@ import { useEffect, useRef } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
-import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import {
+  Switch,
+  Route,
+  useLocation,
+  Router as WouterRouter,
+  Redirect,
+} from "wouter";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +21,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LandingPage } from "@/pages/landing";
 import { DashboardPage } from "@/pages/dashboard";
 import { JobsPage } from "@/pages/jobs";
+import { ApplicationsPage } from "@/pages/applications";
 import { ProfilePage } from "@/pages/profile";
 import { SettingsPage } from "@/pages/settings";
 import NotFound from "@/pages/not-found";
@@ -65,14 +76,16 @@ const clerkAppearance = {
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox: "bg-white rounded-2xl w-[440px] max-w-full overflow-hidden border border-gray-200 shadow-sm",
+    cardBox:
+      "bg-white rounded-2xl w-[440px] max-w-full overflow-hidden border border-gray-200 shadow-sm",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
     headerTitle: "text-2xl font-bold tracking-tight text-gray-900",
     headerSubtitle: "text-sm text-gray-500",
     socialButtonsBlockButtonText: "text-sm font-medium",
     formFieldLabel: "text-sm font-medium text-gray-900",
-    footerActionLink: "text-sm font-medium text-[hsl(250,89%,65%)] hover:text-[hsl(250,89%,55%)]",
+    footerActionLink:
+      "text-sm font-medium text-[hsl(250,89%,65%)] hover:text-[hsl(250,89%,55%)]",
     footerActionText: "text-sm text-gray-500",
     dividerText: "text-xs text-gray-400 font-medium",
     identityPreviewEditButton: "text-[hsl(250,89%,65%)]",
@@ -80,9 +93,12 @@ const clerkAppearance = {
     alertText: "text-[hsl(0,84%,60%)]",
     logoBox: "flex justify-center mb-6",
     logoImage: "h-12 w-auto",
-    socialButtonsBlockButton: "border border-gray-200 rounded-md hover:bg-gray-50",
-    formButtonPrimary: "bg-[hsl(250,89%,65%)] hover:bg-[hsl(250,89%,55%)] text-white shadow-sm rounded-md",
-    formFieldInput: "flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(250,89%,65%)]",
+    socialButtonsBlockButton:
+      "border border-gray-200 rounded-md hover:bg-gray-50",
+    formButtonPrimary:
+      "bg-[hsl(250,89%,65%)] hover:bg-[hsl(250,89%,55%)] text-white shadow-sm rounded-md",
+    formFieldInput:
+      "flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(250,89%,65%)]",
     footerAction: "mt-6 border-t border-gray-100 pt-6",
     dividerLine: "bg-gray-200",
     alert: "bg-red-50 border border-red-200 rounded-md p-3",
@@ -95,7 +111,11 @@ const clerkAppearance = {
 function SignInPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 selection:bg-primary/20">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+      <SignIn
+        routing="path"
+        path={`${basePath}/sign-in`}
+        signUpUrl={`${basePath}/sign-up`}
+      />
     </div>
   );
 }
@@ -103,7 +123,11 @@ function SignInPage() {
 function SignUpPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 selection:bg-primary/20">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      <SignUp
+        routing="path"
+        path={`${basePath}/sign-up`}
+        signInUrl={`${basePath}/sign-in`}
+      />
     </div>
   );
 }
@@ -121,7 +145,11 @@ function HomeRedirect() {
   );
 }
 
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+function ProtectedRoute({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
   return (
     <>
       <Show when="signed-in">
@@ -196,6 +224,9 @@ function ClerkProviderWithRoutes() {
           </Route>
           <Route path="/jobs">
             <ProtectedRoute component={JobsPage} />
+          </Route>
+          <Route path="/applications">
+            <ProtectedRoute component={ApplicationsPage} />
           </Route>
           <Route path="/profile">
             <ProtectedRoute component={ProfilePage} />

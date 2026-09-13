@@ -15,14 +15,17 @@ import { withRetry, httpGet } from "../retry";
 import { slugify } from "../../lib/slugify";
 import type { RemotiveResponse, RemotiveJob } from "./types";
 
-const API_URL = "https://remotive.com/api/remote-jobs?category=software-dev&limit=100";
+const API_URL =
+  "https://remotive.com/api/remote-jobs?category=software-dev&limit=100";
 
 export class RemotiveProvider extends AbstractProvider {
   readonly name = "remotive";
   readonly displayName = "Remotive";
   readonly hasPublicApi = true;
 
-  protected async doFetch(_config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    _config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const data = await withRetry(() => httpGet<RemotiveResponse>(API_URL), {
       label: "remotive:software-dev",
       maxAttempts: 3,
@@ -33,7 +36,9 @@ export class RemotiveProvider extends AbstractProvider {
 
   private normalize(job: RemotiveJob): ProviderJob {
     const locationStr = job.candidate_required_location || "Worldwide";
-    const description = job.description ? this.stripHtml(job.description) : undefined;
+    const description = job.description
+      ? this.stripHtml(job.description)
+      : undefined;
 
     return {
       externalId: String(job.id),
@@ -50,7 +55,9 @@ export class RemotiveProvider extends AbstractProvider {
       description,
       sourceUrl: job.url,
       applyUrl: job.url,
-      postedDate: job.publication_date ? new Date(job.publication_date) : undefined,
+      postedDate: job.publication_date
+        ? new Date(job.publication_date)
+        : undefined,
       rawText: description,
     };
   }

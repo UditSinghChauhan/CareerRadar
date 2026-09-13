@@ -32,17 +32,25 @@ export function LandingPage() {
             Track your path to <span className="text-primary">placement.</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Stop losing track of internship deadlines and interview rounds in messy spreadsheets. 
-            CareerRadar is your quiet, focused command center designed to get you hired.
+            Stop losing track of internship deadlines and interview rounds in
+            messy spreadsheets. CareerRadar is your quiet, focused command
+            center designed to get you hired.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Link href={`${basePath}/sign-up`}>
-              <Button size="lg" className="h-12 px-8 text-base font-medium rounded-full shadow-lg shadow-primary/25">
+              <Button
+                size="lg"
+                className="h-12 px-8 text-base font-medium rounded-full shadow-lg shadow-primary/25"
+              >
                 Start tracking now <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href={`${basePath}/sign-in`}>
-              <Button variant="outline" size="lg" className="h-12 px-8 text-base font-medium rounded-full">
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-12 px-8 text-base font-medium rounded-full"
+              >
                 Sign in to dashboard
               </Button>
             </Link>
@@ -55,21 +63,28 @@ export function LandingPage() {
               <Target className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Centralized Tracking</h3>
-            <p className="text-muted-foreground text-center">One place for all your applications, from first round to final offer.</p>
+            <p className="text-muted-foreground text-center">
+              One place for all your applications, from first round to final
+              offer.
+            </p>
           </div>
           <div className="flex flex-col items-center p-6 bg-card rounded-2xl border border-border shadow-sm">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
               <Zap className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Deadline Alerts</h3>
-            <p className="text-muted-foreground text-center">Never miss an OA or interview scheduling deadline again.</p>
+            <p className="text-muted-foreground text-center">
+              Never miss an OA or interview scheduling deadline again.
+            </p>
           </div>
           <div className="flex flex-col items-center p-6 bg-card rounded-2xl border border-border shadow-sm">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
               <CheckCircle2 className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Profile Readiness</h3>
-            <p className="text-muted-foreground text-center">Keep your resume, CGPA, and skills up-to-date and ready to deploy.</p>
+            <p className="text-muted-foreground text-center">
+              Keep your resume, CGPA, and skills up-to-date and ready to deploy.
+            </p>
           </div>
         </div>
       </main>

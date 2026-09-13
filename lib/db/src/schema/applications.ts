@@ -25,7 +25,9 @@ export const applicationsTable = pgTable(
     referralName: text("referral_name"),
     followUpDate: timestamp("follow_up_date", { withTimezone: true }),
     offerAmount: integer("offer_amount"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (table) => [

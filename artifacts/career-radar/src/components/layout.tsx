@@ -1,20 +1,28 @@
 import { useUser, useClerk } from "@clerk/react";
 import { Link, useLocation } from "wouter";
-import { 
-  LayoutDashboard, 
-  UserCircle, 
-  Settings as SettingsIcon, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  UserCircle,
+  Settings as SettingsIcon,
+  LogOut,
   Menu,
-  Briefcase
+  Briefcase,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+  SheetHeader,
+} from "@/components/ui/sheet";
 import { useState } from "react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Jobs", href: "/jobs", icon: Briefcase },
+  { label: "Applications", href: "/applications", icon: ClipboardList },
   { label: "Profile", href: "/profile", icon: UserCircle },
   { label: "Settings", href: "/settings", icon: SettingsIcon },
 ];
@@ -36,11 +44,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         const isActive = location === item.href;
         const Icon = item.icon;
         return (
-          <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={() => setMobileMenuOpen(false)}
+          >
             <div
               className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors cursor-pointer ${
-                isActive 
-                  ? "bg-primary/10 text-primary font-medium" 
+                isActive
+                  ? "bg-primary/10 text-primary font-medium"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
@@ -96,7 +108,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <span>CareerRadar</span>
             </div>
           </div>
-          
+
           <div className="hidden md:block">
             {/* Empty space for desktop header left */}
           </div>
@@ -105,7 +117,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-medium hidden sm:inline-block">
               {user?.fullName || user?.primaryEmailAddress?.emailAddress}
             </span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="text-muted-foreground hover:text-foreground"
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Sign out
             </Button>
@@ -113,9 +130,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="flex-1 overflow-auto p-4 md:p-8">
-          <div className="mx-auto max-w-5xl">
-            {children}
-          </div>
+          <div className="mx-auto max-w-5xl">{children}</div>
         </main>
       </div>
     </div>

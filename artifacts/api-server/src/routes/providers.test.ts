@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  afterAll,
+  beforeEach,
+} from "vitest";
 import express, { type Express } from "express";
 import type { Server } from "http";
 import type { AddressInfo } from "net";
@@ -52,16 +60,22 @@ describe("providers routes — CR-002 auth gate on POST endpoints", () => {
   });
 
   function authed() {
-    mockGetAuth.mockReturnValue({ userId: "user_123" } as unknown as ReturnType<typeof getAuth>);
+    mockGetAuth.mockReturnValue({ userId: "user_123" } as unknown as ReturnType<
+      typeof getAuth
+    >);
   }
 
   function unauthed() {
-    mockGetAuth.mockReturnValue({ userId: undefined } as unknown as ReturnType<typeof getAuth>);
+    mockGetAuth.mockReturnValue({ userId: undefined } as unknown as ReturnType<
+      typeof getAuth
+    >);
   }
 
   it("POST /api/providers/run — 401 without auth, and the scheduler is never triggered", async () => {
     unauthed();
-    mockRunAll.mockResolvedValue({} as Awaited<ReturnType<typeof schedulerService.runAll>>);
+    mockRunAll.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof schedulerService.runAll>>,
+    );
 
     const res = await fetch(`${baseUrl}/api/providers/run`, { method: "POST" });
 
@@ -71,7 +85,9 @@ describe("providers routes — CR-002 auth gate on POST endpoints", () => {
 
   it("POST /api/providers/run — 200 when authenticated, and triggers the scheduler", async () => {
     authed();
-    mockRunAll.mockResolvedValue({} as Awaited<ReturnType<typeof schedulerService.runAll>>);
+    mockRunAll.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof schedulerService.runAll>>,
+    );
 
     const res = await fetch(`${baseUrl}/api/providers/run`, { method: "POST" });
     const body = (await res.json()) as { message: string };
@@ -84,9 +100,12 @@ describe("providers routes — CR-002 auth gate on POST endpoints", () => {
   it("POST /api/providers/:name/run — 401 without auth, and no single-provider run is triggered", async () => {
     unauthed();
 
-    const res = await fetch(`${baseUrl}/api/providers/greenhouse/run?company=postman`, {
-      method: "POST",
-    });
+    const res = await fetch(
+      `${baseUrl}/api/providers/greenhouse/run?company=postman`,
+      {
+        method: "POST",
+      },
+    );
 
     expect(res.status).toBe(401);
     expect(mockRunOne).not.toHaveBeenCalled();
@@ -95,7 +114,9 @@ describe("providers routes — CR-002 auth gate on POST endpoints", () => {
   it("POST /api/providers/:name/run — 400 when authenticated but ?company is missing", async () => {
     authed();
 
-    const res = await fetch(`${baseUrl}/api/providers/greenhouse/run`, { method: "POST" });
+    const res = await fetch(`${baseUrl}/api/providers/greenhouse/run`, {
+      method: "POST",
+    });
 
     expect(res.status).toBe(400);
     expect(mockRunOne).not.toHaveBeenCalled();

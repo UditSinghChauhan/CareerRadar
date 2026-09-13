@@ -10,6 +10,7 @@ import type { ApplicationInputStatus } from './applicationInputStatus';
 export interface ApplicationInput {
   jobId: string;
   status?: ApplicationInputStatus;
+  appliedDate?: Date;
   notes?: string;
   resumeVersion?: string;
   referralName?: string;

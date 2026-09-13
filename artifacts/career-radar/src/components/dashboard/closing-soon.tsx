@@ -10,12 +10,25 @@ function deadlineBadge(deadline: string) {
     (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
   );
   if (days <= 1)
-    return { label: "Closing today", className: "bg-destructive/10 text-destructive border-destructive/20" };
+    return {
+      label: "Closing today",
+      className: "bg-destructive/10 text-destructive border-destructive/20",
+    };
   if (days <= 3)
-    return { label: `${days}d left`, className: "bg-destructive/10 text-destructive border-destructive/20" };
+    return {
+      label: `${days}d left`,
+      className: "bg-destructive/10 text-destructive border-destructive/20",
+    };
   if (days <= 7)
-    return { label: `${days}d left`, className: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20" };
-  return { label: `${days}d left`, className: "bg-secondary text-muted-foreground border-border" };
+    return {
+      label: `${days}d left`,
+      className:
+        "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
+    };
+  return {
+    label: `${days}d left`,
+    className: "bg-secondary text-muted-foreground border-border",
+  };
 }
 
 function ClosingSoonCard({ job }: { job: Job }) {
@@ -36,8 +49,12 @@ function ClosingSoonCard({ job }: { job: Job }) {
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium leading-tight truncate">{job.title}</p>
-        <p className="text-xs text-muted-foreground truncate">{company?.name}</p>
+        <p className="text-sm font-medium leading-tight truncate">
+          {job.title}
+        </p>
+        <p className="text-xs text-muted-foreground truncate">
+          {company?.name}
+        </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {badge && (

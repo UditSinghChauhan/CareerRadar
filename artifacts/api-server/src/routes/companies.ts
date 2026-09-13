@@ -18,7 +18,9 @@ router.get("/companies", async (req, res) => {
 router.post("/companies", requireAuth, async (req, res) => {
   const parsed = CreateCompanyBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    res
+      .status(400)
+      .json({ error: "Invalid input", details: parsed.error.issues });
     return;
   }
 

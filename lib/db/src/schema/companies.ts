@@ -15,7 +15,9 @@ export const companiesTable = pgTable(
     size: companySizeEnum("size"),
     type: companyTypeEnum("type"),
     linkedinUrl: text("linkedin_url"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (table) => [

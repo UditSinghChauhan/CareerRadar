@@ -36,11 +36,25 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      "@assets": path.resolve(
+        import.meta.dirname,
+        "..",
+        "..",
+        "attached_assets",
+      ),
     },
     dedupe: ["react", "react-dom"],
   },
   root: path.resolve(import.meta.dirname),
+  // The .env lives at the monorepo root, not next to this config. Vite's
+  // envDir defaults to `root` (above), so without this every VITE_* var is
+  // undefined in local dev — which makes publishableKeyFromHost fall through
+  // to deriving a bogus "clerk.localhost" frontend API and the app renders
+  // nothing. No-op on Render: there is no root .env there, and VITE_* vars
+  // arrive as real environment variables, which Vite reads regardless.
+  // Only VITE_-prefixed vars are ever exposed to the bundle, so widening the
+  // env directory does not put DATABASE_URL or CLERK_SECRET_KEY in client code.
+  envDir: path.resolve(import.meta.dirname, "..", ".."),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,

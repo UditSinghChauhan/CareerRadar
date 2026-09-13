@@ -1,5 +1,14 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, AlertCircle, RefreshCw, X } from "lucide-react";
+import {
+  Search,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  AlertCircle,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import {
   useListJobs,
   useListBookmarks,
@@ -7,19 +16,43 @@ import {
   useCreateBookmark,
   useDeleteBookmark,
   useGetProfile,
+  useGetApplicationStatusMap,
+  useCreateApplication,
+  useListApplications,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListBookmarksQueryKey, getListJobsQueryKey } from "@workspace/api-client-react";
+import {
+  getListBookmarksQueryKey,
+  getListJobsQueryKey,
+  getGetApplicationStatusMapQueryKey,
+  getListApplicationsQueryKey,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetTitle, SheetHeader } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetHeader,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobCard } from "@/components/jobs/job-card";
-import { JobFilters, DEFAULT_FILTERS, countActiveFilters } from "@/components/jobs/job-filters";
+import {
+  JobFilters,
+  DEFAULT_FILTERS,
+  countActiveFilters,
+} from "@/components/jobs/job-filters";
 import type { JobFiltersState } from "@/components/jobs/job-filters";
-import type { Job } from "@workspace/api-client-react";
+import type { ApplicationStatusMap, Job } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -41,7 +74,8 @@ function sortJobs(jobs: Job[], key: SortKey): Job[] {
   switch (key) {
     case "newest":
       return sorted.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     case "deadline":
       return sorted.sort((a, b) => {
@@ -66,23 +100,42 @@ function sortJobs(jobs: Job[], key: SortKey): Job[] {
 
 // ─── Filter helper ────────────────────────────────────────────────────────────
 
-function applyClientFilters(jobs: Job[], filters: JobFiltersState): Job[] {
+function applyClientFilters(
+  jobs: Job[],
+  filters: JobFiltersState,
+  statusMap: ApplicationStatusMap = {},
+): Job[] {
   return jobs.filter((job) => {
+    // Hide anything already in the tracker, in any pipeline stage.
+    if (filters.hideApplied && statusMap[job.id]) {
+      return false;
+    }
     // Work mode (multi-select)
-    if (filters.workModes.length > 0 && !filters.workModes.includes(job.workMode as "remote" | "hybrid" | "onsite")) {
+    if (
+      filters.workModes.length > 0 &&
+      !filters.workModes.includes(
+        job.workMode as "remote" | "hybrid" | "onsite",
+      )
+    ) {
       return false;
     }
     // Batch year (multi-select)
     if (filters.batches.length > 0) {
       const jobBatches = job.eligibleBatch ?? [];
-      if (jobBatches.length > 0 && !filters.batches.some((b) => jobBatches.includes(b))) {
+      if (
+        jobBatches.length > 0 &&
+        !filters.batches.some((b) => jobBatches.includes(b))
+      ) {
         return false;
       }
     }
     // Branch (multi-select)
     if (filters.branches.length > 0) {
       const jobBranches = job.eligibleBranches ?? [];
-      if (jobBranches.length > 0 && !filters.branches.some((b) => jobBranches.includes(b))) {
+      if (
+        jobBranches.length > 0 &&
+        !filters.branches.some((b) => jobBranches.includes(b))
+      ) {
         return false;
       }
     }
@@ -94,7 +147,10 @@ function applyClientFilters(jobs: Job[], filters: JobFiltersState): Job[] {
       }
     }
     // Source platform
-    if (filters.sourcePlatform && job.sourcePlatform !== filters.sourcePlatform) {
+    if (
+      filters.sourcePlatform &&
+      job.sourcePlatform !== filters.sourcePlatform
+    ) {
       return false;
     }
     // Deadline before
@@ -140,13 +196,21 @@ function JobCardSkeleton() {
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-function EmptyState({ hasFilters, onClear }: { hasFilters: boolean; onClear: () => void }) {
+function EmptyState({
+  hasFilters,
+  onClear,
+}: {
+  hasFilters: boolean;
+  onClear: () => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
         <Search className="h-5 w-5 text-muted-foreground" />
       </div>
-      <h3 className="text-sm font-semibold text-foreground mb-1">No jobs found</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-1">
+        No jobs found
+      </h3>
       <p className="text-sm text-muted-foreground mb-4 max-w-xs">
         {hasFilters
           ? "Try adjusting your filters or search query."
@@ -180,7 +244,12 @@ export function JobsPage() {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement).tagName;
-      if (e.key === "/" && tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
+      if (
+        e.key === "/" &&
+        tag !== "INPUT" &&
+        tag !== "TEXTAREA" &&
+        tag !== "SELECT"
+      ) {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
@@ -196,7 +265,9 @@ export function JobsPage() {
   const [page, setPage] = useState(1);
 
   // Reset page when filters/search change
-  useEffect(() => { setPage(1); }, [debouncedSearch, filters, sort]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters, sort]);
 
   // ── Data fetching ─────────────────────────────────────────────────────────
   const {
@@ -208,9 +279,10 @@ export function JobsPage() {
     status: "active",
     search: debouncedSearch || undefined,
     companyId: filters.companyId || undefined,
-    jobType: filters.jobType !== "all"
-      ? (filters.jobType as "internship" | "full_time")
-      : undefined,
+    jobType:
+      filters.jobType !== "all"
+        ? (filters.jobType as "internship" | "full_time")
+        : undefined,
     limit: 200,
   });
 
@@ -218,22 +290,61 @@ export function JobsPage() {
   const { data: companiesData } = useListCompanies({ limit: 100 });
   const { data: profileData } = useGetProfile();
 
-  // ── Mutations ─────────────────────────────────────────────────────────────
-  const { mutate: createBookmark, isPending: creatingBookmark } = useCreateBookmark({
-    mutation: {
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: getListBookmarksQueryKey() });
-      },
+  // Long staleTime: this only changes when the user applies or saves, and both
+  // of those paths invalidate it explicitly below.
+  const { data: statusMapData } = useGetApplicationStatusMap({
+    query: {
+      queryKey: getGetApplicationStatusMapQueryKey(),
+      staleTime: 5 * 60 * 1000,
     },
   });
+  const statusMap = useMemo<ApplicationStatusMap>(
+    () => statusMapData ?? {},
+    [statusMapData],
+  );
 
-  const { mutate: deleteBookmark, isPending: deletingBookmark } = useDeleteBookmark({
-    mutation: {
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: getListBookmarksQueryKey() });
+  // The status map is status-only by design. The applied-on date for the badge
+  // comes from the applications list, which uses the same limit as the
+  // Applications page so both share one React Query cache entry.
+  const { data: applicationsData } = useListApplications(
+    { limit: 200 },
+    {
+      query: {
+        queryKey: getListApplicationsQueryKey({ limit: 200 }),
+        staleTime: 5 * 60 * 1000,
       },
     },
-  });
+  );
+  const appliedDates = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const app of applicationsData?.data ?? []) {
+      if (app.appliedDate) map[app.jobId] = app.appliedDate;
+    }
+    return map;
+  }, [applicationsData]);
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
+  const { mutate: createBookmark, isPending: creatingBookmark } =
+    useCreateBookmark({
+      mutation: {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({
+            queryKey: getListBookmarksQueryKey(),
+          });
+        },
+      },
+    });
+
+  const { mutate: deleteBookmark, isPending: deletingBookmark } =
+    useDeleteBookmark({
+      mutation: {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({
+            queryKey: getListBookmarksQueryKey(),
+          });
+        },
+      },
+    });
 
   const handleBookmarkToggle = useCallback(
     (jobId: string, isCurrentlyBookmarked: boolean) => {
@@ -246,6 +357,88 @@ export function JobsPage() {
     [createBookmark, deleteBookmark],
   );
 
+  const statusMapQueryKey = useMemo(
+    () => getGetApplicationStatusMapQueryKey(),
+    [],
+  );
+
+  const { mutateAsync: createApplication } = useCreateApplication();
+
+  // Per-job, not the mutation's global isPending: one in-flight apply must not
+  // disable the Apply button on every other card in the list.
+  const [pendingJobIds, setPendingJobIds] = useState<Set<string>>(new Set());
+
+  const clearPending = useCallback((jobId: string) => {
+    setPendingJobIds((prev) => {
+      const next = new Set(prev);
+      next.delete(jobId);
+      return next;
+    });
+  }, []);
+
+  // Optimistically flip the card, then reconcile with the server. Note the tab
+  // has already been opened by the click handler in job-card.tsx — a failure
+  // here must not try to undo that.
+  const trackApplication = useCallback(
+    async (jobId: string, status: "applied" | "saved") => {
+      const appliedDate = new Date().toISOString();
+      setPendingJobIds((prev) => new Set(prev).add(jobId));
+      await queryClient.cancelQueries({ queryKey: statusMapQueryKey });
+      const previous =
+        queryClient.getQueryData<ApplicationStatusMap>(statusMapQueryKey);
+
+      queryClient.setQueryData<ApplicationStatusMap>(
+        statusMapQueryKey,
+        (current) => ({ ...(current ?? {}), [jobId]: status }),
+      );
+
+      try {
+        await createApplication({
+          data: {
+            jobId,
+            status,
+            ...(status === "applied" ? { appliedDate } : {}),
+          },
+        });
+      } catch {
+        if (previous) queryClient.setQueryData(statusMapQueryKey, previous);
+        else queryClient.removeQueries({ queryKey: statusMapQueryKey });
+
+        clearPending(jobId);
+
+        toast.error(
+          status === "applied"
+            ? "Opened the posting, but could not log the application"
+            : "Could not save that job",
+          {
+            action: {
+              label: "Retry",
+              onClick: () => void trackApplication(jobId, status),
+            },
+          },
+        );
+        return;
+      }
+
+      clearPending(jobId);
+      void queryClient.invalidateQueries({ queryKey: statusMapQueryKey });
+      void queryClient.invalidateQueries({
+        queryKey: getListApplicationsQueryKey(),
+      });
+    },
+    [queryClient, statusMapQueryKey, createApplication, clearPending],
+  );
+
+  const handleApply = useCallback(
+    (jobId: string) => void trackApplication(jobId, "applied"),
+    [trackApplication],
+  );
+
+  const handleSave = useCallback(
+    (jobId: string) => void trackApplication(jobId, "saved"),
+    [trackApplication],
+  );
+
   // ── Derived state ─────────────────────────────────────────────────────────
   const bookmarkedJobIds = useMemo(
     () => new Set((bookmarksData ?? []).map((b) => b.jobId)),
@@ -255,8 +448,8 @@ export function JobsPage() {
   const allJobs = jobsData?.data ?? [];
 
   const filteredJobs = useMemo(
-    () => applyClientFilters(allJobs, filters),
-    [allJobs, filters],
+    () => applyClientFilters(allJobs, filters, statusMap),
+    [allJobs, filters, statusMap],
   );
 
   const sortedJobs = useMemo(
@@ -266,9 +459,13 @@ export function JobsPage() {
 
   const totalPages = Math.max(1, Math.ceil(sortedJobs.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const pagedJobs = sortedJobs.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pagedJobs = sortedJobs.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
 
-  const activeFilterCount = countActiveFilters(filters) + (debouncedSearch ? 1 : 0);
+  const activeFilterCount =
+    countActiveFilters(filters) + (debouncedSearch ? 1 : 0);
   const companies = companiesData?.data ?? [];
   const profileBatch = profileData?.graduationYear ?? null;
 
@@ -278,7 +475,8 @@ export function JobsPage() {
       <div className="flex flex-col gap-1 mb-6">
         <h1 className="text-xl font-bold tracking-tight">Jobs Explorer</h1>
         <p className="text-sm text-muted-foreground">
-          Browse and filter active opportunities. All data is sourced from official provider APIs.
+          Browse and filter active opportunities. All data is sourced from
+          official provider APIs.
         </p>
       </div>
 
@@ -317,7 +515,10 @@ export function JobsPage() {
                 />
                 {searchInput ? (
                   <button
-                    onClick={() => { setSearchInput(""); searchInputRef.current?.focus(); }}
+                    onClick={() => {
+                      setSearchInput("");
+                      searchInputRef.current?.focus();
+                    }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     aria-label="Clear search"
                   >
@@ -364,11 +565,13 @@ export function JobsPage() {
 
             {/* Quick type chips — one-click filter for the most common case */}
             <div className="flex items-center gap-1.5">
-              {([
-                { value: "all", label: "All" },
-                { value: "internship", label: "Internship" },
-                { value: "full_time", label: "Full-Time" },
-              ] as const).map(({ value, label }) => (
+              {(
+                [
+                  { value: "all", label: "All" },
+                  { value: "internship", label: "Internship" },
+                  { value: "full_time", label: "Full-Time" },
+                ] as const
+              ).map(({ value, label }) => (
                 <button
                   key={value}
                   onClick={() => setFilters((f) => ({ ...f, jobType: value }))}
@@ -391,7 +594,9 @@ export function JobsPage() {
                 "Loading..."
               ) : (
                 <>
-                  <span className="font-medium text-foreground">{sortedJobs.length}</span>{" "}
+                  <span className="font-medium text-foreground">
+                    {sortedJobs.length}
+                  </span>{" "}
                   {sortedJobs.length === 1 ? "job" : "jobs"}
                   {activeFilterCount > 0 ? " matching filters" : ""}
                 </>
@@ -400,7 +605,9 @@ export function JobsPage() {
             {profileBatch && (
               <p className="text-xs text-muted-foreground">
                 Your batch:{" "}
-                <span className="font-medium text-foreground">{profileBatch}</span>
+                <span className="font-medium text-foreground">
+                  {profileBatch}
+                </span>
               </p>
             )}
           </div>
@@ -421,7 +628,8 @@ export function JobsPage() {
                 Failed to load jobs
               </h3>
               <p className="text-sm text-muted-foreground mb-4 max-w-xs">
-                Could not connect to the server. Check your connection and try again.
+                Could not connect to the server. Check your connection and try
+                again.
               </p>
               <button
                 onClick={() => void refetchJobs()}
@@ -448,6 +656,11 @@ export function JobsPage() {
                   isBookmarked={bookmarkedJobIds.has(job.id)}
                   onBookmarkToggle={handleBookmarkToggle}
                   isBookmarkPending={creatingBookmark || deletingBookmark}
+                  applicationStatus={statusMap[job.id] ?? null}
+                  appliedDate={appliedDates[job.id] ?? null}
+                  onApply={handleApply}
+                  onSave={handleSave}
+                  isApplyPending={pendingJobIds.has(job.id)}
                 />
               ))}
             </div>
@@ -468,9 +681,11 @@ export function JobsPage() {
               </Button>
               <span className="text-xs text-muted-foreground">
                 Page{" "}
-                <span className="font-medium text-foreground">{safePage}</span>
-                {" "}of{" "}
-                <span className="font-medium text-foreground">{totalPages}</span>
+                <span className="font-medium text-foreground">{safePage}</span>{" "}
+                of{" "}
+                <span className="font-medium text-foreground">
+                  {totalPages}
+                </span>
               </span>
               <Button
                 variant="outline"

@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from "react";
-import { 
-  useGetProfile, 
-  useUpdateProfile, 
-  getGetProfileQueryKey 
+import {
+  useGetProfile,
+  useUpdateProfile,
+  getGetProfileQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -20,7 +20,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { AlertCircle, RefreshCw, Save } from "lucide-react";
 
@@ -29,11 +35,25 @@ const profileSchema = z.object({
   college: z.string().optional(),
   degree: z.string().optional(),
   branch: z.string().optional(),
-  graduationYear: z.coerce.number().min(2000).max(2040).optional().or(z.literal("").transform(() => undefined)),
-  cgpa: z.coerce.number().min(0).max(10).optional().or(z.literal("").transform(() => undefined)),
+  graduationYear: z.coerce
+    .number()
+    .min(2000)
+    .max(2040)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  cgpa: z.coerce
+    .number()
+    .min(0)
+    .max(10)
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   skills: z.string().optional(), // We'll manage it as a comma-separated string for simplicity in the UI
   resumeUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-  linkedinUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  linkedinUrl: z
+    .string()
+    .url("Must be a valid URL")
+    .optional()
+    .or(z.literal("")),
   githubUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
@@ -91,31 +111,40 @@ export function ProfilePage() {
       formValues.linkedinUrl,
       formValues.githubUrl,
     ];
-    const filled = fields.filter((v) => v !== undefined && v !== "" && v !== null).length;
+    const filled = fields.filter(
+      (v) => v !== undefined && v !== "" && v !== null,
+    ).length;
     return Math.round((filled / fields.length) * 100);
   }, [formValues]);
 
   const onSubmit = (data: ProfileFormValues) => {
-    const skillsArray = data.skills 
-      ? data.skills.split(",").map(s => s.trim()).filter(Boolean) 
+    const skillsArray = data.skills
+      ? data.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [];
 
-    updateProfile.mutate({
-      data: {
-        ...data,
-        skills: skillsArray,
-      }
-    }, {
-      onSuccess: () => {
-        toast.success("Profile updated successfully");
-        queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey() });
+    updateProfile.mutate(
+      {
+        data: {
+          ...data,
+          skills: skillsArray,
+        },
       },
-      onError: (err) => {
-        toast.error("Failed to update profile", {
-          description: err instanceof Error ? err.message : "Unknown error occurred"
-        });
-      }
-    });
+      {
+        onSuccess: () => {
+          toast.success("Profile updated successfully");
+          queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey() });
+        },
+        onError: (err) => {
+          toast.error("Failed to update profile", {
+            description:
+              err instanceof Error ? err.message : "Unknown error occurred",
+          });
+        },
+      },
+    );
   };
 
   if (isLoading) {
@@ -162,22 +191,29 @@ export function ProfilePage() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-3xl">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-        <p className="text-muted-foreground mt-1">Manage your academic details and external links.</p>
+        <p className="text-muted-foreground mt-1">
+          Manage your academic details and external links.
+        </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
           <CardDescription>
-            Update your academic records and resume. These will be used to track your completeness.
+            Update your academic records and resume. These will be used to track
+            your completeness.
           </CardDescription>
         </CardHeader>
 
         {/* Completeness bar */}
         <div className="mx-6 mb-2 rounded-lg border border-border bg-muted/40 p-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Profile completeness</span>
-            <span className={`text-xs font-semibold ${completeness === 100 ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
+            <span className="text-xs font-medium text-muted-foreground">
+              Profile completeness
+            </span>
+            <span
+              className={`text-xs font-semibold ${completeness === 100 ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}
+            >
               {completeness}%
             </span>
           </div>
@@ -207,7 +243,6 @@ export function ProfilePage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
               <div className="grid gap-6 sm:grid-cols-2">
                 <FormField
                   control={form.control}
@@ -272,7 +307,12 @@ export function ProfilePage() {
                     <FormItem>
                       <FormLabel>Graduation Year</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="2025" {...field} value={field.value || ""} />
+                        <Input
+                          type="number"
+                          placeholder="2025"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -286,7 +326,13 @@ export function ProfilePage() {
                     <FormItem>
                       <FormLabel>CGPA (out of 10)</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" placeholder="8.5" {...field} value={field.value || ""} />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="8.5"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -300,9 +346,14 @@ export function ProfilePage() {
                     <FormItem className="sm:col-span-2">
                       <FormLabel>Skills</FormLabel>
                       <FormControl>
-                        <Input placeholder="React, Node.js, Python" {...field} />
+                        <Input
+                          placeholder="React, Node.js, Python"
+                          {...field}
+                        />
                       </FormControl>
-                      <FormDescription>Comma separated list of skills.</FormDescription>
+                      <FormDescription>
+                        Comma separated list of skills.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -315,7 +366,10 @@ export function ProfilePage() {
                     <FormItem className="sm:col-span-2">
                       <FormLabel>Resume URL</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://drive.google.com/..." {...field} />
+                        <Input
+                          placeholder="https://drive.google.com/..."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -329,7 +383,10 @@ export function ProfilePage() {
                     <FormItem>
                       <FormLabel>LinkedIn URL</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://linkedin.com/in/..." {...field} />
+                        <Input
+                          placeholder="https://linkedin.com/in/..."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -343,7 +400,10 @@ export function ProfilePage() {
                     <FormItem>
                       <FormLabel>GitHub URL</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://github.com/..." {...field} />
+                        <Input
+                          placeholder="https://github.com/..."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

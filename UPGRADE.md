@@ -260,6 +260,58 @@ Same verification rule as above.
 - [ ] No config flipped to enabled without recorded verification.
 
 ---
+## Phase 5.5 — Coverage expansion (run with Phase 5)
+
+Currently ~7 working providers. This phase widens intake through legitimate public APIs only.
+**Verify every endpoint with curl before implementing. If it 401s, 404s, or its ToS prohibits
+automated access, record that and move on — do not work around it.**
+
+### A. Multiply the aggregators already working (cheapest win)
+
+`adzuna` and `jsearch` each have ONE config entry, i.e. one search query. Both accept arbitrary
+queries. Convert each to a multi-query provider driven by a query list:
+
+  "software engineer intern India", "SDE intern 2027", "software developer fresher India",
+  "graduate engineer trainee software", "entry level software engineer India",
+  "backend developer intern India", "full stack intern India", "SDE 1 India"
+
+Paginate each query. De-dup via the existing sourceUrl mechanism. Respect rate limits — JSearch's
+free RapidAPI tier is capped; add a per-run request budget env (`JSEARCH_MAX_REQUESTS`, default 20)
+and stop cleanly when exhausted rather than erroring.
+
+Expect this alone to multiply aggregator intake several-fold.
+
+### B. New ATS providers not yet supported
+
+Each follows the existing AbstractProvider pattern. Verify the endpoint, then add configs for
+India-hiring companies found on each:
+
+- **Workable** — `https://apply.workable.com/api/v1/widget/accounts/{subdomain}?details=true`
+  Used by many Indian startups. Highest expected value of the four.
+- **Recruitee** — `https://{company}.recruitee.com/api/offers/`
+- **Teamtailor**, **Zoho Recruit** — check for public endpoints; likely require keys. Skip if so.
+
+### C. Free public job APIs
+
+- **Arbeitnow** — `https://www.arbeitnow.com/api/job-board-api` (free, no key)
+- **Jobicy** — `https://jobicy.com/api/v2/remote-jobs` (free, no key)
+- **WeWorkRemotely** — public RSS feeds
+
+These skew remote/international. Low India yield, but free and additive. Build a small
+`RssFeedProvider` base class for the RSS one — it will be reused.
+
+### D. Community internship listing repos
+
+Repos like SimplifyJobs' internship trackers publish structured listings and are fetched via the
+GitHub API — public data, explicitly published for this purpose, no ToS issue.
+**Verify the JSON path exists before implementing.** US-skewed, so gate behind a config flag
+and expect low India yield.
+
+**Acceptance criteria**
+- [ ] Active job count increases substantially versus the 2,105 baseline.
+- [ ] Every new provider verified by a real request, recorded with count and date in its config note.
+- [ ] Nothing added that requires scraping or circumventing an auth wall.
+- [ ] JSearch request budget respected — no rate-limit errors in a full run.
 
 ## Phase 2 — Location normalization and relevance
 

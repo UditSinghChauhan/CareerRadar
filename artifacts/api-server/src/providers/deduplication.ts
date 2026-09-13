@@ -26,7 +26,13 @@ import { logger } from "../lib/logger";
 import type { DedupeDecision, DedupeAction } from "./types";
 
 /** Fields we treat as "change triggers" for an update. */
-const TRACKED_FIELDS = ["title", "location", "workMode", "deadline", "status"] as const;
+const TRACKED_FIELDS = [
+  "title",
+  "location",
+  "workMode",
+  "deadline",
+  "status",
+] as const;
 type TrackedField = (typeof TRACKED_FIELDS)[number];
 
 export interface UpsertResult {
@@ -72,9 +78,7 @@ export class DeduplicationService {
           )
       : [];
 
-    const existingByUrl = new Map(
-      existing.map((row) => [row.sourceUrl, row]),
-    );
+    const existingByUrl = new Map(existing.map((row) => [row.sourceUrl, row]));
 
     const results: UpsertResult[] = [];
 
@@ -85,7 +89,10 @@ export class DeduplicationService {
 
       if (!existingRow) {
         // INSERT
-        const [inserted] = await db.insert(jobsTable).values(job).returning({ id: jobsTable.id });
+        const [inserted] = await db
+          .insert(jobsTable)
+          .values(job)
+          .returning({ id: jobsTable.id });
         results.push({ action: "insert", id: inserted.id });
       } else {
         // Check for changes
@@ -94,8 +101,14 @@ export class DeduplicationService {
           const oldVal = existingRow[field as TrackedField];
 
           if (field === "deadline") {
-            const newDate = newVal instanceof Date ? newVal.toISOString() : String(newVal ?? "");
-            const oldDate = oldVal instanceof Date ? (oldVal as Date).toISOString() : String(oldVal ?? "");
+            const newDate =
+              newVal instanceof Date
+                ? newVal.toISOString()
+                : String(newVal ?? "");
+            const oldDate =
+              oldVal instanceof Date
+                ? (oldVal as Date).toISOString()
+                : String(oldVal ?? "");
             return newDate !== oldDate;
           }
           return String(newVal ?? "") !== String(oldVal ?? "");

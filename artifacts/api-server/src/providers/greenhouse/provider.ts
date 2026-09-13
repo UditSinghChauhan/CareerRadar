@@ -31,13 +31,15 @@ export class GreenhouseProvider extends AbstractProvider {
   readonly displayName = "Greenhouse";
   readonly hasPublicApi = true;
 
-  protected async doFetch(config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const url = `${BASE_URL}/${encodeURIComponent(config.providerId)}/jobs?content=true`;
 
-    const data = await withRetry(
-      () => httpGet<GreenhouseBoardResponse>(url),
-      { label: `greenhouse:${config.companySlug}`, maxAttempts: 3 },
-    );
+    const data = await withRetry(() => httpGet<GreenhouseBoardResponse>(url), {
+      label: `greenhouse:${config.companySlug}`,
+      maxAttempts: 3,
+    });
 
     const filterCountry = config.extra?.filterCountry as string | undefined;
 
@@ -53,7 +55,10 @@ export class GreenhouseProvider extends AbstractProvider {
     });
   }
 
-  private normalize(job: GreenhouseJob, config: CompanyProviderConfig): ProviderJob {
+  private normalize(
+    job: GreenhouseJob,
+    config: CompanyProviderConfig,
+  ): ProviderJob {
     const locationStr = job.location?.name ?? "";
     const department = job.departments?.[0]?.name;
 

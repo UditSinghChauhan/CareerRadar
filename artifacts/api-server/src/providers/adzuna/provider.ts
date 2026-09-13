@@ -39,7 +39,9 @@ export class AdzunaProvider extends AbstractProvider {
   readonly displayName = "Adzuna India";
   readonly hasPublicApi = true;
 
-  protected async doFetch(_config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    _config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const appId = process.env["ADZUNA_APP_ID"];
     const appKey = process.env["ADZUNA_APP_KEY"];
 
@@ -74,7 +76,10 @@ export class AdzunaProvider extends AbstractProvider {
         }
       } catch (err) {
         // One bad query shouldn't sink the whole aggregator run.
-        logger.warn({ err, what }, "[adzuna:india] Query failed — continuing with remaining queries");
+        logger.warn(
+          { err, what },
+          "[adzuna:india] Query failed — continuing with remaining queries",
+        );
       }
 
       // Polite pause between queries (free tier rate limits).
@@ -87,7 +92,9 @@ export class AdzunaProvider extends AbstractProvider {
   private normalize(result: AdzunaResult): ProviderJob {
     const companyName = result.company?.display_name || "Unknown Company";
     const locationStr = result.location?.display_name || "India";
-    const description = result.description ? this.stripHtml(result.description) : undefined;
+    const description = result.description
+      ? this.stripHtml(result.description)
+      : undefined;
 
     return {
       externalId: String(result.id),
@@ -101,7 +108,9 @@ export class AdzunaProvider extends AbstractProvider {
       // "India" when the free-text location doesn't match a known city.
       country: this.inferCountry(locationStr) ?? "India",
       workMode: this.inferWorkMode(locationStr),
-      jobType: this.inferJobType(`${result.title} ${result.contract_time ?? ""}`),
+      jobType: this.inferJobType(
+        `${result.title} ${result.contract_time ?? ""}`,
+      ),
       description,
       sourceUrl: result.redirect_url,
       applyUrl: result.redirect_url,

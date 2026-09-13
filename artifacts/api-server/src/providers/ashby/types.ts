@@ -14,7 +14,12 @@ export interface AshbyJobPosting {
   isRemote?: boolean;
   employmentType?: string;
   compensation?: {
-    summaryComponents?: Array<{ type: string; minValue?: number; maxValue?: number; currency?: string }>;
+    summaryComponents?: Array<{
+      type: string;
+      minValue?: number;
+      maxValue?: number;
+      currency?: string;
+    }>;
   };
   descriptionHtml?: string;
   descriptionPlain?: string;

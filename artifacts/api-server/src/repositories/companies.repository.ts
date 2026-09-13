@@ -1,5 +1,10 @@
 import { and, count, eq, ilike, sql } from "drizzle-orm";
-import { db, companiesTable, type InsertCompany, type Company } from "@workspace/db";
+import {
+  db,
+  companiesTable,
+  type InsertCompany,
+  type Company,
+} from "@workspace/db";
 import { type PaginationParams, buildPaginatedResult } from "../lib/pagination";
 
 export interface CompanyFilters {

@@ -6,7 +6,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // no DATABASE_URL, no network, no Postgres required.
 vi.mock("@workspace/db", () => ({
   db: {
-    insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
+    insert: vi
+      .fn()
+      .mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
     select: vi.fn().mockReturnValue({ from: vi.fn().mockResolvedValue([]) }),
   },
   providerSyncLogsTable: {},

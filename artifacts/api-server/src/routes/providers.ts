@@ -72,7 +72,10 @@ router.post("/providers/:name/run", requireAuth, async (req, res) => {
       error: result.error,
     });
   } catch (err: unknown) {
-    req.log.error({ err, providerName, companySlug }, "Manual provider run failed");
+    req.log.error(
+      { err, providerName, companySlug },
+      "Manual provider run failed",
+    );
     const message = err instanceof Error ? err.message : "Unknown error";
     res.status(500).json({ error: message });
   }

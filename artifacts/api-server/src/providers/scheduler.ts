@@ -106,7 +106,10 @@ export class SchedulerService {
       // Small delay so the server finishes booting first
       setTimeout(() => {
         this.runAll().catch((err) => {
-          logger.error({ err }, "Unhandled error in scheduler run — server remains up");
+          logger.error(
+            { err },
+            "Unhandled error in scheduler run — server remains up",
+          );
         });
       }, 5_000);
     }
@@ -116,7 +119,10 @@ export class SchedulerService {
 
     this.timer = setInterval(() => {
       this.runAll().catch((err) => {
-        logger.error({ err }, "Unhandled error in scheduler run — server remains up");
+        logger.error(
+          { err },
+          "Unhandled error in scheduler run — server remains up",
+        );
       });
     }, this.intervalMs);
   }
@@ -146,13 +152,19 @@ export class SchedulerService {
     try {
       await jobNormalizer.warmUp();
     } catch (err) {
-      logger.error({ err }, "Scheduler run aborted — failed to warm up normalizer cache (DB unreachable?)");
+      logger.error(
+        { err },
+        "Scheduler run aborted — failed to warm up normalizer cache (DB unreachable?)",
+      );
       this.isRunning = false;
       return this.emptyResult();
     }
 
     const configs = getEnabledConfigs();
-    logger.info({ count: configs.length }, `Processing ${configs.length} provider configs`);
+    logger.info(
+      { count: configs.length },
+      `Processing ${configs.length} provider configs`,
+    );
 
     const fetchResults: FetchResult[] = [];
     let totalInserted = 0;
@@ -165,7 +177,10 @@ export class SchedulerService {
       const provider = providerRegistry.get(config.providerName);
       if (!provider) {
         logger.warn(
-          { providerName: config.providerName, companySlug: config.companySlug },
+          {
+            providerName: config.providerName,
+            companySlug: config.companySlug,
+          },
           "Unknown provider in config — skipping",
         );
         continue;
@@ -178,17 +193,24 @@ export class SchedulerService {
         const rawJobs = await provider.fetchJobs(config);
 
         // Normalize (sequential — auto company-creation must not race within a batch)
-        const normalizedJobs: NonNullable<Awaited<ReturnType<typeof jobNormalizer.normalize>>>[] = [];
+        const normalizedJobs: NonNullable<
+          Awaited<ReturnType<typeof jobNormalizer.normalize>>
+        >[] = [];
         for (const j of rawJobs) {
           const normalized = await jobNormalizer.normalize(j);
           if (normalized !== null) normalizedJobs.push(normalized);
         }
 
         // Deduplicate + persist
-        const upsertResults = await deduplicationService.upsertBatch(normalizedJobs);
+        const upsertResults =
+          await deduplicationService.upsertBatch(normalizedJobs);
 
-        const inserted = upsertResults.filter((r) => r.action === "insert").length;
-        const updated = upsertResults.filter((r) => r.action === "update").length;
+        const inserted = upsertResults.filter(
+          (r) => r.action === "insert",
+        ).length;
+        const updated = upsertResults.filter(
+          (r) => r.action === "update",
+        ).length;
         const skipped = upsertResults.filter((r) => r.action === "skip").length;
 
         totalInserted += inserted;
@@ -225,13 +247,23 @@ export class SchedulerService {
         });
 
         logger.info(
-          { companySlug: config.companySlug, provider: config.providerName, inserted, updated, skipped },
+          {
+            companySlug: config.companySlug,
+            provider: config.providerName,
+            inserted,
+            updated,
+            skipped,
+          },
           "Provider run complete",
         );
       } catch (err: unknown) {
         errors++;
         const errorMsg = err instanceof Error ? err.message : String(err);
-        metrics.recordFailure(config.providerName, config.companySlug, errorMsg);
+        metrics.recordFailure(
+          config.providerName,
+          config.companySlug,
+          errorMsg,
+        );
 
         await writeSyncLog({
           providerName: config.providerName,
@@ -252,7 +284,11 @@ export class SchedulerService {
         };
 
         logger.error(
-          { err, companySlug: config.companySlug, provider: config.providerName },
+          {
+            err,
+            companySlug: config.companySlug,
+            provider: config.providerName,
+          },
           "Provider run failed",
         );
       }
@@ -320,19 +356,29 @@ export class SchedulerService {
     const start = Date.now();
     const rawJobs = await provider.fetchJobs(config);
 
-    const normalizedJobs: NonNullable<Awaited<ReturnType<typeof jobNormalizer.normalize>>>[] = [];
+    const normalizedJobs: NonNullable<
+      Awaited<ReturnType<typeof jobNormalizer.normalize>>
+    >[] = [];
     for (const j of rawJobs) {
       const normalized = await jobNormalizer.normalize(j);
       if (normalized !== null) normalizedJobs.push(normalized);
     }
 
-    const upsertResults = await deduplicationService.upsertBatch(normalizedJobs);
+    const upsertResults =
+      await deduplicationService.upsertBatch(normalizedJobs);
 
     const inserted = upsertResults.filter((r) => r.action === "insert").length;
     const updated = upsertResults.filter((r) => r.action === "update").length;
     const skipped = upsertResults.filter((r) => r.action === "skip").length;
 
-    metrics.recordSuccess(providerName, companySlug, rawJobs.length, inserted, updated, skipped);
+    metrics.recordSuccess(
+      providerName,
+      companySlug,
+      rawJobs.length,
+      inserted,
+      updated,
+      skipped,
+    );
 
     await writeSyncLog({
       providerName,

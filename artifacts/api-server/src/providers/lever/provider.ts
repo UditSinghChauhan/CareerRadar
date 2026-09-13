@@ -32,18 +32,23 @@ export class LeverProvider extends AbstractProvider {
   readonly displayName = "Lever";
   readonly hasPublicApi = true;
 
-  protected async doFetch(config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const url = `${BASE_URL}/${encodeURIComponent(config.providerId)}?mode=json&skip=0&limit=500`;
 
-    const postings = await withRetry(
-      () => httpGet<LeverPosting[]>(url),
-      { label: `lever:${config.companySlug}`, maxAttempts: 3 },
-    );
+    const postings = await withRetry(() => httpGet<LeverPosting[]>(url), {
+      label: `lever:${config.companySlug}`,
+      maxAttempts: 3,
+    });
 
     return postings.map((posting) => this.normalize(posting, config));
   }
 
-  private normalize(posting: LeverPosting, config: CompanyProviderConfig): ProviderJob {
+  private normalize(
+    posting: LeverPosting,
+    config: CompanyProviderConfig,
+  ): ProviderJob {
     const commitment = posting.categories.commitment ?? "";
     const location = posting.categories.location ?? "";
     const allLocations = (posting.categories.allLocations ?? []).join(", ");

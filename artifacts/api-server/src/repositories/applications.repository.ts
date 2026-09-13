@@ -11,7 +11,9 @@ import {
 } from "@workspace/db";
 import { type PaginationParams, buildPaginatedResult } from "../lib/pagination";
 
-export type ApplicationWithJob = Application & { job: Job & { company: Company } };
+export type ApplicationWithJob = Application & {
+  job: Job & { company: Company };
+};
 
 export interface ApplicationFilters {
   status?: Application["status"];
@@ -20,7 +22,12 @@ export interface ApplicationFilters {
 
 // Drizzle does not support 3-level nested object selects.
 // Use flat three-table join and transform the result.
-async function queryApplicationsWithJob(where: Parameters<typeof db.select>[0] extends undefined ? undefined : ReturnType<typeof and> | undefined, opts: { limit?: number; offset?: number } = {}) {
+async function queryApplicationsWithJob(
+  where: Parameters<typeof db.select>[0] extends undefined
+    ? undefined
+    : ReturnType<typeof and> | undefined,
+  opts: { limit?: number; offset?: number } = {},
+) {
   const query = db
     .select()
     .from(applicationsTable)
@@ -29,9 +36,10 @@ async function queryApplicationsWithJob(where: Parameters<typeof db.select>[0] e
     .where(where)
     .orderBy(desc(applicationsTable.createdAt));
 
-  const rows = opts.limit !== undefined
-    ? await query.limit(opts.limit).offset(opts.offset ?? 0)
-    : await query;
+  const rows =
+    opts.limit !== undefined
+      ? await query.limit(opts.limit).offset(opts.offset ?? 0)
+      : await query;
 
   return rows.map((r) => ({
     ...r.applications,
@@ -69,7 +77,10 @@ export const applicationsRepository = {
     return buildPaginatedResult(rows, Number(countResult[0].value), pagination);
   },
 
-  async findById(id: string, clerkId: string): Promise<ApplicationWithJob | null> {
+  async findById(
+    id: string,
+    clerkId: string,
+  ): Promise<ApplicationWithJob | null> {
     const where = and(
       eq(applicationsTable.id, id),
       eq(applicationsTable.clerkId, clerkId),
@@ -78,7 +89,10 @@ export const applicationsRepository = {
     return rows[0] ?? null;
   },
 
-  async findByJobId(clerkId: string, jobId: string): Promise<Application | null> {
+  async findByJobId(
+    clerkId: string,
+    jobId: string,
+  ): Promise<Application | null> {
     const [row] = await db
       .select()
       .from(applicationsTable)
@@ -89,6 +103,20 @@ export const applicationsRepository = {
         ),
       );
     return row ?? null;
+  },
+
+  // Deliberately no join: the jobs list only needs jobId -> status, and this
+  // runs on every /jobs render. Served straight off applications_clerk_id_idx.
+  async findStatusMap(
+    clerkId: string,
+  ): Promise<Array<{ jobId: string; status: Application["status"] }>> {
+    return db
+      .select({
+        jobId: applicationsTable.jobId,
+        status: applicationsTable.status,
+      })
+      .from(applicationsTable)
+      .where(eq(applicationsTable.clerkId, clerkId));
   },
 
   async countAll(clerkId: string): Promise<number> {
@@ -124,7 +152,10 @@ export const applicationsRepository = {
       .update(applicationsTable)
       .set({ ...data, updatedAt: new Date() })
       .where(
-        and(eq(applicationsTable.id, id), eq(applicationsTable.clerkId, clerkId)),
+        and(
+          eq(applicationsTable.id, id),
+          eq(applicationsTable.clerkId, clerkId),
+        ),
       );
     return this.findById(id, clerkId);
   },
@@ -133,7 +164,10 @@ export const applicationsRepository = {
     const result = await db
       .delete(applicationsTable)
       .where(
-        and(eq(applicationsTable.id, id), eq(applicationsTable.clerkId, clerkId)),
+        and(
+          eq(applicationsTable.id, id),
+          eq(applicationsTable.clerkId, clerkId),
+        ),
       )
       .returning({ id: applicationsTable.id });
     return result.length > 0;

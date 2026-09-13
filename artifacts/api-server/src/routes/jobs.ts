@@ -89,7 +89,10 @@ router.put("/jobs/:id", requireAuth, async (req, res) => {
   }
 
   try {
-    const job = await jobsService.update(id, parsed.data as Record<string, unknown>);
+    const job = await jobsService.update(
+      id,
+      parsed.data as Record<string, unknown>,
+    );
     if (!job) {
       res.status(404).json({ error: "Job not found" });
       return;

@@ -39,7 +39,9 @@ export class InternshalaProvider extends AbstractProvider {
   readonly displayName = "Internshala";
   readonly hasPublicApi = false;
 
-  protected async doFetch(_config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    _config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     return [];
   }
 }

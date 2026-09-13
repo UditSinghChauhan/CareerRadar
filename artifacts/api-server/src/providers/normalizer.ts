@@ -9,7 +9,12 @@
  */
 
 import { eq } from "drizzle-orm";
-import { db, companiesTable, jobSourcesTable, type InsertJob } from "@workspace/db";
+import {
+  db,
+  companiesTable,
+  jobSourcesTable,
+  type InsertJob,
+} from "@workspace/db";
 import { logger } from "../lib/logger";
 import type { ProviderJob } from "./types";
 
@@ -24,8 +29,12 @@ export class JobNormalizer {
   /** Warm up caches to avoid repeated DB round-trips during a scheduler run. */
   async warmUp(): Promise<void> {
     const [companies, sources] = await Promise.all([
-      db.select({ id: companiesTable.id, slug: companiesTable.slug }).from(companiesTable),
-      db.select({ id: jobSourcesTable.id, name: jobSourcesTable.name }).from(jobSourcesTable),
+      db
+        .select({ id: companiesTable.id, slug: companiesTable.slug })
+        .from(companiesTable),
+      db
+        .select({ id: jobSourcesTable.id, name: jobSourcesTable.name })
+        .from(jobSourcesTable),
     ]);
 
     companies.forEach((c) => this.companyCache.set(c.slug, c.id));
@@ -44,7 +53,10 @@ export class JobNormalizer {
    * JSearch) which pull jobs from employers not pre-seeded in the DB.
    * Concurrent lookups for the same new slug collapse onto one insert.
    */
-  private async resolveCompanyId(slug: string, companyName?: string): Promise<string | null> {
+  private async resolveCompanyId(
+    slug: string,
+    companyName?: string,
+  ): Promise<string | null> {
     const cached = this.companyCache.get(slug);
     if (cached) return cached;
 
@@ -79,7 +91,10 @@ export class JobNormalizer {
 
         return null;
       } catch (err) {
-        logger.error({ err, slug, companyName }, "Failed to auto-create company for aggregator job");
+        logger.error(
+          { err, slug, companyName },
+          "Failed to auto-create company for aggregator job",
+        );
         return null;
       } finally {
         this.pendingCompanyCreates.delete(slug);
@@ -96,7 +111,10 @@ export class JobNormalizer {
    * companyName was provided to auto-create it).
    */
   async normalize(job: ProviderJob): Promise<NormalizedJob | null> {
-    const companyId = await this.resolveCompanyId(job.companySlug, job.companyName);
+    const companyId = await this.resolveCompanyId(
+      job.companySlug,
+      job.companyName,
+    );
     if (!companyId) {
       logger.warn(
         { companySlug: job.companySlug, provider: job.sourceProvider },

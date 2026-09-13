@@ -10,7 +10,11 @@
  */
 
 import { Router } from "express";
-import { getSources, getSourceById, getSourceHealth } from "../sources/registry";
+import {
+  getSources,
+  getSourceById,
+  getSourceHealth,
+} from "../sources/registry";
 
 const router = Router();
 
@@ -18,7 +22,10 @@ const router = Router();
 
 router.get("/sources", async (req, res) => {
   try {
-    const { status, provider, enabled } = req.query as Record<string, string | undefined>;
+    const { status, provider, enabled } = req.query as Record<
+      string,
+      string | undefined
+    >;
 
     let sources = await getSources();
 

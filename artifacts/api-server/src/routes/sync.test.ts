@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  afterAll,
+  beforeEach,
+} from "vitest";
 import express, { type Express } from "express";
 import type { Server } from "http";
 import type { AddressInfo } from "net";
@@ -66,11 +74,15 @@ describe("sync routes — CR-NEW-001 auth gate on work-triggering endpoints", ()
   });
 
   function unauthed() {
-    mockGetAuth.mockReturnValue({ userId: undefined } as unknown as ReturnType<typeof getAuth>);
+    mockGetAuth.mockReturnValue({ userId: undefined } as unknown as ReturnType<
+      typeof getAuth
+    >);
   }
 
   function authed() {
-    mockGetAuth.mockReturnValue({ userId: "user_123" } as unknown as ReturnType<typeof getAuth>);
+    mockGetAuth.mockReturnValue({ userId: "user_123" } as unknown as ReturnType<
+      typeof getAuth
+    >);
   }
 
   it("POST /api/sync/all — 401 without auth, and the scheduler is never triggered", async () => {
@@ -85,7 +97,9 @@ describe("sync routes — CR-NEW-001 auth gate on work-triggering endpoints", ()
   it("POST /api/sync/provider/:provider — 401 without auth, and no run is triggered", async () => {
     unauthed();
 
-    const res = await fetch(`${baseUrl}/api/sync/provider/greenhouse`, { method: "POST" });
+    const res = await fetch(`${baseUrl}/api/sync/provider/greenhouse`, {
+      method: "POST",
+    });
 
     expect(res.status).toBe(401);
     expect(mockRunOne).not.toHaveBeenCalled();
@@ -94,9 +108,12 @@ describe("sync routes — CR-NEW-001 auth gate on work-triggering endpoints", ()
   it("POST /api/sync/provider/:provider/company/:company — 401 without auth", async () => {
     unauthed();
 
-    const res = await fetch(`${baseUrl}/api/sync/provider/greenhouse/company/postman`, {
-      method: "POST",
-    });
+    const res = await fetch(
+      `${baseUrl}/api/sync/provider/greenhouse/company/postman`,
+      {
+        method: "POST",
+      },
+    );
 
     expect(res.status).toBe(401);
     expect(mockRunOne).not.toHaveBeenCalled();
@@ -114,9 +131,12 @@ describe("sync routes — CR-NEW-001 auth gate on work-triggering endpoints", ()
   it("POST /api/sync/provider/:provider — 404 for an unregistered provider when authenticated", async () => {
     authed();
 
-    const res = await fetch(`${baseUrl}/api/sync/provider/definitely-not-a-real-provider`, {
-      method: "POST",
-    });
+    const res = await fetch(
+      `${baseUrl}/api/sync/provider/definitely-not-a-real-provider`,
+      {
+        method: "POST",
+      },
+    );
 
     expect(res.status).toBe(404);
     expect(mockRunOne).not.toHaveBeenCalled();
