@@ -8,14 +8,21 @@ import {
   type Job,
   type Company,
 } from "@workspace/db";
+import { bookmarkColumns, companyColumns, jobColumns } from "./columns";
 
 export type BookmarkWithJob = Bookmark & { job: Job & { company: Company } };
 
-// Drizzle does not support 3-level nested object selects.
-// Use flat three-table join and transform the result.
+// Drizzle does not support 3-level nested object selects, so this selects three
+// flat groups and reassembles them. Columns are listed explicitly (see
+// ./columns.ts) rather than taken from a bare select, so a new schema column
+// does not appear in this response until someone puts it there on purpose.
 async function queryBookmarksWithJob(where?: ReturnType<typeof and>) {
   const rows = await db
-    .select()
+    .select({
+      bookmark: bookmarkColumns,
+      job: jobColumns,
+      company: companyColumns,
+    })
     .from(bookmarksTable)
     .innerJoin(jobsTable, eq(bookmarksTable.jobId, jobsTable.id))
     .innerJoin(companiesTable, eq(jobsTable.companyId, companiesTable.id))
@@ -23,8 +30,8 @@ async function queryBookmarksWithJob(where?: ReturnType<typeof and>) {
     .orderBy(desc(bookmarksTable.createdAt));
 
   return rows.map((r) => ({
-    ...r.bookmarks,
-    job: { ...r.jobs, company: r.companies },
+    ...r.bookmark,
+    job: { ...r.job, company: r.company },
   })) as BookmarkWithJob[];
 }
 
@@ -37,7 +44,7 @@ export const bookmarksRepository = {
 
   async findByJobId(clerkId: string, jobId: string): Promise<Bookmark | null> {
     const [row] = await db
-      .select()
+      .select(bookmarkColumns)
       .from(bookmarksTable)
       .where(
         and(

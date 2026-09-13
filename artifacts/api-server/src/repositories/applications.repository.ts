@@ -10,6 +10,7 @@ import {
   type Company,
 } from "@workspace/db";
 import { type PaginationParams, buildPaginatedResult } from "../lib/pagination";
+import { applicationColumns, companyColumns, jobColumns } from "./columns";
 
 export type ApplicationWithJob = Application & {
   job: Job & { company: Company };
@@ -20,8 +21,10 @@ export interface ApplicationFilters {
   jobType?: Job["jobType"];
 }
 
-// Drizzle does not support 3-level nested object selects.
-// Use flat three-table join and transform the result.
+// Drizzle does not support 3-level nested object selects, so this selects three
+// flat groups and reassembles them. Columns are listed explicitly (see
+// ./columns.ts) rather than taken from a bare select, so a new schema column
+// does not appear in this response until someone puts it there on purpose.
 async function queryApplicationsWithJob(
   where: Parameters<typeof db.select>[0] extends undefined
     ? undefined
@@ -29,7 +32,11 @@ async function queryApplicationsWithJob(
   opts: { limit?: number; offset?: number } = {},
 ) {
   const query = db
-    .select()
+    .select({
+      application: applicationColumns,
+      job: jobColumns,
+      company: companyColumns,
+    })
     .from(applicationsTable)
     .innerJoin(jobsTable, eq(applicationsTable.jobId, jobsTable.id))
     .innerJoin(companiesTable, eq(jobsTable.companyId, companiesTable.id))
@@ -42,8 +49,8 @@ async function queryApplicationsWithJob(
       : await query;
 
   return rows.map((r) => ({
-    ...r.applications,
-    job: { ...r.jobs, company: r.companies },
+    ...r.application,
+    job: { ...r.job, company: r.company },
   })) as ApplicationWithJob[];
 }
 
@@ -94,7 +101,7 @@ export const applicationsRepository = {
     jobId: string,
   ): Promise<Application | null> {
     const [row] = await db
-      .select()
+      .select(applicationColumns)
       .from(applicationsTable)
       .where(
         and(

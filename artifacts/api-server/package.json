@@ -9,6 +9,7 @@
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "seed": "tsx src/seed/seed.ts",
+    "backfill:stale-jobs": "tsx src/scripts/backfill-close-stale-jobs.ts",
     "test": "vitest run"
   },
   "dependencies": {
@@ -28,10 +29,12 @@
     "pino-http": "^10.5.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
+    "drizzle-kit": "^0.31.10",
     "esbuild": "0.27.3",
     "esbuild-plugin-pino": "^2.3.3",
     "pino-pretty": "^13.1.3",

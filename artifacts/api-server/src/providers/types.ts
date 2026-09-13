@@ -101,6 +101,11 @@ export interface FetchResult {
   rawCount: number;
   /** Elapsed fetch time in ms. */
   durationMs: number;
+  /**
+   * Jobs the last-seen sweep closed after this run. Absent when the sweep was
+   * skipped (empty fetch, aggregator platform) — see `staleness.ts`.
+   */
+  jobsClosed?: number;
   error?: string;
 }
 
@@ -137,6 +142,8 @@ export interface SchedulerRunResult {
   totalInserted: number;
   totalUpdated: number;
   totalSkipped: number;
+  /** Jobs closed across all three staleness sweeps during this run. */
+  totalClosed: number;
   errors: number;
 }
 

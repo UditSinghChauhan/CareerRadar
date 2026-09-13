@@ -1,0 +1,207 @@
+import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import { desc, eq } from "drizzle-orm";
+
+// Real Postgres (PGlite) standing in for the pool. The point of this suite is to
+// compare what two different SELECT formulations actually return, so a mocked
+// `db` would prove nothing at all.
+vi.mock("@workspace/db", async () => {
+  const schema = await import("@workspace/db/schema");
+  const { getTestDb } = await import("../test/pglite");
+  return { ...schema, db: await getTestDb(), pool: {} };
+});
+
+import {
+  db,
+  applicationsTable,
+  bookmarksTable,
+  companiesTable,
+  jobsTable,
+} from "@workspace/db";
+import { getTestDb, truncateAll, type TestDb } from "../test/pglite";
+import { applicationsRepository } from "./applications.repository";
+import { bookmarksRepository } from "./bookmarks.repository";
+
+/**
+ * The exact `jobs` column set the API returned before Phase 1.5, in the order a
+ * bare `db.select()` produced it. CLAUDE.md forbids changing an existing response
+ * shape, so the explicit column lists must still reproduce this list — plus
+ * `lastSeenAt`, which this phase adds deliberately and declares in openapi.yaml.
+ */
+const JOB_KEYS_BEFORE_PHASE_1_5 = [
+  "id",
+  "companyId",
+  "sourceId",
+  "title",
+  "department",
+  "location",
+  "country",
+  "workMode",
+  "jobType",
+  "salaryMin",
+  "salaryMax",
+  "stipend",
+  "currency",
+  "eligibleBatch",
+  "eligibleBranches",
+  "minCgpa",
+  "requiredSkills",
+  "experienceMin",
+  "experienceMax",
+  "deadline",
+  "applyUrl",
+  "sourcePlatform",
+  "sourceUrl",
+  "postedDate",
+  "status",
+  "description",
+  "requirements",
+  "benefits",
+  "selectionProcess",
+  "createdAt",
+  "updatedAt",
+];
+
+const CLERK_ID = "user_columns_spec";
+
+/**
+ * The pre-Phase-1.5 read, reproduced verbatim: a bare select over the same join,
+ * reassembled the same way. This is the baseline the explicit lists must match.
+ */
+async function legacyApplicationRead(testDb: TestDb) {
+  const rows = await testDb
+    .select()
+    .from(applicationsTable)
+    .innerJoin(jobsTable, eq(applicationsTable.jobId, jobsTable.id))
+    .innerJoin(companiesTable, eq(jobsTable.companyId, companiesTable.id))
+    .where(eq(applicationsTable.clerkId, CLERK_ID))
+    .orderBy(desc(applicationsTable.createdAt));
+
+  return rows.map((r) => ({
+    ...r.applications,
+    job: { ...r.jobs, company: r.companies },
+  }));
+}
+
+async function legacyBookmarkRead(testDb: TestDb) {
+  const rows = await testDb
+    .select()
+    .from(bookmarksTable)
+    .innerJoin(jobsTable, eq(bookmarksTable.jobId, jobsTable.id))
+    .innerJoin(companiesTable, eq(jobsTable.companyId, companiesTable.id))
+    .where(eq(bookmarksTable.clerkId, CLERK_ID))
+    .orderBy(desc(bookmarksTable.createdAt));
+
+  return rows.map((r) => ({
+    ...r.bookmarks,
+    job: { ...r.jobs, company: r.companies },
+  }));
+}
+
+describe("repository column lists — response shape is unchanged", () => {
+  let testDb: TestDb;
+  let jobId: string;
+
+  beforeAll(async () => {
+    testDb = await getTestDb();
+  });
+
+  beforeEach(async () => {
+    await truncateAll(testDb);
+
+    const [company] = await db
+      .insert(companiesTable)
+      .values({ name: "Acme Corp", slug: "acme", industry: "Software" })
+      .returning();
+
+    // Values chosen so every column type is exercised: nulls, arrays, enums,
+    // timestamps. A shape comparison over all-null rows would prove very little.
+    const [job] = await db
+      .insert(jobsTable)
+      .values({
+        companyId: company.id,
+        title: "SDE Intern",
+        department: "Platform",
+        location: "Bengaluru, KA",
+        workMode: "hybrid",
+        jobType: "internship",
+        stipend: 60000,
+        eligibleBatch: [2027],
+        eligibleBranches: ["CSE", "IT"],
+        minCgpa: 7.5,
+        requiredSkills: ["TypeScript", "Postgres"],
+        benefits: ["PPO"],
+        deadline: new Date("2026-12-01T00:00:00.000Z"),
+        applyUrl: "https://example.test/apply",
+        sourcePlatform: "greenhouse",
+        sourceUrl: "https://example.test/job/1",
+        postedDate: new Date("2026-09-01T00:00:00.000Z"),
+        lastSeenAt: new Date("2026-09-10T00:00:00.000Z"),
+        description: "Build things.",
+      })
+      .returning();
+    jobId = job.id;
+
+    await db.insert(applicationsTable).values({
+      clerkId: CLERK_ID,
+      jobId,
+      status: "applied",
+      appliedDate: new Date("2026-09-05T00:00:00.000Z"),
+      notes: "referred",
+    });
+    await db.insert(bookmarksTable).values({ clerkId: CLERK_ID, jobId });
+  });
+
+  it("applications: explicit select returns byte-identical JSON to the old bare select", async () => {
+    const before = await legacyApplicationRead(testDb);
+    const after = await applicationsRepository.findAll(
+      CLERK_ID,
+      {},
+      { page: 1, limit: 20 },
+    );
+
+    expect(before).toHaveLength(1);
+    expect(JSON.stringify(after.data)).toBe(JSON.stringify(before));
+  });
+
+  it("bookmarks: explicit select returns byte-identical JSON to the old bare select", async () => {
+    const before = await legacyBookmarkRead(testDb);
+    const after = await bookmarksRepository.findAll(CLERK_ID);
+
+    expect(before).toHaveLength(1);
+    expect(JSON.stringify(after)).toBe(JSON.stringify(before));
+  });
+
+  it("the only key Phase 1.5 adds to a job payload is lastSeenAt", async () => {
+    const [application] = await applicationsRepository
+      .findAll(CLERK_ID, {}, { page: 1, limit: 20 })
+      .then((r) => r.data);
+
+    expect(Object.keys(application.job).filter((k) => k !== "company")).toEqual(
+      [
+        ...JOB_KEYS_BEFORE_PHASE_1_5.slice(
+          0,
+          JOB_KEYS_BEFORE_PHASE_1_5.indexOf("status") + 1,
+        ),
+        "lastSeenAt",
+        ...JOB_KEYS_BEFORE_PHASE_1_5.slice(
+          JOB_KEYS_BEFORE_PHASE_1_5.indexOf("status") + 1,
+        ),
+      ],
+    );
+  });
+
+  it("a column added to the schema does not reach the API until it is listed", async () => {
+    // Guards the reason these lists exist: the bare select this replaced would
+    // have returned every jobs column, so Phase 2's nine new columns would have
+    // entered the payload unreviewed. `jobColumns` is the gate.
+    const { jobColumns } = await import("./columns");
+    const declared = Object.keys(jobColumns);
+    const [application] = await applicationsRepository
+      .findAll(CLERK_ID, {}, { page: 1, limit: 20 })
+      .then((r) => r.data);
+
+    expect(Object.keys(application.job).filter((k) => k !== "company")).toEqual(
+      declared,
+    );
+  });
+});

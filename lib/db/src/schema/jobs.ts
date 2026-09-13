@@ -54,6 +54,17 @@ export const jobsTable = pgTable(
     postedDate: timestamp("posted_date", { withTimezone: true }),
     status: jobStatusEnum("status").notNull().default("active"),
 
+    /**
+     * Last time a provider run observed this posting in its upstream listing.
+     * Stamped on insert, update AND skip — a skip still means the provider is
+     * currently listing the job. The staleness sweep closes active rows whose
+     * lastSeenAt predates the run that just finished.
+     *
+     * Nullable on purpose: every row that existed before this column was added
+     * has never been swept, and NULL is what the sweep treats as "not seen".
+     */
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+
     // Content
     description: text("description"),
     requirements: text("requirements"),
@@ -73,6 +84,7 @@ export const jobsTable = pgTable(
     index("jobs_deadline_idx").on(table.deadline),
     index("jobs_posted_date_idx").on(table.postedDate),
     index("jobs_source_platform_idx").on(table.sourcePlatform),
+    index("jobs_last_seen_at_idx").on(table.lastSeenAt),
   ],
 );
 

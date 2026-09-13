@@ -67,7 +67,7 @@ pnpm run test
 pnpm run build
 ```
 
-Note: the root `package.json` currently defines only `typecheck:libs`, `typecheck`, and `build`. `lint` and `test` are the CI-required steps from `UPGRADE.md` §1 but have no root script yet — `test` exists per-package (`artifacts/api-server`, `artifacts/career-radar` run `vitest run`). Add the root scripts rather than skipping the steps.
+Note: the root `package.json` defines all five steps — `lint` is `prettier --check .` and `test` fans out with `pnpm -r --if-present run test` to the per-package `vitest run` in `artifacts/api-server` and `artifacts/career-radar`.
 
 Other useful commands:
 

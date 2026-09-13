@@ -11,8 +11,12 @@
  *     1. Resolve the provider from the registry
  *     2. Fetch jobs (with retry)
  *     3. Normalize each job (resolve company/source FKs)
- *     4. Deduplicate: insert / update / skip
- *     5. Record metrics
+ *     4. Deduplicate: insert / update / skip (each stamps lastSeenAt)
+ *     5. Close anything this provider stopped listing (guarded — see staleness.ts)
+ *     6. Record metrics
+ *
+ * After every config has run, two global sweeps close aggregator jobs past
+ * SYNC_MAX_AGE_DAYS and any job whose stated deadline has passed.
  *
  * Concurrency: configs run sequentially by default to be polite to upstream
  * APIs. Set PROVIDER_CONCURRENCY > 1 to parallelize (careful — rate limits).
@@ -23,6 +27,7 @@
  *   PROVIDER_INTERVAL_MS  milliseconds        default: 21600000 (6 hours)
  *   PROVIDER_CONCURRENCY  number              default: 1
  *   PROVIDER_RUN_ON_START "true" | "false"   default: "true"
+ *   SYNC_MAX_AGE_DAYS     number              default: 45
  */
 
 import { logger } from "../lib/logger";
@@ -32,6 +37,12 @@ import { getEnabledConfigs } from "./config";
 import { jobNormalizer } from "./normalizer";
 import { deduplicationService } from "./deduplication";
 import { metrics } from "./metrics";
+import {
+  closeExpiredDeadlineJobs,
+  closeStaleAggregatorJobs,
+  closeUnseenJobs,
+  getMaxAgeDays,
+} from "./staleness";
 import type { SchedulerRunResult, FetchResult } from "./types";
 
 async function writeSyncLog(entry: {
@@ -170,6 +181,7 @@ export class SchedulerService {
     let totalInserted = 0;
     let totalUpdated = 0;
     let totalSkipped = 0;
+    let totalClosed = 0;
     let errors = 0;
 
     // Sequential execution (respect upstream rate limits)
@@ -187,6 +199,7 @@ export class SchedulerService {
       }
 
       const fetchStart = Date.now();
+      const configRunStartedAt = new Date(fetchStart);
       let result: FetchResult;
 
       try {
@@ -201,9 +214,13 @@ export class SchedulerService {
           if (normalized !== null) normalizedJobs.push(normalized);
         }
 
-        // Deduplicate + persist
-        const upsertResults =
-          await deduplicationService.upsertBatch(normalizedJobs);
+        // Deduplicate + persist. Every touched row is stamped with exactly
+        // `configRunStartedAt`, so the sweep's `lastSeenAt < configRunStartedAt`
+        // predicate excludes this run's sightings without any clock slack.
+        const upsertResults = await deduplicationService.upsertBatch(
+          normalizedJobs,
+          { seenAt: configRunStartedAt },
+        );
 
         const inserted = upsertResults.filter(
           (r) => r.action === "insert",
@@ -217,12 +234,25 @@ export class SchedulerService {
         totalUpdated += updated;
         totalSkipped += skipped;
 
+        // Close whatever this provider stopped listing. Disarmed unless the
+        // fetch actually produced jobs — see the guard in staleness.ts.
+        const sweep = await closeUnseenJobs({
+          sourcePlatform: config.providerName,
+          companyIds: normalizedJobs.map((j) => j.companyId),
+          runStartedAt: configRunStartedAt,
+          fetchedCount: rawJobs.length,
+          persistedCount: upsertResults.length,
+          companySlug: config.companySlug,
+        });
+        totalClosed += sweep.closed;
+
         result = {
           companySlug: config.companySlug,
           providerName: config.providerName,
           jobs: rawJobs,
           rawCount: rawJobs.length,
           durationMs: Date.now() - fetchStart,
+          jobsClosed: sweep.closed,
         };
 
         metrics.recordSuccess(
@@ -253,6 +283,8 @@ export class SchedulerService {
             inserted,
             updated,
             skipped,
+            closed: sweep.closed,
+            sweepSkipped: sweep.skipped,
           },
           "Provider run complete",
         );
@@ -299,6 +331,33 @@ export class SchedulerService {
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
+    // ── Global sweeps ────────────────────────────────────────────────────────
+    // Unlike the per-config sweep these are not conditional on any fetch: they
+    // read only our own columns (postedDate, deadline), so an upstream outage
+    // cannot make them close the wrong thing. A failure here must not fail the
+    // ingestion run that already succeeded, so each is caught separately.
+    try {
+      const aggregatorSweep = await closeStaleAggregatorJobs({
+        maxAgeDays: getMaxAgeDays(),
+      });
+      totalClosed += aggregatorSweep.closed;
+    } catch (err) {
+      logger.error(
+        { err },
+        "Aggregator age sweep failed — ingestion results are unaffected",
+      );
+    }
+
+    try {
+      const deadlineSweep = await closeExpiredDeadlineJobs();
+      totalClosed += deadlineSweep.closed;
+    } catch (err) {
+      logger.error(
+        { err },
+        "Expired-deadline sweep failed — ingestion results are unaffected",
+      );
+    }
+
     const finishedAt = new Date();
     const nextRunAt = new Date(Date.now() + this.intervalMs);
     metrics.recordSchedulerEnd(nextRunAt);
@@ -312,6 +371,7 @@ export class SchedulerService {
       totalInserted,
       totalUpdated,
       totalSkipped,
+      totalClosed,
       errors,
     };
 
@@ -322,6 +382,7 @@ export class SchedulerService {
         totalInserted,
         totalUpdated,
         totalSkipped,
+        totalClosed,
         errors,
       },
       "Scheduler run finished",
@@ -354,6 +415,7 @@ export class SchedulerService {
     }
 
     const start = Date.now();
+    const runStartedAt = new Date(start);
     const rawJobs = await provider.fetchJobs(config);
 
     const normalizedJobs: NonNullable<
@@ -364,12 +426,25 @@ export class SchedulerService {
       if (normalized !== null) normalizedJobs.push(normalized);
     }
 
-    const upsertResults =
-      await deduplicationService.upsertBatch(normalizedJobs);
+    const upsertResults = await deduplicationService.upsertBatch(
+      normalizedJobs,
+      { seenAt: runStartedAt },
+    );
 
     const inserted = upsertResults.filter((r) => r.action === "insert").length;
     const updated = upsertResults.filter((r) => r.action === "update").length;
     const skipped = upsertResults.filter((r) => r.action === "skip").length;
+
+    // Same guarded sweep as runAll. The manual trigger routes hit this path, so
+    // leaving it out would mean a hand-run sync silently stopped closing jobs.
+    const sweep = await closeUnseenJobs({
+      sourcePlatform: providerName,
+      companyIds: normalizedJobs.map((j) => j.companyId),
+      runStartedAt,
+      fetchedCount: rawJobs.length,
+      persistedCount: upsertResults.length,
+      companySlug,
+    });
 
     metrics.recordSuccess(
       providerName,
@@ -398,6 +473,7 @@ export class SchedulerService {
       jobs: rawJobs,
       rawCount: rawJobs.length,
       durationMs: Date.now() - start,
+      jobsClosed: sweep.closed,
     };
   }
 
@@ -410,6 +486,7 @@ export class SchedulerService {
       totalInserted: 0,
       totalUpdated: 0,
       totalSkipped: 0,
+      totalClosed: 0,
       errors: 0,
     };
   }
