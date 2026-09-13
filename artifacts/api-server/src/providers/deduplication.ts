@@ -13,10 +13,19 @@
  * Update  — sourceUrl exists but title, location, or deadline changed.
  * Skip    — sourceUrl exists and no tracked field changed.
  *
+ * LAST-SEEN STAMPING
+ * ───────────────────
+ * Every decision above stamps `lastSeenAt`, including "skip". A skip means the
+ * provider IS still listing that posting and simply hasn't changed it, which is
+ * exactly the evidence the staleness sweep in `staleness.ts` needs. Treating a
+ * skip as "not seen" would close every unchanged job on the next run.
+ *
+ * Skips are stamped with one batched UPDATE rather than a write per row, so a
+ * steady-state run where nothing changed still costs a single statement.
+ *
  * FUTURE IMPROVEMENTS
  * ────────────────────
  * - Add a content hash column to detect description-only updates.
- * - Track a "last seen" timestamp per posting for stale-detection.
  * - Batch DB lookups instead of per-job queries.
  */
 
@@ -35,9 +44,22 @@ const TRACKED_FIELDS = [
 ] as const;
 type TrackedField = (typeof TRACKED_FIELDS)[number];
 
+/** Rows per lastSeenAt stamping UPDATE — the free-tier instance has 512 MB. */
+const SEEN_STAMP_BATCH_SIZE = 500;
+
 export interface UpsertResult {
   action: DedupeAction;
   id: string;
+}
+
+export interface UpsertBatchOptions {
+  /**
+   * Timestamp written to `lastSeenAt` for every row this batch touches.
+   * The caller passes the run's start time so that "seen this run" is a single
+   * instant, and the sweep's `lastSeenAt < runStartedAt` comparison cannot race
+   * a long-running batch.
+   */
+  seenAt?: Date;
 }
 
 export class DeduplicationService {
@@ -46,9 +68,15 @@ export class DeduplicationService {
    * Returns parallel array of UpsertResult after performing inserts/updates.
    *
    * @param jobs — normalized jobs from a single provider+company run
+   * @param options.seenAt — instant stamped onto every touched row's lastSeenAt
    */
-  async upsertBatch(jobs: InsertJob[]): Promise<UpsertResult[]> {
+  async upsertBatch(
+    jobs: InsertJob[],
+    options: UpsertBatchOptions = {},
+  ): Promise<UpsertResult[]> {
     if (jobs.length === 0) return [];
+
+    const seenAt = options.seenAt ?? new Date();
 
     // Collect all sourceUrls for a single DB query
     const sourceUrls = jobs
@@ -81,6 +109,8 @@ export class DeduplicationService {
     const existingByUrl = new Map(existing.map((row) => [row.sourceUrl, row]));
 
     const results: UpsertResult[] = [];
+    /** Ids of unchanged rows, stamped together once the loop finishes. */
+    const skippedIds: string[] = [];
 
     for (const job of jobs) {
       const existingRow = job.sourceUrl
@@ -91,7 +121,7 @@ export class DeduplicationService {
         // INSERT
         const [inserted] = await db
           .insert(jobsTable)
-          .values(job)
+          .values({ ...job, lastSeenAt: seenAt })
           .returning({ id: jobsTable.id });
         results.push({ action: "insert", id: inserted.id });
       } else {
@@ -117,13 +147,24 @@ export class DeduplicationService {
         if (changed) {
           await db
             .update(jobsTable)
-            .set({ ...job, updatedAt: new Date() })
+            .set({ ...job, lastSeenAt: seenAt, updatedAt: new Date() })
             .where(eq(jobsTable.id, existingRow.id));
           results.push({ action: "update", id: existingRow.id });
         } else {
+          skippedIds.push(existingRow.id);
           results.push({ action: "skip", id: existingRow.id });
         }
       }
+    }
+
+    // One statement for the whole unchanged tail. `updatedAt` is deliberately
+    // left alone: nothing about the posting changed, only our sighting of it.
+    for (let i = 0; i < skippedIds.length; i += SEEN_STAMP_BATCH_SIZE) {
+      const batch = skippedIds.slice(i, i + SEEN_STAMP_BATCH_SIZE);
+      await db
+        .update(jobsTable)
+        .set({ lastSeenAt: seenAt })
+        .where(inArray(jobsTable.id, batch));
     }
 
     return results;

@@ -294,6 +294,11 @@ export interface Job {
   /** @nullable */
   postedDate?: string | null;
   status: JobStatus;
+  /**
+     * Last time a provider run observed this posting in its upstream listing. Null for rows never covered by a sweep. Internal staleness bookkeeping — clients should not branch on it.
+     * @nullable
+     */
+  lastSeenAt?: string | null;
   /** @nullable */
   description?: string | null;
   /** @nullable */

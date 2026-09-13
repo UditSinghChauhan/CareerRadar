@@ -19,6 +19,7 @@ import {
   type Company,
 } from "@workspace/db";
 import { type PaginationParams, buildPaginatedResult } from "../lib/pagination";
+import { companyColumns, jobColumns } from "./columns";
 
 export type JobWithCompany = Job & { company: Company };
 
@@ -35,54 +36,7 @@ export interface JobFilters {
 
 function buildJobSelect() {
   return db
-    .select({
-      id: jobsTable.id,
-      companyId: jobsTable.companyId,
-      sourceId: jobsTable.sourceId,
-      title: jobsTable.title,
-      department: jobsTable.department,
-      location: jobsTable.location,
-      country: jobsTable.country,
-      workMode: jobsTable.workMode,
-      jobType: jobsTable.jobType,
-      salaryMin: jobsTable.salaryMin,
-      salaryMax: jobsTable.salaryMax,
-      stipend: jobsTable.stipend,
-      currency: jobsTable.currency,
-      eligibleBatch: jobsTable.eligibleBatch,
-      eligibleBranches: jobsTable.eligibleBranches,
-      minCgpa: jobsTable.minCgpa,
-      requiredSkills: jobsTable.requiredSkills,
-      experienceMin: jobsTable.experienceMin,
-      experienceMax: jobsTable.experienceMax,
-      deadline: jobsTable.deadline,
-      applyUrl: jobsTable.applyUrl,
-      sourcePlatform: jobsTable.sourcePlatform,
-      sourceUrl: jobsTable.sourceUrl,
-      postedDate: jobsTable.postedDate,
-      status: jobsTable.status,
-      description: jobsTable.description,
-      requirements: jobsTable.requirements,
-      benefits: jobsTable.benefits,
-      selectionProcess: jobsTable.selectionProcess,
-      createdAt: jobsTable.createdAt,
-      updatedAt: jobsTable.updatedAt,
-      company: {
-        id: companiesTable.id,
-        name: companiesTable.name,
-        slug: companiesTable.slug,
-        logoUrl: companiesTable.logoUrl,
-        website: companiesTable.website,
-        industry: companiesTable.industry,
-        description: companiesTable.description,
-        headquarters: companiesTable.headquarters,
-        size: companiesTable.size,
-        type: companiesTable.type,
-        linkedinUrl: companiesTable.linkedinUrl,
-        createdAt: companiesTable.createdAt,
-        updatedAt: companiesTable.updatedAt,
-      },
-    })
+    .select({ ...jobColumns, company: companyColumns })
     .from(jobsTable)
     .innerJoin(companiesTable, eq(jobsTable.companyId, companiesTable.id));
 }
