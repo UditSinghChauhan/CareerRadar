@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "./schema";
 import { normalizeConnectionString } from "./connection-string";
+import { getConnectTimeoutMs } from "./connect-timeout";
 
 const { Pool } = pg;
 
@@ -16,8 +17,16 @@ export const pool = new Pool({
   // emitting pg's deprecation warning on every connection. See
   // ./connection-string.ts for why this is the right side of that change.
   connectionString: normalizeConnectionString(process.env.DATABASE_URL),
+  // Bound the connection attempt. pg's default is 0 — wait until the kernel
+  // gives up, ~127s later, with a bare ETIMEDOUT and no context. See
+  // ./connect-timeout.ts.
+  connectionTimeoutMillis: getConnectTimeoutMs(),
 });
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";
 export { normalizeConnectionString } from "./connection-string";
+export {
+  DEFAULT_CONNECT_TIMEOUT_MS,
+  getConnectTimeoutMs,
+} from "./connect-timeout";
