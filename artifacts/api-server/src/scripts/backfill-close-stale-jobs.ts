@@ -9,6 +9,13 @@
  * the aggregator rows (RemoteOK, Remotive, Adzuna, JSearch) are never re-listed
  * at all. This script clears that backlog once.
  *
+ * SCOPE: aggregator rows only (RemoteOK, Remotive, Adzuna, JSearch). Age is
+ * only evidence of death where absence is not. An ATS board enumerates an
+ * employer's open roles completely, so a Greenhouse or Lever posting that is
+ * still listed is still open however old it is — closing those by age would
+ * have wrongly closed 84 live postings on the live table. `closeUnseenJobs` is
+ * the authority for ATS platforms.
+ *
  * SAFETY
  * ───────
  * Report-only by default. It prints the number of rows it WOULD close and exits
@@ -43,7 +50,12 @@
 import { createInterface } from "node:readline/promises";
 import { count, eq } from "drizzle-orm";
 import { db, jobsTable, pool } from "@workspace/db";
-import { closeJobsOlderThan, findJobsOlderThan } from "../providers/staleness";
+import {
+  AGGREGATOR_PLATFORMS,
+  closeAggregatorJobsOlderThan,
+  surveyJobsOlderThan,
+  type PlatformCount,
+} from "../providers/staleness";
 import {
   AbortedError,
   confirmationMatchesHost,
@@ -51,6 +63,11 @@ import {
   UsageError,
   type DatabaseTarget,
 } from "../lib/backfill-target";
+import {
+  diagnoseConnection,
+  formatDiagnosis,
+  isConnectionFailure,
+} from "../lib/connection-diagnosis";
 import { formatError } from "../lib/describe-error";
 import { logger } from "../lib/logger";
 
@@ -102,6 +119,15 @@ async function activeJobCount(): Promise<number> {
     .from(jobsTable)
     .where(eq(jobsTable.status, "active"));
   return row?.value ?? 0;
+}
+
+/** "  (lever 58, greenhouse 26)", or "" when there is nothing to break down. */
+function describe(counts: PlatformCount[]): string {
+  if (counts.length === 0) return "";
+  const parts = counts.map(
+    (c) => `${c.platform ?? "(no platform)"} ${c.count}`,
+  );
+  return `  (${parts.join(", ")})`;
 }
 
 /**
@@ -173,7 +199,8 @@ async function main(): Promise<void> {
   const activeBefore = await activeJobCount();
   if (!target.isLocal) warnRemoteTarget(target.host, activeBefore);
 
-  const { cutoff, count: staleCount } = await findJobsOlderThan(days);
+  const survey = await surveyJobsOlderThan(days);
+  const { cutoff, closableCount: staleCount } = survey;
 
   console.log("");
   console.log("  Backfill — close stale jobs");
@@ -182,7 +209,9 @@ async function main(): Promise<void> {
   console.log(`  Cutoff              postedDate older than ${days} days`);
   console.log(`                      (${cutoff.toISOString()})`);
   console.log(`  Active jobs now     ${activeBefore}`);
-  console.log(`  Would close         ${staleCount}`);
+  console.log(
+    `  Would close         ${staleCount}${describe(survey.closable)}`,
+  );
   console.log(
     `  Active after        ${activeBefore - staleCount}${
       activeBefore > 0
@@ -190,6 +219,22 @@ async function main(): Promise<void> {
         : ""
     }`,
   );
+  console.log("");
+  console.log(
+    `  Past the cutoff but left alone: ${survey.excludedCount}${describe(survey.excluded)}`,
+  );
+  console.log(
+    "  Age alone only closes aggregator rows (" +
+      AGGREGATOR_PLATFORMS.join(", ") +
+      ").",
+  );
+  console.log(
+    "  ATS boards list an employer's open roles completely, so a role still",
+  );
+  console.log(
+    "  listed there is still open however old it is — the last-seen sweep is",
+  );
+  console.log("  the only thing allowed to close those.");
   console.log("");
 
   if (!confirmed) {
@@ -208,7 +253,7 @@ async function main(): Promise<void> {
 
   if (staleCount === 0) {
     console.log("  Nothing to close. (Already clean — this script is safe to");
-    console.log("  re-run; it only ever touches rows still marked active.)");
+    console.log("  re-run; it only ever touches active aggregator rows.)");
     console.log("");
     return;
   }
@@ -229,12 +274,14 @@ async function main(): Promise<void> {
       cutoff,
       activeBefore,
       toClose: staleCount,
+      byPlatform: survey.closable,
+      excluded: survey.excluded,
     },
     `Backfill closing ${staleCount} job(s) older than ${days} days on ${target.host}`,
   );
 
   console.log(`  --yes given — closing ${staleCount} job(s)...`);
-  const { closed } = await closeJobsOlderThan(days);
+  const { closed } = await closeAggregatorJobsOlderThan(days);
   const activeAfter = await activeJobCount();
 
   // The exact number actually closed, which is not necessarily the number
@@ -275,7 +322,7 @@ async function main(): Promise<void> {
 }
 
 main()
-  .catch((err: unknown) => {
+  .catch(async (err: unknown) => {
     if (err instanceof UsageError) {
       // Caused by the invocation or a declined confirmation, not by the system.
       // The sentence is the message.
@@ -288,6 +335,20 @@ main()
     console.error("\n  Backfill failed.\n");
     console.error(formatError(err));
     console.error("");
+
+    // If we never reached the database, the error alone cannot say why — pg
+    // reports "timeout expired" with no address, and ETIMEDOUT reports an
+    // address with no explanation of why that one was chosen. Resolve and probe
+    // the target so the next report carries the answer instead of a symptom.
+    if (isConnectionFailure(err)) {
+      const diagnosis = await diagnoseConnection(
+        process.env["DATABASE_URL"] ?? "",
+      );
+      if (diagnosis) {
+        console.error(formatDiagnosis(diagnosis));
+        console.error("");
+      }
+    }
     process.exitCode = 1;
   })
   .finally(() => {

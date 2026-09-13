@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./schema": "./src/schema/index.ts",
-    "./connection-string": "./src/connection-string.ts"
+    "./connection-string": "./src/connection-string.ts",
+    "./connect-timeout": "./src/connect-timeout.ts"
   },
   "scripts": {
     "push": "drizzle-kit push --config ./drizzle.config.ts",

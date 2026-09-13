@@ -24,10 +24,12 @@ import { getTestDb, truncateAll, type TestDb } from "../test/pglite";
 import { deduplicationService } from "./deduplication";
 import {
   DEFAULT_MAX_AGE_DAYS,
+  closeAggregatorJobsOlderThan,
   closeExpiredDeadlineJobs,
   closeStaleAggregatorJobs,
   closeUnseenJobs,
   getMaxAgeDays,
+  surveyJobsOlderThan,
 } from "./staleness";
 
 const T0 = new Date("2026-09-01T00:00:00.000Z");
@@ -433,6 +435,125 @@ describe("staleness sweeps", () => {
       expect(
         (await closeStaleAggregatorJobs({ maxAgeDays: 45, now })).closed,
       ).toBe(0);
+    });
+  });
+
+  // ── The backfill's age cutoff ─────────────────────────────────────────────
+  describe("the backfill age cutoff excludes ATS platforms", () => {
+    /**
+     * The bug this pins down: the backfill applied its 60-day cutoff to every
+     * platform. Against the live table all 84 candidates were Lever (58) and
+     * Greenhouse (26) — ATS rows still listed upstream — so running it would
+     * have closed 84 live postings. Age is only evidence of death where absence
+     * is not, which is aggregators and nothing else.
+     */
+    const now = new Date("2026-09-13T00:00:00.000Z");
+    const old = new Date("2026-05-01T00:00:00.000Z"); // ~135 days
+
+    async function seedMixedBacklog() {
+      await db.insert(jobsTable).values([
+        providerJob(1, { sourcePlatform: "lever", postedDate: old }),
+        providerJob(2, { sourcePlatform: "lever", postedDate: old }),
+        providerJob(3, { sourcePlatform: "greenhouse", postedDate: old }),
+        providerJob(4, {
+          sourcePlatform: "remoteok",
+          sourceUrl: "https://remoteok.test/4",
+          postedDate: old,
+        }),
+        providerJob(5, {
+          sourcePlatform: "adzuna",
+          sourceUrl: "https://adzuna.test/5",
+          postedDate: old,
+        }),
+        // Young enough to be outside the cutoff on any platform.
+        providerJob(6, {
+          sourcePlatform: "remotive",
+          sourceUrl: "https://remotive.test/6",
+          postedDate: new Date("2026-09-10T00:00:00.000Z"),
+        }),
+      ]);
+    }
+
+    it("closes aggregator rows and leaves every ATS row active", async () => {
+      await seedMixedBacklog();
+
+      const { closed } = await closeAggregatorJobsOlderThan(60, now);
+
+      expect(closed).toBe(2);
+      expect(await statuses()).toEqual({
+        "SDE Intern 1": "active", // lever
+        "SDE Intern 2": "active", // lever
+        "SDE Intern 3": "active", // greenhouse
+        "SDE Intern 4": "closed", // remoteok
+        "SDE Intern 5": "closed", // adzuna
+        "SDE Intern 6": "active", // remotive, too recent
+      });
+    });
+
+    it("reports the ATS rows separately instead of counting them as closable", async () => {
+      await seedMixedBacklog();
+
+      const survey = await surveyJobsOlderThan(60, now);
+
+      expect(survey.closableCount).toBe(2);
+      expect(
+        Object.fromEntries(survey.closable.map((c) => [c.platform, c.count])),
+      ).toEqual({ remoteok: 1, adzuna: 1 });
+
+      expect(survey.excludedCount).toBe(3);
+      expect(
+        Object.fromEntries(survey.excluded.map((c) => [c.platform, c.count])),
+      ).toEqual({ lever: 2, greenhouse: 1 });
+    });
+
+    it("closes nothing at all when the backlog is entirely ATS", async () => {
+      await db
+        .insert(jobsTable)
+        .values([
+          providerJob(1, { sourcePlatform: "lever", postedDate: old }),
+          providerJob(2, { sourcePlatform: "greenhouse", postedDate: old }),
+        ]);
+
+      const survey = await surveyJobsOlderThan(60, now);
+      expect(survey.closableCount).toBe(0);
+      expect(survey.excludedCount).toBe(2);
+
+      const { closed } = await closeAggregatorJobsOlderThan(60, now);
+      expect(closed).toBe(0);
+      expect(await statuses()).toEqual({
+        "SDE Intern 1": "active",
+        "SDE Intern 2": "active",
+      });
+    });
+
+    it("leaves rows with no postedDate and no platform alone", async () => {
+      await db.insert(jobsTable).values([
+        providerJob(1, {
+          sourcePlatform: "remoteok",
+          sourceUrl: "https://remoteok.test/1",
+          postedDate: null,
+        }),
+        providerJob(2, { sourcePlatform: null, postedDate: old }),
+      ]);
+
+      const survey = await surveyJobsOlderThan(60, now);
+      expect(survey.closableCount).toBe(0);
+      // The platform-less row is past the cutoff, so it is reported — as
+      // excluded, never as closable.
+      expect(survey.excluded).toEqual([{ platform: null, count: 1 }]);
+
+      expect((await closeAggregatorJobsOlderThan(60, now)).closed).toBe(0);
+      expect(await statuses()).toEqual({
+        "SDE Intern 1": "active",
+        "SDE Intern 2": "active",
+      });
+    });
+
+    it("is idempotent", async () => {
+      await seedMixedBacklog();
+      expect((await closeAggregatorJobsOlderThan(60, now)).closed).toBe(2);
+      expect((await closeAggregatorJobsOlderThan(60, now)).closed).toBe(0);
+      expect((await surveyJobsOlderThan(60, now)).closableCount).toBe(0);
     });
   });
 

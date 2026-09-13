@@ -312,19 +312,44 @@ export async function closeExpiredDeadlineJobs(
   return { closed: closedIds.length, closedIds, skipped: null };
 }
 
+/** A row of the backfill's platform breakdown. `platform` is null for rows that carry none. */
+export interface PlatformCount {
+  platform: string | null;
+  count: number;
+}
+
+export interface AgeCutoffSurvey {
+  cutoff: Date;
+  /** Aggregator rows past the cutoff — the only ones age alone may close. */
+  closable: PlatformCount[];
+  closableCount: number;
+  /** Rows past the cutoff on every other platform. Left alone on purpose. */
+  excluded: PlatformCount[];
+  excludedCount: number;
+}
+
 /**
- * Count active jobs older than `days`, without touching a row. Shared by the
- * backfill script so its dry run and its (future) write path agree on the
- * definition of "stale" by construction rather than by two copies of a WHERE.
+ * What does the age cutoff actually see, broken down by platform?
+ *
+ * WHY THE BREAKDOWN, AND NOT JUST A COUNT
+ * ────────────────────────────────────────
+ * The backfill used to report one number for every platform at once, and on the
+ * live table all 84 of those rows turned out to be Lever (58) and Greenhouse
+ * (26) — ATS postings still listed upstream, which the age rule has no business
+ * closing. A single total hid that; the split makes it impossible to miss, and
+ * the caller prints both halves so the exclusion is visible rather than implied.
  */
-export async function findJobsOlderThan(
+export async function surveyJobsOlderThan(
   days: number,
   now: Date = new Date(),
-): Promise<{ cutoff: Date; count: number }> {
+): Promise<AgeCutoffSurvey> {
   const cutoff = new Date(now.getTime() - days * MS_PER_DAY);
 
-  const [row] = await db
-    .select({ count: sql<number>`count(*)::int` })
+  const rows = await db
+    .select({
+      platform: jobsTable.sourcePlatform,
+      count: sql<number>`count(*)::int`,
+    })
     .from(jobsTable)
     .where(
       and(
@@ -332,13 +357,48 @@ export async function findJobsOlderThan(
         isNotNull(jobsTable.postedDate),
         lt(jobsTable.postedDate, cutoff),
       ),
-    );
+    )
+    .groupBy(jobsTable.sourcePlatform);
 
-  return { cutoff, count: row?.count ?? 0 };
+  const byCountDesc = (a: PlatformCount, b: PlatformCount) => b.count - a.count;
+  const closable = rows
+    .filter((r) => r.platform !== null && isAggregatorPlatform(r.platform))
+    .sort(byCountDesc);
+  const excluded = rows
+    .filter((r) => r.platform === null || !isAggregatorPlatform(r.platform))
+    .sort(byCountDesc);
+  const total = (list: PlatformCount[]) =>
+    list.reduce((sum, r) => sum + r.count, 0);
+
+  return {
+    cutoff,
+    closable,
+    closableCount: total(closable),
+    excluded,
+    excludedCount: total(excluded),
+  };
 }
 
-/** Page through stale ids so the backfill never loads the whole table into memory. */
-export async function closeJobsOlderThan(
+/**
+ * Close aggregator jobs older than `days`, paging so the backfill never loads
+ * the whole table into memory.
+ *
+ * SCOPED TO AGGREGATORS, DELIBERATELY
+ * ────────────────────────────────────
+ * Age is only evidence of death where absence is not. RemoteOK, Remotive,
+ * Adzuna and JSearch answer search queries, so a row that has aged out of their
+ * results can never be confirmed closed any other way. An ATS board is the
+ * opposite: Greenhouse and Lever enumerate an employer's open roles completely,
+ * and a role posted eight months ago and still listed today is still open —
+ * companies genuinely leave graduate pipelines up for a year. `closeUnseenJobs`
+ * is the authority for those platforms, and it is the only thing allowed to
+ * close them.
+ *
+ * This mirrors the scoping `closeStaleAggregatorJobs` already applies to the
+ * scheduled sweep; the backfill is the same rule applied once to the backlog,
+ * so it has to carry the same restriction.
+ */
+export async function closeAggregatorJobsOlderThan(
   days: number,
   now: Date = new Date(),
 ): Promise<{ cutoff: Date; closed: number }> {
@@ -352,6 +412,7 @@ export async function closeJobsOlderThan(
       .where(
         and(
           eq(jobsTable.status, "active"),
+          inArray(jobsTable.sourcePlatform, [...AGGREGATOR_PLATFORMS]),
           isNotNull(jobsTable.postedDate),
           lt(jobsTable.postedDate, cutoff),
         ),
