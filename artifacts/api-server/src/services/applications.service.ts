@@ -33,7 +33,10 @@ export const applicationsService = {
     const job = await jobsRepository.findById(data.jobId);
     if (!job) throw new Error(`Job "${data.jobId}" not found`);
 
-    const existing = await applicationsRepository.findByJobId(clerkId, data.jobId);
+    const existing = await applicationsRepository.findByJobId(
+      clerkId,
+      data.jobId,
+    );
     if (existing) throw new Error("You have already applied to this job");
 
     return applicationsRepository.create({

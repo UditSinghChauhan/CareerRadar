@@ -40,7 +40,9 @@ export class WellfoundProvider extends AbstractProvider {
    */
   readonly hasPublicApi = false;
 
-  protected async doFetch(_config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    _config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     // Will not be called while hasPublicApi = false.
     return [];
   }

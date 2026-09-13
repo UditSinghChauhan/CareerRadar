@@ -68,9 +68,14 @@ export abstract class CompanyCareersProvider extends AbstractProvider {
   protected abstract get endpointUrl(): string;
 
   /** Parse the raw API response into ProviderJob objects. */
-  protected abstract parseJobs(raw: unknown, config: CompanyProviderConfig): ProviderJob[];
+  protected abstract parseJobs(
+    raw: unknown,
+    config: CompanyProviderConfig,
+  ): ProviderJob[];
 
-  protected async doFetch(config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const url = config.providerId || this.endpointUrl;
     const raw = await httpGet<unknown>(url);
     return this.parseJobs(raw, config);
@@ -114,13 +119,18 @@ export class SmartRecruitersProvider extends AbstractProvider {
   readonly displayName = "SmartRecruiters";
   readonly hasPublicApi = true;
 
-  protected async doFetch(config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const url = `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(config.providerId)}/postings?status=PUBLISHED&limit=100`;
     const data = await httpGet<SmartRecruitersResponse>(url);
     return data.content.map((p) => this.normalize(p, config));
   }
 
-  private normalize(p: SmartRecruitersPosting, config: CompanyProviderConfig): ProviderJob {
+  private normalize(
+    p: SmartRecruitersPosting,
+    config: CompanyProviderConfig,
+  ): ProviderJob {
     const city = p.location?.city ?? "";
     const country = p.location?.country ?? "";
     const locationStr = [city, country].filter(Boolean).join(", ");
@@ -134,7 +144,9 @@ export class SmartRecruitersProvider extends AbstractProvider {
       location: locationStr || undefined,
       country: country || undefined,
       workMode: p.location?.remote ? "remote" : this.inferWorkMode(locationStr),
-      jobType: this.inferJobType(p.name + " " + (p.typeOfEmployment?.label ?? "")),
+      jobType: this.inferJobType(
+        p.name + " " + (p.typeOfEmployment?.label ?? ""),
+      ),
       description: p.jobAd?.sections?.jobDescription?.text,
       sourceUrl: p.ref,
       applyUrl: p.ref,

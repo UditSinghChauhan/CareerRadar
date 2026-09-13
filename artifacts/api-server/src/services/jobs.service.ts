@@ -16,9 +16,7 @@ export const jobsService = {
       eligibleBatch: rawQuery.eligibleBatch
         ? Number(rawQuery.eligibleBatch)
         : undefined,
-      minCgpaLte: rawQuery.minCgpaLte
-        ? Number(rawQuery.minCgpaLte)
-        : undefined,
+      minCgpaLte: rawQuery.minCgpaLte ? Number(rawQuery.minCgpaLte) : undefined,
       deadlineBefore: rawQuery.deadlineBefore
         ? new Date(rawQuery.deadlineBefore as string)
         : undefined,
@@ -89,9 +87,13 @@ export const jobsService = {
 
     const updateData: Record<string, unknown> = { ...data };
     if (data.deadline) updateData.deadline = new Date(data.deadline as string);
-    if (data.postedDate) updateData.postedDate = new Date(data.postedDate as string);
+    if (data.postedDate)
+      updateData.postedDate = new Date(data.postedDate as string);
 
-    return jobsRepository.update(id, updateData as Parameters<typeof jobsRepository.update>[1]);
+    return jobsRepository.update(
+      id,
+      updateData as Parameters<typeof jobsRepository.update>[1],
+    );
   },
 
   async close(id: string) {

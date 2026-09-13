@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, profilesTable } from "@workspace/db";
-import { requireAuth, type AuthenticatedRequest } from "../middlewares/requireAuth";
+import {
+  requireAuth,
+  type AuthenticatedRequest,
+} from "../middlewares/requireAuth";
 import { applicationsRepository } from "../repositories/applications.repository";
 import { bookmarksRepository } from "../repositories/bookmarks.repository";
 import { jobsRepository } from "../repositories/jobs.repository";
@@ -12,15 +15,25 @@ router.get("/dashboard/summary", requireAuth, async (req, res) => {
   const { clerkUserId } = req as AuthenticatedRequest;
 
   try {
-    const [profile, totalApplications, byStatus, bookmarksCount, activeJobsCount, upcomingDeadlines] =
-      await Promise.all([
-        db.select().from(profilesTable).where(eq(profilesTable.clerkId, clerkUserId)).then((r) => r[0] ?? null),
-        applicationsRepository.countAll(clerkUserId),
-        applicationsRepository.countByStatuses(clerkUserId),
-        bookmarksRepository.count(clerkUserId),
-        jobsRepository.countActive(),
-        jobsRepository.countClosingSoon(7),
-      ]);
+    const [
+      profile,
+      totalApplications,
+      byStatus,
+      bookmarksCount,
+      activeJobsCount,
+      upcomingDeadlines,
+    ] = await Promise.all([
+      db
+        .select()
+        .from(profilesTable)
+        .where(eq(profilesTable.clerkId, clerkUserId))
+        .then((r) => r[0] ?? null),
+      applicationsRepository.countAll(clerkUserId),
+      applicationsRepository.countByStatuses(clerkUserId),
+      bookmarksRepository.count(clerkUserId),
+      jobsRepository.countActive(),
+      jobsRepository.countClosingSoon(7),
+    ]);
 
     let profileCompleteness = 0;
     if (profile) {

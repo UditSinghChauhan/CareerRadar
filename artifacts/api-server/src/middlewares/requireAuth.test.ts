@@ -23,7 +23,9 @@ describe("requireAuth", () => {
   });
 
   it("responds 401 and does not call next() when there is no Clerk session", () => {
-    mockGetAuth.mockReturnValue({ userId: undefined } as unknown as ReturnType<typeof getAuth>);
+    mockGetAuth.mockReturnValue({ userId: undefined } as unknown as ReturnType<
+      typeof getAuth
+    >);
     const req = {} as Request;
     const res = makeRes();
     const next = vi.fn() as unknown as NextFunction;
@@ -36,7 +38,9 @@ describe("requireAuth", () => {
   });
 
   it("responds 401 when getAuth returns no auth object at all", () => {
-    mockGetAuth.mockReturnValue(undefined as unknown as ReturnType<typeof getAuth>);
+    mockGetAuth.mockReturnValue(
+      undefined as unknown as ReturnType<typeof getAuth>,
+    );
     const req = {} as Request;
     const res = makeRes();
     const next = vi.fn() as unknown as NextFunction;
@@ -48,7 +52,9 @@ describe("requireAuth", () => {
   });
 
   it("attaches clerkUserId and calls next() when a session is present", () => {
-    mockGetAuth.mockReturnValue({ userId: "user_123" } as unknown as ReturnType<typeof getAuth>);
+    mockGetAuth.mockReturnValue({ userId: "user_123" } as unknown as ReturnType<
+      typeof getAuth
+    >);
     const req = {} as Request;
     const res = makeRes();
     const next = vi.fn() as unknown as NextFunction;

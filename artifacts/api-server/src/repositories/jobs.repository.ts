@@ -1,4 +1,15 @@
-import { and, asc, count, desc, eq, ilike, isNull, lte, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  isNull,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import {
   db,
   jobsTable,
@@ -137,7 +148,11 @@ export const jobsRepository = {
         .where(where),
     ]);
 
-    return buildPaginatedResult(rows as JobWithCompany[], Number(countResult[0].value), pagination);
+    return buildPaginatedResult(
+      rows as JobWithCompany[],
+      Number(countResult[0].value),
+      pagination,
+    );
   },
 
   async findById(id: string): Promise<JobWithCompany | null> {
@@ -192,7 +207,10 @@ export const jobsRepository = {
     return job!;
   },
 
-  async update(id: string, data: Partial<InsertJob>): Promise<JobWithCompany | null> {
+  async update(
+    id: string,
+    data: Partial<InsertJob>,
+  ): Promise<JobWithCompany | null> {
     await db
       .update(jobsTable)
       .set({ ...data, updatedAt: new Date() })

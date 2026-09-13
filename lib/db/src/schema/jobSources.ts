@@ -6,7 +6,9 @@ export const jobSourcesTable = pgTable("job_sources", {
   baseUrl: text("base_url"),
   logoUrl: text("logo_url"),
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export type JobSource = typeof jobSourcesTable.$inferSelect;

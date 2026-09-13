@@ -45,7 +45,10 @@ router.get("/sync/status", async (_req, res) => {
         totalUpdated: sql<number>`sum(${providerSyncLogsTable.jobsUpdated})::int`,
       })
       .from(providerSyncLogsTable)
-      .groupBy(providerSyncLogsTable.providerName, providerSyncLogsTable.companySlug),
+      .groupBy(
+        providerSyncLogsTable.providerName,
+        providerSyncLogsTable.companySlug,
+      ),
   ]);
 
   res.json({
@@ -63,7 +66,8 @@ router.post("/sync/all", requireAuth, (req, res) => {
 
   if (enabled.length === 0) {
     res.status(422).json({
-      message: "No enabled provider configs. Enable at least one company in providers/config.ts.",
+      message:
+        "No enabled provider configs. Enable at least one company in providers/config.ts.",
       hint: "Set `enabled: true` on a config entry and restart the server.",
     });
     return;
@@ -87,11 +91,15 @@ router.post("/sync/provider/:provider", requireAuth, async (req, res) => {
   const providerName = req.params["provider"] as string;
 
   if (!providerRegistry.has(providerName)) {
-    res.status(404).json({ error: `Provider "${providerName}" is not registered` });
+    res
+      .status(404)
+      .json({ error: `Provider "${providerName}" is not registered` });
     return;
   }
 
-  const configs = getEnabledConfigs().filter((c) => c.providerName === providerName);
+  const configs = getEnabledConfigs().filter(
+    (c) => c.providerName === providerName,
+  );
 
   if (configs.length === 0) {
     res.status(422).json({
@@ -105,7 +113,10 @@ router.post("/sync/provider/:provider", requireAuth, async (req, res) => {
 
   for (const config of configs) {
     try {
-      const result = await schedulerService.runOne(providerName, config.companySlug);
+      const result = await schedulerService.runOne(
+        providerName,
+        config.companySlug,
+      );
       results.push({
         companySlug: config.companySlug,
         status: "success",
@@ -114,7 +125,10 @@ router.post("/sync/provider/:provider", requireAuth, async (req, res) => {
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      req.log.error({ err, providerName, companySlug: config.companySlug }, "Provider sync failed");
+      req.log.error(
+        { err, providerName, companySlug: config.companySlug },
+        "Provider sync failed",
+      );
       results.push({
         companySlug: config.companySlug,
         status: "failure",
@@ -129,30 +143,39 @@ router.post("/sync/provider/:provider", requireAuth, async (req, res) => {
 // ─── POST /api/sync/provider/:provider/company/:company ──────────────────────
 // Trigger a single provider+company combination.
 
-router.post("/sync/provider/:provider/company/:company", requireAuth, async (req, res) => {
-  const providerName = req.params["provider"] as string;
-  const companySlug = req.params["company"] as string;
+router.post(
+  "/sync/provider/:provider/company/:company",
+  requireAuth,
+  async (req, res) => {
+    const providerName = req.params["provider"] as string;
+    const companySlug = req.params["company"] as string;
 
-  if (!providerRegistry.has(providerName)) {
-    res.status(404).json({ error: `Provider "${providerName}" not registered` });
-    return;
-  }
+    if (!providerRegistry.has(providerName)) {
+      res
+        .status(404)
+        .json({ error: `Provider "${providerName}" not registered` });
+      return;
+    }
 
-  try {
-    const result = await schedulerService.runOne(providerName, companySlug);
-    res.json({
-      providerName,
-      companySlug,
-      status: "success",
-      jobsFetched: result.rawCount,
-      durationMs: result.durationMs,
-    });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    req.log.error({ err, providerName, companySlug }, "Single provider sync failed");
-    res.status(500).json({ error: msg });
-  }
-});
+    try {
+      const result = await schedulerService.runOne(providerName, companySlug);
+      res.json({
+        providerName,
+        companySlug,
+        status: "success",
+        jobsFetched: result.rawCount,
+        durationMs: result.durationMs,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      req.log.error(
+        { err, providerName, companySlug },
+        "Single provider sync failed",
+      );
+      res.status(500).json({ error: msg });
+    }
+  },
+);
 
 // ─── GET /api/sync/verify ─────────────────────────────────────────────────────
 // Runs live HTTP checks against all configured endpoints and returns a report.

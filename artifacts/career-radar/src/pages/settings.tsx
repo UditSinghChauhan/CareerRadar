@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useTheme } from "next-themes";
-import { 
-  useGetSettings, 
-  useUpdateSettings, 
-  getGetSettingsQueryKey 
+import {
+  useGetSettings,
+  useUpdateSettings,
+  getGetSettingsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -19,11 +19,23 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { AlertCircle, RefreshCw, Save } from "lucide-react";
 
@@ -66,25 +78,29 @@ export function SettingsPage() {
   }, [settings, form, setTheme]);
 
   const onSubmit = (data: SettingsFormValues) => {
-    updateSettings.mutate({
-      data: {
-        emailNotifications: data.emailNotifications,
-        deadlineAlertDays: data.deadlineAlertDays,
-        theme: data.theme,
-        timezone: data.timezone,
-      }
-    }, {
-      onSuccess: () => {
-        toast.success("Settings updated successfully");
-        setTheme(data.theme);
-        queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
+    updateSettings.mutate(
+      {
+        data: {
+          emailNotifications: data.emailNotifications,
+          deadlineAlertDays: data.deadlineAlertDays,
+          theme: data.theme,
+          timezone: data.timezone,
+        },
       },
-      onError: (err) => {
-        toast.error("Failed to update settings", {
-          description: err instanceof Error ? err.message : "Unknown error occurred"
-        });
-      }
-    });
+      {
+        onSuccess: () => {
+          toast.success("Settings updated successfully");
+          setTheme(data.theme);
+          queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
+        },
+        onError: (err) => {
+          toast.error("Failed to update settings", {
+            description:
+              err instanceof Error ? err.message : "Unknown error occurred",
+          });
+        },
+      },
+    );
   };
 
   if (isLoading) {
@@ -134,7 +150,9 @@ export function SettingsPage() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-3xl">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your app preferences and alerts.</p>
+        <p className="text-muted-foreground mt-1">
+          Manage your app preferences and alerts.
+        </p>
       </div>
 
       <Card>
@@ -147,7 +165,6 @@ export function SettingsPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              
               <div className="space-y-6">
                 <FormField
                   control={form.control}
@@ -161,7 +178,10 @@ export function SettingsPage() {
                         </FormDescription>
                       </div>
                       <FormControl className="mt-2 sm:mt-0 w-[180px]">
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select theme" />
                           </SelectTrigger>
@@ -182,7 +202,9 @@ export function SettingsPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Email Notifications</FormLabel>
+                        <FormLabel className="text-base">
+                          Email Notifications
+                        </FormLabel>
                         <FormDescription>
                           Receive emails about upcoming deadlines.
                         </FormDescription>

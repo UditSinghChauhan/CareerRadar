@@ -40,7 +40,10 @@ class MetricsStore {
     return `${providerName}:${companySlug}`;
   }
 
-  private getOrCreate(providerName: string, companySlug: string): ProviderRunMetrics {
+  private getOrCreate(
+    providerName: string,
+    companySlug: string,
+  ): ProviderRunMetrics {
     const k = this.key(providerName, companySlug);
     if (!this.providerMetrics.has(k)) {
       this.providerMetrics.set(k, {
@@ -82,7 +85,11 @@ class MetricsStore {
     m.lastError = null;
   }
 
-  recordFailure(providerName: string, companySlug: string, error: string): void {
+  recordFailure(
+    providerName: string,
+    companySlug: string,
+    error: string,
+  ): void {
     const m = this.getOrCreate(providerName, companySlug);
     m.lastRunAt = new Date();
     m.totalRuns++;

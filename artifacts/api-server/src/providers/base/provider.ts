@@ -33,7 +33,9 @@ export abstract class AbstractProvider implements JobProvider {
    * Provider-specific fetch logic. Called only when `hasPublicApi` is true.
    * Must return normalized ProviderJob objects.
    */
-  protected abstract doFetch(config: CompanyProviderConfig): Promise<ProviderJob[]>;
+  protected abstract doFetch(
+    config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]>;
 
   async fetchJobs(config: CompanyProviderConfig): Promise<ProviderJob[]> {
     const tag = `${this.name}:${config.companySlug}`;
@@ -48,20 +50,33 @@ export abstract class AbstractProvider implements JobProvider {
     }
 
     const start = Date.now();
-    logger.info({ provider: this.name, companySlug: config.companySlug }, `[${tag}] Fetching jobs`);
+    logger.info(
+      { provider: this.name, companySlug: config.companySlug },
+      `[${tag}] Fetching jobs`,
+    );
 
     try {
       const jobs = await this.doFetch(config);
 
       logger.info(
-        { provider: this.name, companySlug: config.companySlug, count: jobs.length, ms: Date.now() - start },
+        {
+          provider: this.name,
+          companySlug: config.companySlug,
+          count: jobs.length,
+          ms: Date.now() - start,
+        },
         `[${tag}] Fetched ${jobs.length} jobs in ${Date.now() - start}ms`,
       );
 
       return jobs;
     } catch (err) {
       logger.error(
-        { err, provider: this.name, companySlug: config.companySlug, ms: Date.now() - start },
+        {
+          err,
+          provider: this.name,
+          companySlug: config.companySlug,
+          ms: Date.now() - start,
+        },
         `[${tag}] Fetch failed`,
       );
       throw err;
@@ -107,15 +122,21 @@ export abstract class AbstractProvider implements JobProvider {
     if (!location) return undefined;
     const l = location.toLowerCase();
     const indiaCities = [
-      "bengaluru", "bangalore",
-      "mumbai", "bombay",
+      "bengaluru",
+      "bangalore",
+      "mumbai",
+      "bombay",
       "pune",
       "hyderabad",
-      "chennai", "madras",
-      "delhi", "new delhi",
+      "chennai",
+      "madras",
+      "delhi",
+      "new delhi",
       "noida",
-      "gurugram", "gurgaon",
-      "kolkata", "calcutta",
+      "gurugram",
+      "gurgaon",
+      "kolkata",
+      "calcutta",
       "ahmedabad",
       "jaipur",
       "chandigarh",

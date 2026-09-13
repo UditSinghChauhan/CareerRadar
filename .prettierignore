@@ -3,3 +3,4 @@ dist
 **/generated/**
 **/.generated/**
 pnpm-lock.yaml
+*.md

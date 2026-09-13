@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, profilesTable } from "@workspace/db";
-import { requireAuth, type AuthenticatedRequest } from "../middlewares/requireAuth";
+import {
+  requireAuth,
+  type AuthenticatedRequest,
+} from "../middlewares/requireAuth";
 import { UpdateProfileBody } from "@workspace/api-zod";
 import { createClerkClient } from "@clerk/express";
 

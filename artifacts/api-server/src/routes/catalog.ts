@@ -40,7 +40,10 @@ const router = Router();
 // ─── GET /api/companies/catalog ───────────────────────────────────────────────
 
 router.get("/companies/catalog", (req, res) => {
-  const { active, verified, country, hiringCategory } = req.query as Record<string, string | undefined>;
+  const { active, verified, country, hiringCategory } = req.query as Record<
+    string,
+    string | undefined
+  >;
 
   let isActive: boolean | undefined;
   if (active === "true") isActive = true;
@@ -57,7 +60,9 @@ router.get("/companies/catalog", (req, res) => {
   }
 
   if (hiringCategory) {
-    entries = entries.filter((e) => e.hiringCategory === (hiringCategory as HiringCategory));
+    entries = entries.filter(
+      (e) => e.hiringCategory === (hiringCategory as HiringCategory),
+    );
   }
 
   res.json({
@@ -75,7 +80,10 @@ router.get("/companies/catalog/providers", (_req, res) => {
     name,
     count: getCatalog({ provider: name }).length,
     activeCount: getCatalog({ provider: name, isActive: true }).length,
-    verifiedCount: getCatalog({ provider: name, verificationStatus: "verified" }).length,
+    verifiedCount: getCatalog({
+      provider: name,
+      verificationStatus: "verified",
+    }).length,
   }));
 
   res.json({ providers: withCounts });

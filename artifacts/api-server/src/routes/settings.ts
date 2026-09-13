@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, settingsTable } from "@workspace/db";
-import { requireAuth, type AuthenticatedRequest } from "../middlewares/requireAuth";
+import {
+  requireAuth,
+  type AuthenticatedRequest,
+} from "../middlewares/requireAuth";
 import { UpdateSettingsBody } from "@workspace/api-zod";
 
 const router = Router();

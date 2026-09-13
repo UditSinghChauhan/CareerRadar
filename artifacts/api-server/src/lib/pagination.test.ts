@@ -7,7 +7,10 @@ describe("paginate", () => {
   });
 
   it("accepts valid numeric-string page and limit", () => {
-    expect(paginate({ page: "3", limit: "50" })).toEqual({ page: 3, limit: 50 });
+    expect(paginate({ page: "3", limit: "50" })).toEqual({
+      page: 3,
+      limit: 50,
+    });
   });
 
   it("clamps limit above 100 down to 100", () => {
@@ -30,7 +33,10 @@ describe("paginate", () => {
   });
 
   it("falls back to defaults for non-numeric input", () => {
-    expect(paginate({ page: "abc", limit: "xyz" })).toEqual({ page: 1, limit: 20 });
+    expect(paginate({ page: "abc", limit: "xyz" })).toEqual({
+      page: 1,
+      limit: 20,
+    });
   });
 });
 

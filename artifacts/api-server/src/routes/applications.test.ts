@@ -1,5 +1,18 @@
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
-import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  afterAll,
+  beforeEach,
+} from "vitest";
+import express, {
+  type Express,
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
 import type { Server } from "http";
 import type { AddressInfo } from "net";
 import { CreateApplicationBody } from "@workspace/api-zod";
@@ -48,7 +61,9 @@ describe("POST /api/applications", () => {
     // Minimal stand-in for the req.log that pino-http normally attaches —
     // the route's generic-500 catch branch calls req.log.error(...).
     app.use((req: Request, _res: Response, next: NextFunction) => {
-      (req as unknown as { log: { error: () => void } }).log = { error: () => {} };
+      (req as unknown as { log: { error: () => void } }).log = {
+        error: () => {},
+      };
       next();
     });
     app.use("/api", applicationsRouter);
@@ -70,7 +85,9 @@ describe("POST /api/applications", () => {
   beforeEach(() => {
     mockGetAuth.mockReset();
     mockCreate.mockReset();
-    mockGetAuth.mockReturnValue({ userId: "user_123" } as unknown as ReturnType<typeof getAuth>);
+    mockGetAuth.mockReturnValue({ userId: "user_123" } as unknown as ReturnType<
+      typeof getAuth
+    >);
   });
 
   it("400s on a body missing jobId, and never calls the service", async () => {
@@ -87,8 +104,15 @@ describe("POST /api/applications", () => {
   });
 
   it("201s and returns the created application on valid input", async () => {
-    const created = { id: "app_1", clerkId: "user_123", jobId: "job_1", status: "saved" };
-    mockCreate.mockResolvedValue(created as Awaited<ReturnType<typeof applicationsService.create>>);
+    const created = {
+      id: "app_1",
+      clerkId: "user_123",
+      jobId: "job_1",
+      status: "saved",
+    };
+    mockCreate.mockResolvedValue(
+      created as Awaited<ReturnType<typeof applicationsService.create>>,
+    );
 
     const res = await fetch(`${baseUrl}/api/applications`, {
       method: "POST",
@@ -98,11 +122,16 @@ describe("POST /api/applications", () => {
 
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual(created);
-    expect(mockCreate).toHaveBeenCalledWith("user_123", expect.objectContaining({ jobId: "job_1" }));
+    expect(mockCreate).toHaveBeenCalledWith(
+      "user_123",
+      expect.objectContaining({ jobId: "job_1" }),
+    );
   });
 
   it("409s when the service reports a duplicate application", async () => {
-    mockCreate.mockRejectedValue(new Error("You have already applied to this job"));
+    mockCreate.mockRejectedValue(
+      new Error("You have already applied to this job"),
+    );
 
     const res = await fetch(`${baseUrl}/api/applications`, {
       method: "POST",
@@ -130,7 +159,9 @@ describe("POST /api/applications", () => {
   });
 
   it("500s with a generic message for any other service error (does not leak the raw error message)", async () => {
-    mockCreate.mockRejectedValue(new Error("connection terminated unexpectedly"));
+    mockCreate.mockRejectedValue(
+      new Error("connection terminated unexpectedly"),
+    );
 
     const res = await fetch(`${baseUrl}/api/applications`, {
       method: "POST",

@@ -34,7 +34,10 @@ const STATUS_STAGES = [
   { key: "offered", label: "Offered", color: "hsl(142 70% 32%)" },
 ] as const;
 
-export function ApplicationChart({ summary, isLoading }: ApplicationChartProps) {
+export function ApplicationChart({
+  summary,
+  isLoading,
+}: ApplicationChartProps) {
   if (isLoading) {
     return (
       <Card className="flex flex-col">
@@ -66,7 +69,9 @@ export function ApplicationChart({ summary, isLoading }: ApplicationChartProps) 
   return (
     <Card className="flex flex-col">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold">Application Funnel</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Application Funnel
+        </CardTitle>
         <p className="text-xs text-muted-foreground">
           {totalApplications} total tracked
         </p>

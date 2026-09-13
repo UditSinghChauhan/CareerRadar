@@ -60,7 +60,10 @@ export async function withRetry<T>(
       lastErr = err;
 
       if (!isRetryable(err) || attempt === maxAttempts - 1) {
-        logger.warn({ err, label, attempt }, "Non-retryable error or max attempts reached");
+        logger.warn(
+          { err, label, attempt },
+          "Non-retryable error or max attempts reached",
+        );
         throw err;
       }
 
@@ -106,7 +109,7 @@ export async function httpGet<T>(
     const response = await fetch(url, {
       headers: {
         "User-Agent": "CareerRadar/0.2 (job-aggregator; contact via repo)",
-        "Accept": "application/json",
+        Accept: "application/json",
         ...headers,
       },
       signal: controller.signal,

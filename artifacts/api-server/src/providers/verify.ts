@@ -18,40 +18,64 @@ interface VerifyResult {
   companySlug: string;
   providerName: string;
   enabled: boolean;
-  status: "live" | "empty" | "broken" | "auth_required" | "no_public_api" | "skipped";
+  status:
+    | "live"
+    | "empty"
+    | "broken"
+    | "auth_required"
+    | "no_public_api"
+    | "skipped";
   jobCount?: number;
   error?: string;
   note?: string;
 }
 
-async function checkGreenhouse(slug: string, token: string): Promise<{ count: number }> {
+async function checkGreenhouse(
+  slug: string,
+  token: string,
+): Promise<{ count: number }> {
   const url = `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(token)}/jobs`;
   const res = await fetch(url, {
     headers: { "User-Agent": "CareerRadar/0.2", Accept: "application/json" },
     signal: AbortSignal.timeout(12_000),
   });
-  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  if (!res.ok)
+    throw Object.assign(new Error(`HTTP ${res.status}`), {
+      status: res.status,
+    });
   const data = (await res.json()) as { jobs?: unknown[]; error?: string };
   if (data.error) throw new Error(data.error);
   return { count: data.jobs?.length ?? 0 };
 }
 
-async function checkLever(slug: string, leverSlug: string): Promise<{ count: number }> {
+async function checkLever(
+  slug: string,
+  leverSlug: string,
+): Promise<{ count: number }> {
   const url = `https://api.lever.co/v0/postings/${encodeURIComponent(leverSlug)}?mode=json&limit=1`;
   const res = await fetch(url, {
     headers: { "User-Agent": "CareerRadar/0.2", Accept: "application/json" },
     signal: AbortSignal.timeout(12_000),
   });
-  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  if (!res.ok)
+    throw Object.assign(new Error(`HTTP ${res.status}`), {
+      status: res.status,
+    });
   const data = await res.json();
-  if (typeof data === "string" || (data !== null && typeof data === "object" && "message" in data)) {
+  if (
+    typeof data === "string" ||
+    (data !== null && typeof data === "object" && "message" in data)
+  ) {
     throw new Error(String((data as { message?: unknown }).message ?? data));
   }
   if (!Array.isArray(data)) throw new Error("Unexpected response shape");
   return { count: data.length };
 }
 
-async function checkAshby(slug: string, org: string): Promise<{ count: number }> {
+async function checkAshby(
+  slug: string,
+  org: string,
+): Promise<{ count: number }> {
   const res = await fetch("https://api.ashbyhq.com/posting-public/jobs", {
     method: "POST",
     headers: {
@@ -62,23 +86,34 @@ async function checkAshby(slug: string, org: string): Promise<{ count: number }>
     body: JSON.stringify({ organizationHostedJobsPageName: org }),
     signal: AbortSignal.timeout(12_000),
   });
-  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  if (!res.ok)
+    throw Object.assign(new Error(`HTTP ${res.status}`), {
+      status: res.status,
+    });
   const data = (await res.json()) as { results?: unknown[] };
   return { count: data.results?.length ?? 0 };
 }
 
-async function checkSmartRecruiters(slug: string, companyId: string): Promise<{ count: number }> {
+async function checkSmartRecruiters(
+  slug: string,
+  companyId: string,
+): Promise<{ count: number }> {
   const url = `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(companyId)}/postings?limit=1`;
   const res = await fetch(url, {
     headers: { "User-Agent": "CareerRadar/0.2", Accept: "application/json" },
     signal: AbortSignal.timeout(12_000),
   });
-  if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+  if (!res.ok)
+    throw Object.assign(new Error(`HTTP ${res.status}`), {
+      status: res.status,
+    });
   const data = (await res.json()) as { totalFound?: number };
   return { count: data.totalFound ?? 0 };
 }
 
-async function verifyOne(cfg: ReturnType<typeof getAllConfigs>[0]): Promise<VerifyResult> {
+async function verifyOne(
+  cfg: ReturnType<typeof getAllConfigs>[0],
+): Promise<VerifyResult> {
   const base: VerifyResult = {
     companySlug: cfg.companySlug,
     providerName: cfg.providerName,
@@ -103,9 +138,17 @@ async function verifyOne(cfg: ReturnType<typeof getAllConfigs>[0]): Promise<Veri
         result = await checkSmartRecruiters(cfg.companySlug, cfg.providerId);
         break;
       case "workday":
-        return { ...base, status: "no_public_api", note: "Workday CXS API requires browser session auth (HTTP 401). hasPublicApi=false." };
+        return {
+          ...base,
+          status: "no_public_api",
+          note: "Workday CXS API requires browser session auth (HTTP 401). hasPublicApi=false.",
+        };
       default:
-        return { ...base, status: "skipped", note: `Provider "${cfg.providerName}" not checkable via verify script.` };
+        return {
+          ...base,
+          status: "skipped",
+          note: `Provider "${cfg.providerName}" not checkable via verify script.`,
+        };
     }
 
     if (result.count === 0) {
@@ -141,7 +184,10 @@ export async function runVerification(): Promise<{
   const authRequired = results.filter((r) => r.status === "auth_required");
   const noPublicApi = results.filter((r) => r.status === "no_public_api");
 
-  return { results, summary: { working, empty, broken, authRequired, noPublicApi } };
+  return {
+    results,
+    summary: { working, empty, broken, authRequired, noPublicApi },
+  };
 }
 
 // Note: This module is imported by the Express route in routes/sync.ts.

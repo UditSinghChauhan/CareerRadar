@@ -19,8 +19,12 @@ export function NewOpportunities() {
             <p className="text-xs font-medium text-primary/80 uppercase tracking-wide mb-1">
               New Opportunities
             </p>
-            <p className="text-3xl font-bold text-primary tabular-nums">{total}</p>
-            <p className="text-xs text-primary/70 mt-1">Active listings right now</p>
+            <p className="text-3xl font-bold text-primary tabular-nums">
+              {total}
+            </p>
+            <p className="text-xs text-primary/70 mt-1">
+              Active listings right now
+            </p>
           </div>
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
             <TrendingUp className="h-5 w-5 text-primary" />

@@ -28,7 +28,9 @@ function TimelineItem({ job }: { job: Job }) {
     <div className="flex gap-4 group">
       {/* Timeline dot + line */}
       <div className="flex flex-col items-center">
-        <div className={`h-2.5 w-2.5 rounded-full mt-1 shrink-0 ${urgencyColor(days)}`} />
+        <div
+          className={`h-2.5 w-2.5 rounded-full mt-1 shrink-0 ${urgencyColor(days)}`}
+        />
         <div className="flex-1 w-px bg-border mt-1" />
       </div>
 
@@ -48,8 +50,12 @@ function TimelineItem({ job }: { job: Job }) {
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-sm font-medium leading-snug truncate">{job.title}</p>
-              <p className="text-xs text-muted-foreground truncate">{company?.name}</p>
+              <p className="text-sm font-medium leading-snug truncate">
+                {job.title}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {company?.name}
+              </p>
             </div>
           </div>
           {job.applyUrl && (
@@ -88,7 +94,9 @@ export function DeadlineTimeline() {
   return (
     <Card className="flex flex-col">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold">Upcoming Deadlines</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Upcoming Deadlines
+        </CardTitle>
         <p className="text-xs text-muted-foreground">Next 21 days</p>
       </CardHeader>
       <CardContent className="pb-2 overflow-y-auto max-h-72">

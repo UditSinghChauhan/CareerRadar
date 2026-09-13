@@ -30,7 +30,9 @@ async function queryBookmarksWithJob(where?: ReturnType<typeof and>) {
 
 export const bookmarksRepository = {
   async findAll(clerkId: string): Promise<BookmarkWithJob[]> {
-    return queryBookmarksWithJob(eq(bookmarksTable.clerkId, clerkId) as ReturnType<typeof and>);
+    return queryBookmarksWithJob(
+      eq(bookmarksTable.clerkId, clerkId) as ReturnType<typeof and>,
+    );
   },
 
   async findByJobId(clerkId: string, jobId: string): Promise<Bookmark | null> {
@@ -38,7 +40,10 @@ export const bookmarksRepository = {
       .select()
       .from(bookmarksTable)
       .where(
-        and(eq(bookmarksTable.clerkId, clerkId), eq(bookmarksTable.jobId, jobId)),
+        and(
+          eq(bookmarksTable.clerkId, clerkId),
+          eq(bookmarksTable.jobId, jobId),
+        ),
       );
     return row ?? null;
   },
@@ -56,7 +61,9 @@ export const bookmarksRepository = {
       .insert(bookmarksTable)
       .values({ clerkId, jobId })
       .returning();
-    const rows = await queryBookmarksWithJob(eq(bookmarksTable.id, row.id) as ReturnType<typeof and>);
+    const rows = await queryBookmarksWithJob(
+      eq(bookmarksTable.id, row.id) as ReturnType<typeof and>,
+    );
     return rows[0];
   },
 
@@ -64,7 +71,10 @@ export const bookmarksRepository = {
     const result = await db
       .delete(bookmarksTable)
       .where(
-        and(eq(bookmarksTable.clerkId, clerkId), eq(bookmarksTable.jobId, jobId)),
+        and(
+          eq(bookmarksTable.clerkId, clerkId),
+          eq(bookmarksTable.jobId, jobId),
+        ),
       )
       .returning({ id: bookmarksTable.id });
     return result.length > 0;

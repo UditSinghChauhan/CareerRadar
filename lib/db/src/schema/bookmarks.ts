@@ -1,4 +1,11 @@
-import { pgTable, text, timestamp, uuid, index, unique } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  index,
+  unique,
+} from "drizzle-orm/pg-core";
 import { jobsTable } from "./jobs";
 
 export const bookmarksTable = pgTable(
@@ -9,7 +16,9 @@ export const bookmarksTable = pgTable(
     jobId: uuid("job_id")
       .notNull()
       .references(() => jobsTable.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     unique("bookmarks_clerk_job_unique").on(table.clerkId, table.jobId),

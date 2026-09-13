@@ -1,4 +1,7 @@
-import { useGetDashboardSummary, useGetProfile } from "@workspace/api-client-react";
+import {
+  useGetDashboardSummary,
+  useGetProfile,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, RefreshCw, UserCircle } from "lucide-react";
@@ -49,7 +52,6 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-
       {/* ── Greeting ─────────────────────────────────────────────── */}
       <Greeting />
 
@@ -71,7 +73,11 @@ export function DashboardPage() {
               </div>
             </div>
             <Link href="/profile">
-              <Button size="sm" variant="outline" className="border-primary/30 text-primary hover:bg-primary/10 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-primary/30 text-primary hover:bg-primary/10 shrink-0"
+              >
                 Complete Profile
               </Button>
             </Link>

@@ -1,8 +1,20 @@
 import { useState } from "react";
-import { ExternalLink, Bookmark, BookmarkCheck, MapPin, Building2, BadgeCheck, Clock } from "lucide-react";
+import {
+  ExternalLink,
+  Bookmark,
+  BookmarkCheck,
+  MapPin,
+  Building2,
+  BadgeCheck,
+  Clock,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import type { Job } from "@workspace/api-client-react";
 
@@ -109,7 +121,12 @@ const sourcePlatformLabels: Record<string, string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending }: JobCardProps) {
+export function JobCard({
+  job,
+  isBookmarked,
+  onBookmarkToggle,
+  isBookmarkPending,
+}: JobCardProps) {
   const [imgError, setImgError] = useState(false);
   const company = job.company;
   const logoUrl = company?.logoUrl;
@@ -120,7 +137,9 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
   const jobIsNewToday = isNewToday(job.createdAt);
   const isVerified = Boolean(job.sourceUrl);
   const platform = job.sourcePlatform ?? null;
-  const platformLabel = platform ? (sourcePlatformLabels[platform] ?? platform) : null;
+  const platformLabel = platform
+    ? (sourcePlatformLabels[platform] ?? platform)
+    : null;
 
   const batches = job.eligibleBatch ?? [];
   const branches = job.eligibleBranches ?? [];
@@ -171,7 +190,9 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
           {(job.department || job.location) && (
             <p className="mt-0.5 text-xs text-muted-foreground truncate flex items-center gap-1">
               {job.department && <span>{job.department}</span>}
-              {job.department && job.location && <span className="opacity-40">·</span>}
+              {job.department && job.location && (
+                <span className="opacity-40">·</span>
+              )}
               {job.location && (
                 <span className="flex items-center gap-0.5">
                   <MapPin className="h-3 w-3" />
@@ -221,19 +242,30 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
           {workModeLabels[job.workMode] ?? job.workMode}
         </Badge>
         {batches.map((yr) => (
-          <Badge key={yr} variant="outline" className="text-xs text-muted-foreground">
+          <Badge
+            key={yr}
+            variant="outline"
+            className="text-xs text-muted-foreground"
+          >
             {yr}
           </Badge>
         ))}
         {branches.slice(0, 3).map((br) => (
-          <Badge key={br} variant="outline" className="text-xs text-muted-foreground">
+          <Badge
+            key={br}
+            variant="outline"
+            className="text-xs text-muted-foreground"
+          >
             {br}
           </Badge>
         ))}
         {branches.length > 3 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge variant="outline" className="text-xs text-muted-foreground cursor-default">
+              <Badge
+                variant="outline"
+                className="text-xs text-muted-foreground cursor-default"
+              >
                 +{branches.length - 3} more
               </Badge>
             </TooltipTrigger>
@@ -243,7 +275,10 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
           </Tooltip>
         )}
         {batches.length === 0 && branches.length === 0 && (
-          <Badge variant="outline" className="text-xs text-muted-foreground/60 italic">
+          <Badge
+            variant="outline"
+            className="text-xs text-muted-foreground/60 italic"
+          >
             Open to all
           </Badge>
         )}
@@ -255,11 +290,15 @@ export function JobCard({ job, isBookmarked, onBookmarkToggle, isBookmarkPending
           {compensation ? (
             <span className="font-medium text-foreground">{compensation}</span>
           ) : (
-            <span className="text-xs text-muted-foreground">Compensation not listed</span>
+            <span className="text-xs text-muted-foreground">
+              Compensation not listed
+            </span>
           )}
         </div>
         {deadline.urgency !== "none" && (
-          <div className={`flex items-center gap-1 text-xs font-medium ${deadlineColors[deadline.urgency]}`}>
+          <div
+            className={`flex items-center gap-1 text-xs font-medium ${deadlineColors[deadline.urgency]}`}
+          >
             <Clock className="h-3.5 w-3.5" />
             {deadline.text}
           </div>

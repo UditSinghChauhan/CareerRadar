@@ -5,7 +5,10 @@ export const savedSearchesService = {
     return savedSearchesRepository.findAll(clerkId);
   },
 
-  async create(clerkId: string, data: { name: string; filters: Record<string, unknown> }) {
+  async create(
+    clerkId: string,
+    data: { name: string; filters: Record<string, unknown> },
+  ) {
     return savedSearchesRepository.create({
       clerkId,
       name: data.name,

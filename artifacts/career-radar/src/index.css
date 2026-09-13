@@ -56,37 +56,37 @@
 :root {
   --app-font-sans: "Geist", sans-serif;
   --app-font-mono: "Geist Mono", monospace;
-  
+
   --background: 0 0% 100%;
   --foreground: 0 0% 9%;
-  
+
   --card: 0 0% 100%;
   --card-foreground: 0 0% 9%;
   --card-border: 0 0% 90%;
-  
+
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 9%;
   --popover-border: 0 0% 90%;
-  
+
   --primary: 250 89% 65%;
   --primary-foreground: 0 0% 100%;
-  
+
   --secondary: 0 0% 96%;
   --secondary-foreground: 0 0% 9%;
-  
+
   --muted: 0 0% 96%;
   --muted-foreground: 0 0% 45%;
-  
+
   --accent: 250 89% 96%;
   --accent-foreground: 250 89% 65%;
-  
+
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  
+
   --border: 0 0% 90%;
   --input: 0 0% 90%;
   --ring: 250 89% 65%;
-  
+
   --sidebar: 0 0% 98%;
   --sidebar-foreground: 0 0% 9%;
   --sidebar-border: 0 0% 90%;
@@ -95,41 +95,41 @@
   --sidebar-accent: 0 0% 94%;
   --sidebar-accent-foreground: 0 0% 9%;
   --sidebar-ring: 250 89% 65%;
-  
+
   --radius: 0.5rem;
 }
 
 .dark {
   --background: 0 0% 3%;
   --foreground: 0 0% 98%;
-  
+
   --card: 0 0% 4%;
   --card-foreground: 0 0% 98%;
   --card-border: 0 0% 12%;
-  
+
   --popover: 0 0% 4%;
   --popover-foreground: 0 0% 98%;
   --popover-border: 0 0% 12%;
-  
+
   --primary: 250 89% 65%;
   --primary-foreground: 0 0% 100%;
-  
+
   --secondary: 0 0% 10%;
   --secondary-foreground: 0 0% 98%;
-  
+
   --muted: 0 0% 10%;
   --muted-foreground: 0 0% 60%;
-  
+
   --accent: 250 89% 15%;
   --accent-foreground: 250 89% 75%;
-  
+
   --destructive: 0 62% 30%;
   --destructive-foreground: 0 0% 98%;
-  
+
   --border: 0 0% 12%;
   --input: 0 0% 12%;
   --ring: 250 89% 65%;
-  
+
   --sidebar: 0 0% 4%;
   --sidebar-foreground: 0 0% 98%;
   --sidebar-border: 0 0% 12%;

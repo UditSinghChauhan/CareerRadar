@@ -8,7 +8,8 @@ import { mockupPreviewPlugin } from "./mockupPreviewPlugin";
 // PORT/BASE_PATH are only needed to start the dev/preview server; a plain
 // `vite build` (e.g. from the root `pnpm run build`) has no server to bind
 // and should not require them.
-const isServe = process.argv.includes("dev") || process.argv.includes("preview");
+const isServe =
+  process.argv.includes("dev") || process.argv.includes("preview");
 
 const rawPort = process.env.PORT;
 

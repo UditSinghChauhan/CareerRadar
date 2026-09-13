@@ -23,7 +23,9 @@ export const notificationsTable = pgTable(
       onDelete: "set null",
     }),
     metadata: jsonb("metadata"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     index("notifications_clerk_id_idx").on(table.clerkId),

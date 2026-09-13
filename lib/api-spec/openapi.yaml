@@ -383,7 +383,18 @@ paths:
           name: status
           schema:
             type: string
-            enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+            enum:
+              [
+                saved,
+                applied,
+                oa_pending,
+                oa_completed,
+                interview_pending,
+                interview_completed,
+                offered,
+                rejected,
+                withdrawn,
+              ]
         - in: query
           name: jobType
           schema:
@@ -685,7 +696,8 @@ components:
 
     JobMatchScore:
       type: object
-      required: [jobId, score, summary, matchingSkills, missingSkills, recommendations]
+      required:
+        [jobId, score, summary, matchingSkills, missingSkills, recommendations]
       properties:
         jobId:
           type: string
@@ -836,7 +848,14 @@ components:
 
     DashboardSummary:
       type: object
-      required: [totalApplications, appliedCount, upcomingDeadlines, recentActivity, profileCompleteness]
+      required:
+        [
+          totalApplications,
+          appliedCount,
+          upcomingDeadlines,
+          recentActivity,
+          profileCompleteness,
+        ]
       properties:
         totalApplications:
           type: integer
@@ -1191,7 +1210,18 @@ components:
           type: string
         status:
           type: string
-          enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+          enum:
+            [
+              saved,
+              applied,
+              oa_pending,
+              oa_completed,
+              interview_pending,
+              interview_completed,
+              offered,
+              rejected,
+              withdrawn,
+            ]
         appliedDate:
           type: ["string", "null"]
           format: date-time
@@ -1223,7 +1253,18 @@ components:
           type: string
         status:
           type: string
-          enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+          enum:
+            [
+              saved,
+              applied,
+              oa_pending,
+              oa_completed,
+              interview_pending,
+              interview_completed,
+              offered,
+              rejected,
+              withdrawn,
+            ]
         notes:
           type: string
         resumeVersion:
@@ -1236,7 +1277,18 @@ components:
       properties:
         status:
           type: string
-          enum: [saved, applied, oa_pending, oa_completed, interview_pending, interview_completed, offered, rejected, withdrawn]
+          enum:
+            [
+              saved,
+              applied,
+              oa_pending,
+              oa_completed,
+              interview_pending,
+              interview_completed,
+              offered,
+              rejected,
+              withdrawn,
+            ]
         notes:
           type: string
         resumeVersion:

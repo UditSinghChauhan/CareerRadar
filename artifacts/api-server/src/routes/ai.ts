@@ -6,7 +6,10 @@
  */
 
 import { Router } from "express";
-import { requireAuth, type AuthenticatedRequest } from "../middlewares/requireAuth";
+import {
+  requireAuth,
+  type AuthenticatedRequest,
+} from "../middlewares/requireAuth";
 import { jobsService } from "../services/jobs.service";
 import {
   getJobMatchScore,

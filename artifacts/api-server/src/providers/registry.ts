@@ -19,7 +19,10 @@ export class ProviderRegistry {
 
   register(provider: JobProvider): void {
     if (this.providers.has(provider.name)) {
-      logger.warn({ name: provider.name }, "Provider already registered — overwriting");
+      logger.warn(
+        { name: provider.name },
+        "Provider already registered — overwriting",
+      );
     }
     this.providers.set(provider.name, provider);
     logger.info(

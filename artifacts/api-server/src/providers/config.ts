@@ -712,7 +712,11 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "workday",
     providerId: "adobe",
     enabled: false,
-    extra: { wd: "wd5", board: "external_experienced_careers", tenant: "adobe" },
+    extra: {
+      wd: "wd5",
+      board: "external_experienced_careers",
+      tenant: "adobe",
+    },
     note: "Workday tenant likely adobe.wd5.myworkdayjobs.com. Disabled — CXS API returns HTTP 401 from non-browser env.",
   },
   {
@@ -759,9 +763,9 @@ const ALL_CONFIGS: EnabledConfig[] = [
 
 /** Returns only enabled configurations. */
 export function getEnabledConfigs(): CompanyProviderConfig[] {
-  return ALL_CONFIGS
-    .filter((c) => c.enabled !== false)
-    .map(({ enabled: _e, note: _n, ...rest }) => rest);
+  return ALL_CONFIGS.filter((c) => c.enabled !== false).map(
+    ({ enabled: _e, note: _n, ...rest }) => rest,
+  );
 }
 
 /** Returns all configurations including disabled ones (used by GET /providers). */

@@ -34,7 +34,9 @@ export class RemoteOkProvider extends AbstractProvider {
   readonly displayName = "RemoteOK";
   readonly hasPublicApi = true;
 
-  protected async doFetch(_config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    _config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const data = await withRetry(
       () =>
         httpGet<RemoteOkResponse>(API_URL, {
@@ -49,7 +51,9 @@ export class RemoteOkProvider extends AbstractProvider {
   private normalize(job: RemoteOkJob): ProviderJob {
     const tagsStr = (job.tags ?? []).join(" ");
     const locationStr = job.location || "Worldwide";
-    const description = job.description ? this.stripHtml(job.description) : undefined;
+    const description = job.description
+      ? this.stripHtml(job.description)
+      : undefined;
 
     return {
       externalId: job.id,

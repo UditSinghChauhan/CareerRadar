@@ -60,7 +60,9 @@ export const jobsTable = pgTable(
     benefits: text("benefits").array().notNull().default([]),
     selectionProcess: text("selection_process"),
 
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (table) => [

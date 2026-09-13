@@ -50,7 +50,11 @@
 import { AbstractProvider } from "../base/provider";
 import type { CompanyProviderConfig, ProviderJob } from "../types";
 import { withRetry, FetchError } from "../retry";
-import type { WorkdayExtra, WorkdayJobPosting, WorkdayJobsResponse } from "./types";
+import type {
+  WorkdayExtra,
+  WorkdayJobPosting,
+  WorkdayJobsResponse,
+} from "./types";
 
 const PAGE_SIZE = 20;
 
@@ -66,7 +70,9 @@ export class WorkdayProvider extends AbstractProvider {
    */
   readonly hasPublicApi = false;
 
-  protected async doFetch(config: CompanyProviderConfig): Promise<ProviderJob[]> {
+  protected async doFetch(
+    config: CompanyProviderConfig,
+  ): Promise<ProviderJob[]> {
     const extra = config.extra as WorkdayExtra | undefined;
 
     if (!extra?.wd || !extra?.board || !extra?.tenant) {
@@ -81,21 +87,18 @@ export class WorkdayProvider extends AbstractProvider {
     let offset = 0;
 
     for (;;) {
-      const data = await withRetry(
-        () => this.postJobs(baseUrl, offset),
-        {
-          label: `workday:${config.companySlug}`,
-          maxAttempts: 3,
-          isRetryable: (err) => {
-            if (err instanceof FetchError) {
-              // Do not retry 401/403 — auth errors are not transient.
-              if (err.status === 401 || err.status === 403) return false;
-              return err.isRetryable;
-            }
-            return err instanceof TypeError;
-          },
+      const data = await withRetry(() => this.postJobs(baseUrl, offset), {
+        label: `workday:${config.companySlug}`,
+        maxAttempts: 3,
+        isRetryable: (err) => {
+          if (err instanceof FetchError) {
+            // Do not retry 401/403 — auth errors are not transient.
+            if (err.status === 401 || err.status === 403) return false;
+            return err.isRetryable;
+          }
+          return err instanceof TypeError;
         },
-      );
+      });
 
       allJobs.push(...data.jobPostings);
 
@@ -107,7 +110,10 @@ export class WorkdayProvider extends AbstractProvider {
     return allJobs.map((job) => this.normalize(job, config, extra));
   }
 
-  private async postJobs(url: string, offset: number): Promise<WorkdayJobsResponse> {
+  private async postJobs(
+    url: string,
+    offset: number,
+  ): Promise<WorkdayJobsResponse> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15_000);
 
@@ -116,7 +122,7 @@ export class WorkdayProvider extends AbstractProvider {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
           "User-Agent": "CareerRadar/0.2 (job-aggregator; contact via repo)",
         },
         body: JSON.stringify({
@@ -152,7 +158,9 @@ export class WorkdayProvider extends AbstractProvider {
 
     const externalId = externalPath.split("/").pop() ?? job.title;
 
-    const postedDate = job.postedOn ? this.parseWorkdayDate(job.postedOn) : undefined;
+    const postedDate = job.postedOn
+      ? this.parseWorkdayDate(job.postedOn)
+      : undefined;
 
     return {
       externalId,

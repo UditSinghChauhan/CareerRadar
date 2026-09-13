@@ -10,7 +10,7 @@ jobs:
   ci:
     name: Typecheck, Test & Build
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:16
