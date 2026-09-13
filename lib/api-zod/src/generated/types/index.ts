@@ -12,6 +12,7 @@ export * from './applicationInput';
 export * from './applicationInputStatus';
 export * from './applicationListResponse';
 export * from './applicationStatus';
+export * from './applicationStatusMap';
 export * from './applicationUpdateInput';
 export * from './applicationUpdateInputStatus';
 export * from './bookmark';

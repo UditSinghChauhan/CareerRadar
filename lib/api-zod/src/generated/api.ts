@@ -725,6 +725,7 @@ export const ListApplicationsResponse = zod.object({
 export const CreateApplicationBody = zod.object({
   "jobId": zod.string(),
   "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']).optional(),
+  "appliedDate": zod.coerce.date().optional(),
   "notes": zod.string().optional(),
   "resumeVersion": zod.string().optional(),
   "referralName": zod.string().optional()
@@ -792,6 +793,13 @@ export const CreateApplicationResponse = zod.object({
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().nullish()
 })
+
+
+/**
+ * Returns every job the authenticated user has an application row for, keyed by job ID. Used by the jobs list to avoid offering a clean Apply button for something already applied to.
+ * @summary Map of jobId to application status for the current user
+ */
+export const GetApplicationStatusMapResponse = zod.record(zod.string(), zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn'])).describe('Job ID keyed map of the current user\'s application statuses.')
 
 
 /**

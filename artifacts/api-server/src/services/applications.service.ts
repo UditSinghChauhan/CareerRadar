@@ -20,11 +20,19 @@ export const applicationsService = {
     return applicationsRepository.findById(id, clerkId);
   },
 
+  async getStatusMap(
+    clerkId: string,
+  ): Promise<Record<string, Application["status"]>> {
+    const rows = await applicationsRepository.findStatusMap(clerkId);
+    return Object.fromEntries(rows.map((r) => [r.jobId, r.status]));
+  },
+
   async create(
     clerkId: string,
     data: {
       jobId: string;
       status?: Application["status"];
+      appliedDate?: string;
       notes?: string;
       resumeVersion?: string;
       referralName?: string;
@@ -39,10 +47,20 @@ export const applicationsService = {
     );
     if (existing) throw new Error("You have already applied to this job");
 
+    const status = data.status ?? "saved";
+    // One-click Apply sends appliedDate explicitly, but default it anyway so an
+    // "applied" row can never land with a null date and sort to the bottom.
+    const appliedDate = data.appliedDate
+      ? new Date(data.appliedDate)
+      : status === "applied"
+        ? new Date()
+        : undefined;
+
     return applicationsRepository.create({
       clerkId,
       jobId: data.jobId,
-      status: data.status ?? "saved",
+      status,
+      appliedDate,
       notes: data.notes,
       resumeVersion: data.resumeVersion,
       referralName: data.referralName,

@@ -7,6 +7,7 @@ import {
   LogOut,
   Menu,
   Briefcase,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,7 @@ import { useState } from "react";
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Jobs", href: "/jobs", icon: Briefcase },
+  { label: "Applications", href: "/applications", icon: ClipboardList },
   { label: "Profile", href: "/profile", icon: UserCircle },
   { label: "Settings", href: "/settings", icon: SettingsIcon },
 ];

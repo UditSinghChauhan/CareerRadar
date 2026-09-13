@@ -105,6 +105,20 @@ export const applicationsRepository = {
     return row ?? null;
   },
 
+  // Deliberately no join: the jobs list only needs jobId -> status, and this
+  // runs on every /jobs render. Served straight off applications_clerk_id_idx.
+  async findStatusMap(
+    clerkId: string,
+  ): Promise<Array<{ jobId: string; status: Application["status"] }>> {
+    return db
+      .select({
+        jobId: applicationsTable.jobId,
+        status: applicationsTable.status,
+      })
+      .from(applicationsTable)
+      .where(eq(applicationsTable.clerkId, clerkId));
+  },
+
   async countAll(clerkId: string): Promise<number> {
     const [{ value }] = await db
       .select({ value: count() })

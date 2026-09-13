@@ -7,8 +7,13 @@ import {
   Building2,
   BadgeCheck,
   Clock,
+  Check,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  statusBadgeClass,
+  statusLabel,
+} from "@/components/applications/status";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -23,6 +28,14 @@ interface JobCardProps {
   isBookmarked: boolean;
   onBookmarkToggle: (jobId: string, isCurrentlyBookmarked: boolean) => void;
   isBookmarkPending?: boolean;
+  /** Current application status for this job, if the user already has one. */
+  applicationStatus?: string | null;
+  /** Applied date for the badge; only meaningful when status is "applied". */
+  appliedDate?: string | null;
+  /** Fired after the new tab has already been opened synchronously. */
+  onApply?: (jobId: string) => void;
+  onSave?: (jobId: string) => void;
+  isApplyPending?: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -126,6 +139,11 @@ export function JobCard({
   isBookmarked,
   onBookmarkToggle,
   isBookmarkPending,
+  applicationStatus,
+  appliedDate,
+  onApply,
+  onSave,
+  isApplyPending,
 }: JobCardProps) {
   const [imgError, setImgError] = useState(false);
   const company = job.company;
@@ -146,7 +164,11 @@ export function JobCard({
   const skills = job.requiredSkills ?? [];
 
   return (
-    <article className="group relative flex flex-col bg-card border border-border rounded-xl overflow-hidden transition-all duration-150 hover:border-border/80 hover:shadow-sm">
+    <article
+      data-testid="job-card"
+      data-job-id={job.id}
+      className="group relative flex flex-col bg-card border border-border rounded-xl overflow-hidden transition-all duration-150 hover:border-border/80 hover:shadow-sm"
+    >
       {/* Top strip */}
       <div className="flex items-start gap-3 px-4 pt-4 pb-3">
         {/* Logo */}
@@ -335,18 +357,86 @@ export function JobCard({
           )}
         </div>
 
-        {job.applyUrl ? (
-          <Button
-            size="sm"
-            className="text-xs h-8 gap-1 flex-shrink-0 px-3"
-            asChild
-          >
-            <a href={job.applyUrl} target="_blank" rel="noopener noreferrer">
-              Apply
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </Button>
-        ) : null}
+        <div className="flex flex-shrink-0 items-center gap-1.5">
+          {applicationStatus ? (
+            <>
+              <Badge
+                variant="outline"
+                data-testid="application-status-badge"
+                className={`h-6 gap-1 px-2 text-[11px] font-medium ${statusBadgeClass(applicationStatus)}`}
+              >
+                {applicationStatus === "applied" ? (
+                  <>
+                    <Check className="h-3 w-3" />
+                    Applied
+                    {appliedDate ? ` · ${formatDate(appliedDate)}` : ""}
+                  </>
+                ) : (
+                  statusLabel(applicationStatus)
+                )}
+              </Badge>
+              {job.applyUrl && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      asChild
+                    >
+                      <a
+                        href={job.applyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Open posting"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    Open posting
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </>
+          ) : (
+            <>
+              {onSave && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2.5 text-xs"
+                  disabled={isApplyPending}
+                  onClick={() => onSave(job.id)}
+                >
+                  Save
+                </Button>
+              )}
+              {job.applyUrl && (
+                <Button
+                  size="sm"
+                  data-testid="apply-button"
+                  className="h-8 flex-shrink-0 gap-1 px-3 text-xs"
+                  disabled={isApplyPending}
+                  onClick={() => {
+                    // MUST stay synchronous and first: a popup blocker will
+                    // swallow window.open if it runs after an await.
+                    window.open(
+                      job.applyUrl as string,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
+                    onApply?.(job.id);
+                  }}
+                >
+                  Apply
+                  <ExternalLink className="h-3 w-3" />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </article>
   );

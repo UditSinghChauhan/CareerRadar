@@ -24,6 +24,7 @@ export interface JobFiltersState {
   sourcePlatform: string;
   companyId: string;
   deadlineBefore: string;
+  hideApplied: boolean;
 }
 
 export const DEFAULT_FILTERS: JobFiltersState = {
@@ -35,6 +36,8 @@ export const DEFAULT_FILTERS: JobFiltersState = {
   sourcePlatform: "",
   companyId: "",
   deadlineBefore: "",
+  // On by default: the jobs list should never re-offer something already done.
+  hideApplied: true,
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -88,6 +91,8 @@ export function countActiveFilters(filters: JobFiltersState): number {
   if (filters.sourcePlatform) n++;
   if (filters.companyId) n++;
   if (filters.deadlineBefore) n++;
+  // hideApplied is deliberately not counted. It is on by default, so counting
+  // it would show a permanent "1 active filter" badge on an untouched page.
   return n;
 }
 
@@ -164,6 +169,23 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
       </div>
 
       <Separator />
+
+      {/* My applications */}
+      <FilterSection title="My Applications">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="filter-hide-applied"
+            checked={filters.hideApplied}
+            onCheckedChange={(checked) => set("hideApplied", checked === true)}
+          />
+          <Label
+            htmlFor="filter-hide-applied"
+            className="text-xs font-normal cursor-pointer"
+          >
+            Hide jobs I've applied to
+          </Label>
+        </div>
+      </FilterSection>
 
       {/* Company */}
       {companies.length > 0 && (

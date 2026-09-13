@@ -29,6 +29,7 @@ vi.mock("../services/applications.service", () => ({
     update: vi.fn(),
     delete: vi.fn(),
     getStats: vi.fn(),
+    getStatusMap: vi.fn(),
   },
 }));
 
@@ -45,6 +46,19 @@ describe("CreateApplicationBody schema", () => {
   it("accepts a body with only jobId (all other fields optional)", () => {
     const result = CreateApplicationBody.safeParse({ jobId: "job_1" });
     expect(result.success).toBe(true);
+  });
+
+  it("coerces an ISO appliedDate into a Date", () => {
+    const iso = "2026-09-13T10:00:00.000Z";
+    const result = CreateApplicationBody.safeParse({
+      jobId: "job_1",
+      status: "applied",
+      appliedDate: iso,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.appliedDate).toBeInstanceOf(Date);
+    expect((result.data?.appliedDate as Date).toISOString()).toBe(iso);
   });
 });
 
@@ -128,6 +142,29 @@ describe("POST /api/applications", () => {
     );
   });
 
+  it("forwards appliedDate to the service as an ISO string", async () => {
+    const iso = "2026-09-13T10:00:00.000Z";
+    mockCreate.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof applicationsService.create>>,
+    );
+
+    await fetch(`${baseUrl}/api/applications`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jobId: "job_1",
+        status: "applied",
+        appliedDate: iso,
+      }),
+    });
+
+    expect(mockCreate).toHaveBeenCalledWith("user_123", {
+      jobId: "job_1",
+      status: "applied",
+      appliedDate: iso,
+    });
+  });
+
   it("409s when the service reports a duplicate application", async () => {
     mockCreate.mockRejectedValue(
       new Error("You have already applied to this job"),
@@ -172,5 +209,89 @@ describe("POST /api/applications", () => {
 
     expect(res.status).toBe(500);
     expect(body.error).toBe("Failed to create application");
+  });
+});
+
+describe("GET /api/applications/status-map", () => {
+  let server: Server;
+  let baseUrl: string;
+
+  const mockGetAuth = vi.mocked(getAuth);
+  const mockGetStatusMap = vi.mocked(applicationsService.getStatusMap);
+
+  beforeAll(async () => {
+    const app: Express = express();
+    app.use(express.json());
+    app.use((req: Request, _res: Response, next: NextFunction) => {
+      (req as unknown as { log: { error: () => void } }).log = {
+        error: () => {},
+      };
+      next();
+    });
+    app.use("/api", applicationsRouter);
+
+    await new Promise<void>((resolve) => {
+      server = app.listen(0, () => resolve());
+    });
+
+    const { port } = server.address() as AddressInfo;
+    baseUrl = `http://127.0.0.1:${port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise<void>((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
+  });
+
+  beforeEach(() => {
+    mockGetAuth.mockReset();
+    mockGetStatusMap.mockReset();
+    mockGetAuth.mockReturnValue({ userId: "user_123" } as unknown as ReturnType<
+      typeof getAuth
+    >);
+  });
+
+  // Guards the route-ordering trap: "/applications/:id" is declared after
+  // "/applications/status-map", so "status-map" must not be read as an id.
+  it("routes to the status-map handler, not the :id handler", async () => {
+    mockGetStatusMap.mockResolvedValue({ job_1: "applied", job_2: "saved" });
+
+    const res = await fetch(`${baseUrl}/api/applications/status-map`);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ job_1: "applied", job_2: "saved" });
+    expect(mockGetStatusMap).toHaveBeenCalledWith("user_123");
+    expect(vi.mocked(applicationsService.get)).not.toHaveBeenCalled();
+  });
+
+  it("returns an empty object for a user with no applications", async () => {
+    mockGetStatusMap.mockResolvedValue({});
+
+    const res = await fetch(`${baseUrl}/api/applications/status-map`);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({});
+  });
+
+  it("401s when there is no authenticated user", async () => {
+    mockGetAuth.mockReturnValue({ userId: null } as unknown as ReturnType<
+      typeof getAuth
+    >);
+
+    const res = await fetch(`${baseUrl}/api/applications/status-map`);
+
+    expect(res.status).toBe(401);
+    expect(mockGetStatusMap).not.toHaveBeenCalled();
+  });
+
+  it("500s with a generic message when the service throws", async () => {
+    mockGetStatusMap.mockRejectedValue(new Error("connection terminated"));
+
+    const res = await fetch(`${baseUrl}/api/applications/status-map`);
+    const body = (await res.json()) as { error: string };
+
+    expect(res.status).toBe(500);
+    expect(body.error).toBe("Failed to build application status map");
   });
 });

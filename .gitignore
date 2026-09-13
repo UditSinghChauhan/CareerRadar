@@ -48,3 +48,8 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Playwright (e2e is local on-demand only, never in CI)
+/test-results
+/e2e/.report
+/playwright/.cache

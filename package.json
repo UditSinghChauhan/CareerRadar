@@ -8,10 +8,17 @@
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "lint": "prettier --check .",
-    "test": "pnpm -r --if-present run test"
+    "test": "pnpm -r --if-present run test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report e2e/.report"
   },
   "private": true,
   "devDependencies": {
+    "@clerk/backend": "^3.17.2",
+    "@clerk/testing": "^2.2.34",
+    "@playwright/test": "^1.63.0",
+    "dotenv": "^17.4.2",
     "prettier": "^3.8.4",
     "typescript": "~5.9.3"
   },

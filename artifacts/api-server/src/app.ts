@@ -28,12 +28,23 @@ app.use(
 );
 
 // ─── Rate Limiting ───────────────────────────────────────────────────────────
+// The limiter exists to protect the public Render deployment. Outside
+// production it is skipped: a single page load fires several API calls, so
+// 100 requests per 15 minutes throttles ordinary local development and makes
+// the e2e suite impossible — it exhausted the window before the first spec
+// finished. Production behaviour is unchanged (NODE_ENV=production there, set
+// by the start command). Set RATE_LIMIT_ENFORCE=true to exercise it locally.
+const enforceRateLimit =
+  process.env["NODE_ENV"] === "production" ||
+  process.env["RATE_LIMIT_ENFORCE"] === "true";
+
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // 100 requests per window
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later" },
+  skip: () => !enforceRateLimit,
 });
 
 app.use("/api", generalLimiter);

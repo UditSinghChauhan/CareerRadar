@@ -36,10 +36,16 @@ router.post("/applications", requireAuth, async (req, res) => {
   }
 
   try {
-    const application = await applicationsService.create(
-      clerkUserId,
-      parsed.data,
-    );
+    // CreateApplicationBody coerces appliedDate to a Date; the service takes an
+    // ISO string. Same normalisation the PUT handler below already does.
+    const application = await applicationsService.create(clerkUserId, {
+      ...parsed.data,
+      appliedDate: parsed.data.appliedDate
+        ? typeof parsed.data.appliedDate === "string"
+          ? parsed.data.appliedDate
+          : (parsed.data.appliedDate as Date).toISOString()
+        : undefined,
+    });
     res.status(201).json(application);
   } catch (err: unknown) {
     if (err instanceof Error) {
@@ -54,6 +60,19 @@ router.post("/applications", requireAuth, async (req, res) => {
     }
     req.log.error({ err }, "Failed to create application");
     res.status(500).json({ error: "Failed to create application" });
+  }
+});
+
+// Must stay above "/applications/:id" — Express matches in declaration order,
+// so ":id" would otherwise swallow the literal "status-map" segment.
+router.get("/applications/status-map", requireAuth, async (req, res) => {
+  const { clerkUserId } = req as AuthenticatedRequest;
+  try {
+    const statusMap = await applicationsService.getStatusMap(clerkUserId);
+    res.json(statusMap);
+  } catch (err) {
+    req.log.error({ err }, "Failed to build application status map");
+    res.status(500).json({ error: "Failed to build application status map" });
   }
 });
 
