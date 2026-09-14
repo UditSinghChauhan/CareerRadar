@@ -2,3 +2,4 @@
 - [Express 5 wildcard routes](express5-wildcard.md) — app.get("*") throws on init in production; use "/{*splat}" for SPA catch-all
 - [Vite build vs serve env requirements](vite-build-vs-serve-env.md) — don't require PORT/BASE_PATH at build time, only for dev/preview servers
 - [CareerRadar aggregator provider pattern](careerradar-aggregator-providers.md) — multi-company providers need per-job companySlug/companyName; normalize() is async and auto-creates companies
+- [Location normalisation (Phase 2.0)](careerradar-location-normalization.md) — jobs.country read nowhere; provider hint only, never the stored column; Adzuna second token is often a district; unmatched → null never false; filters are server-side; backfill is recompute-all

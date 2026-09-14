@@ -5,8 +5,10 @@ import {
   desc,
   eq,
   ilike,
+  inArray,
   isNull,
   lte,
+  notInArray,
   or,
   sql,
 } from "drizzle-orm";
@@ -19,6 +21,7 @@ import {
   type Company,
 } from "@workspace/db";
 import { type PaginationParams, buildPaginatedResult } from "../lib/pagination";
+import { FEATURED_METROS } from "../relevance/location";
 import { companyColumns, jobColumns } from "./columns";
 
 export type JobWithCompany = Job & { company: Company };
@@ -32,6 +35,64 @@ export interface JobFilters {
   eligibleBatch?: number;
   minCgpaLte?: number;
   deadlineBefore?: Date;
+  // ── Phase 2.0 location filters. All server-side: the page fetches a bounded
+  // window of rows, so anything filtered in the browser would silently miss
+  // every match outside that window. ──
+  /** AND `is_india = <value>`. Rows with `is_india IS NULL` never match. */
+  isIndia?: boolean;
+  /** AND `is_remote = <value>`. */
+  isRemote?: boolean;
+  /**
+   * OR-ed buckets. A metro name matches `location_metro` exactly;
+   * `remote`       = is_remote AND is_india IS NOT false (remote-elsewhere
+   *                  such as 'Remote - US' is excluded on purpose);
+   * `other_india`  = is_india AND metro not in FEATURED_METROS (includes bare
+   *                  'India');
+   * `unknown`      = is_india IS NULL — rule 6's reviewable bucket.
+   * Empty / absent = no location filtering at all.
+   */
+  locations?: string[];
+}
+
+/** Bucket keys that are not metro names. Anything else in `locations` is a metro. */
+const SPECIAL_BUCKETS = new Set(["remote", "other_india", "unknown"]);
+
+/**
+ * The OR of every selected bucket, or undefined when nothing is selected.
+ * Exported so the backfill report can count buckets with the exact predicate
+ * the filter uses.
+ */
+export function locationBucketCondition(locations: string[]) {
+  const metros = locations.filter((l) => !SPECIAL_BUCKETS.has(l));
+  const parts = [];
+
+  if (metros.length > 0) {
+    parts.push(inArray(jobsTable.locationMetro, metros));
+  }
+  if (locations.includes("remote")) {
+    parts.push(
+      and(
+        eq(jobsTable.isRemote, true),
+        or(isNull(jobsTable.isIndia), eq(jobsTable.isIndia, true)),
+      ),
+    );
+  }
+  if (locations.includes("other_india")) {
+    parts.push(
+      and(
+        eq(jobsTable.isIndia, true),
+        or(
+          isNull(jobsTable.locationMetro),
+          notInArray(jobsTable.locationMetro, [...FEATURED_METROS]),
+        ),
+      ),
+    );
+  }
+  if (locations.includes("unknown")) {
+    parts.push(isNull(jobsTable.isIndia));
+  }
+
+  return parts.length > 0 ? or(...parts) : undefined;
 }
 
 function buildJobSelect() {
@@ -79,6 +140,16 @@ function buildConditions(filters: JobFilters) {
   }
   if (filters.deadlineBefore) {
     conditions.push(lte(jobsTable.deadline, filters.deadlineBefore));
+  }
+  if (filters.isIndia !== undefined) {
+    conditions.push(eq(jobsTable.isIndia, filters.isIndia));
+  }
+  if (filters.isRemote !== undefined) {
+    conditions.push(eq(jobsTable.isRemote, filters.isRemote));
+  }
+  if (filters.locations && filters.locations.length > 0) {
+    const bucket = locationBucketCondition(filters.locations);
+    if (bucket) conditions.push(bucket);
   }
 
   return conditions.length > 0 ? and(...conditions) : undefined;

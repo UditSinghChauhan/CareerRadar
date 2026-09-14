@@ -25,7 +25,43 @@ export interface JobFiltersState {
   companyId: string;
   deadlineBefore: string;
   hideApplied: boolean;
+  /**
+   * Phase 2.0 location buckets, OR-ed together and applied SERVER-SIDE via
+   * `?locations=`. The page fetches a bounded window of rows, so filtering
+   * these in the browser would silently miss every match outside the window.
+   * Empty = every location (the pre-2.0 behaviour).
+   */
+  locations: string[];
+  /** Phase 2.0. `?isIndia=true`. Off by default so unplaced rows stay reviewable. */
+  indiaOnly: boolean;
 }
+
+/**
+ * The buckets the Jobs page offers. Keys are what the API accepts in
+ * `?locations=`; metro keys must equal `locationMetro` values exactly.
+ * Mirrors FEATURED_METROS in the API's relevance/location.ts.
+ */
+export const LOCATION_BUCKETS: Array<{ key: string; label: string }> = [
+  { key: "NCR", label: "Delhi NCR" },
+  { key: "Bengaluru", label: "Bengaluru" },
+  { key: "Hyderabad", label: "Hyderabad" },
+  { key: "Pune", label: "Pune" },
+  { key: "MMR", label: "Mumbai" },
+  { key: "Chennai", label: "Chennai" },
+  { key: "Kolkata", label: "Kolkata" },
+  { key: "other_india", label: "Other India" },
+  { key: "remote", label: "Remote" },
+  { key: "unknown", label: "Unknown location" },
+];
+
+/** Where the user is, the big SDE hubs, and location-agnostic remote (UPGRADE.md §2.0). */
+export const DEFAULT_LOCATIONS = [
+  "NCR",
+  "Bengaluru",
+  "Hyderabad",
+  "Pune",
+  "remote",
+];
 
 export const DEFAULT_FILTERS: JobFiltersState = {
   jobType: "all",
@@ -38,7 +74,13 @@ export const DEFAULT_FILTERS: JobFiltersState = {
   deadlineBefore: "",
   // On by default: the jobs list should never re-offer something already done.
   hideApplied: true,
+  locations: DEFAULT_LOCATIONS,
+  indiaOnly: false,
 };
+
+function sameSet(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((x) => b.includes(x));
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -91,6 +133,10 @@ export function countActiveFilters(filters: JobFiltersState): number {
   if (filters.sourcePlatform) n++;
   if (filters.companyId) n++;
   if (filters.deadlineBefore) n++;
+  // Location counts only once it differs from the default set — same reason
+  // as hideApplied below: an untouched page must not show a badge.
+  if (!sameSet(filters.locations, DEFAULT_LOCATIONS)) n++;
+  if (filters.indiaOnly) n++;
   // hideApplied is deliberately not counted. It is on by default, so counting
   // it would show a permanent "1 active filter" badge on an untouched page.
   return n;
@@ -238,6 +284,68 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
               {label}
             </button>
           ))}
+        </div>
+      </FilterSection>
+
+      <Separator />
+
+      {/* Location — Phase 2.0. Buckets are OR-ed and filtered on the server. */}
+      <FilterSection title="Location">
+        <div className="flex flex-wrap gap-1.5" data-testid="location-buckets">
+          {LOCATION_BUCKETS.map(({ key, label }) => {
+            const active = filters.locations.includes(key);
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={active}
+                data-location-bucket={key}
+                onClick={() => toggleArray("locations", key, filters.locations)}
+                className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => set("locations", [])}
+            disabled={filters.locations.length === 0}
+            className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-default underline-offset-2 hover:underline"
+          >
+            All locations
+          </button>
+          <span className="text-muted-foreground/40 text-xs">·</span>
+          <button
+            type="button"
+            onClick={() => set("locations", DEFAULT_LOCATIONS)}
+            disabled={sameSet(filters.locations, DEFAULT_LOCATIONS)}
+            className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-default underline-offset-2 hover:underline"
+          >
+            Reset to my defaults
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="filter-india-only"
+            checked={filters.indiaOnly}
+            onCheckedChange={(checked) => set("indiaOnly", checked === true)}
+          />
+          <Label
+            htmlFor="filter-india-only"
+            className="text-xs font-normal cursor-pointer"
+          >
+            India only
+            <span className="block text-[10px] text-muted-foreground/70">
+              Hides jobs whose location couldn't be placed
+            </span>
+          </Label>
         </div>
       </FilterSection>
 

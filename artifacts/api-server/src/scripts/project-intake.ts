@@ -29,6 +29,7 @@ import net from "node:net";
 import { getAllConfigs } from "../providers/config";
 import { providerRegistry } from "../providers/registry";
 import type { CompanyProviderConfig } from "../providers/types";
+import { normalizeLocation } from "../relevance/location";
 
 // See verify-providers.ts for why this is set here and not in the server.
 net.setDefaultAutoSelectFamily(true);
@@ -106,7 +107,11 @@ async function main(): Promise<void> {
       const jobs = await provider.fetchJobs(cfg as CompanyProviderConfig);
       slot.jobs += jobs.length;
       slot.internships += jobs.filter((j) => j.jobType === "internship").length;
-      slot.india += jobs.filter((j) => j.country === "India").length;
+      // Measured the way the Jobs page filters it (Phase 2.0), not off the
+      // provider's raw country string.
+      slot.india += jobs.filter(
+        (j) => normalizeLocation(j.location, j.country).isIndia === true,
+      ).length;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       slot.unmeasured.push(`${cfg.companySlug} (ERROR: ${msg})`);

@@ -18,6 +18,18 @@ status?: ListJobsStatus;
 eligibleBatch?: number;
 minCgpaLte?: number;
 deadlineBefore?: Date;
+/**
+ * Phase 2.0. Only rows whose normalised location is (true) or is not (false) in India. Rows the normaliser could not place (isIndia null) never match either value — select the `unknown` bucket in `locations` to see them.
+ */
+isIndia?: boolean;
+/**
+ * Phase 2.0. Only rows whose location carries a remote marker.
+ */
+isRemote?: boolean;
+/**
+ * Phase 2.0 location buckets, OR-ed together; omit for no location filtering. A metro name (NCR, MMR, Bengaluru, Hyderabad, Pune, Chennai, Kolkata, or any other locationMetro value) matches that metro exactly. `remote` = remote roles not scoped to another country. `other_india` = India rows outside the seven featured metros, including bare 'India'. `unknown` = rows the normaliser could not place — kept reviewable rather than hidden. Filtering is server-side; the list is bounded, so nothing is filtered in the browser.
+ */
+locations?: string[];
 page?: number;
 limit?: number;
 };

@@ -4,6 +4,28 @@ import {
 } from "../repositories/jobs.repository";
 import { companiesRepository } from "../repositories/companies.repository";
 import { paginate } from "../lib/pagination";
+import { normalizeLocation, toLocationColumns } from "../relevance/location";
+
+/** 'true' / 'false' from the query string; anything else is "not given". */
+function parseBoolean(value: unknown): boolean | undefined {
+  if (value === "true" || value === true) return true;
+  if (value === "false" || value === false) return false;
+  return undefined;
+}
+
+/**
+ * `?locations=NCR&locations=remote` arrives as an array, `?locations=NCR` as a
+ * string, and the generated client sends the array form. Comma-separated is
+ * accepted too so the URL can be typed by hand.
+ */
+function parseList(value: unknown): string[] | undefined {
+  const raw = Array.isArray(value) ? value : value == null ? [] : [value];
+  const items = raw
+    .flatMap((v) => String(v).split(","))
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
+  return items.length > 0 ? items : undefined;
+}
 
 export const jobsService = {
   async list(rawQuery: Record<string, unknown>) {
@@ -20,6 +42,9 @@ export const jobsService = {
       deadlineBefore: rawQuery.deadlineBefore
         ? new Date(rawQuery.deadlineBefore as string)
         : undefined,
+      isIndia: parseBoolean(rawQuery.isIndia),
+      isRemote: parseBoolean(rawQuery.isRemote),
+      locations: parseList(rawQuery.locations),
     };
     const pagination = paginate(rawQuery);
     return jobsRepository.findAll(filters, pagination);
@@ -70,6 +95,8 @@ export const jobsService = {
 
     return jobsRepository.create({
       ...data,
+      // Hand-entered jobs get the same normalised location as synced ones.
+      ...toLocationColumns(normalizeLocation(data.location, data.country)),
       deadline: data.deadline ? new Date(data.deadline) : undefined,
       postedDate: data.postedDate ? new Date(data.postedDate) : new Date(),
       eligibleBatch: data.eligibleBatch ?? [],
@@ -86,6 +113,19 @@ export const jobsService = {
     if (!job) return null;
 
     const updateData: Record<string, unknown> = { ...data };
+    if ("location" in data || "country" in data) {
+      const location =
+        "location" in data ? (data.location as string | null) : job.location;
+      // Only a country the caller is sending right now may act as a hint. The
+      // stored `job.country` is the unreliable column (schema default 'India')
+      // and must never feed the normaliser — see relevance/location.ts.
+      const country =
+        "country" in data ? (data.country as string | null) : undefined;
+      Object.assign(
+        updateData,
+        toLocationColumns(normalizeLocation(location, country)),
+      );
+    }
     if (data.deadline) updateData.deadline = new Date(data.deadline as string);
     if (data.postedDate)
       updateData.postedDate = new Date(data.postedDate as string);

@@ -198,10 +198,15 @@ function JobCardSkeleton() {
 
 function EmptyState({
   hasFilters,
+  locationFiltered,
   onClear,
+  onAllLocations,
 }: {
   hasFilters: boolean;
+  /** The location buckets are narrowing the list — including the defaults. */
+  locationFiltered: boolean;
   onClear: () => void;
+  onAllLocations: () => void;
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -214,13 +219,22 @@ function EmptyState({
       <p className="text-sm text-muted-foreground mb-4 max-w-xs">
         {hasFilters
           ? "Try adjusting your filters or search query."
-          : "No active job listings right now. Check back soon."}
+          : locationFiltered
+            ? "Nothing in your default locations. If the location backfill hasn't run yet, every job is still in the Unknown bucket."
+            : "No active job listings right now. Check back soon."}
       </p>
-      {hasFilters && (
-        <Button variant="outline" size="sm" onClick={onClear}>
-          Clear filters
-        </Button>
-      )}
+      <div className="flex gap-2">
+        {hasFilters && (
+          <Button variant="outline" size="sm" onClick={onClear}>
+            Clear filters
+          </Button>
+        )}
+        {locationFiltered && (
+          <Button variant="outline" size="sm" onClick={onAllLocations}>
+            Show all locations
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -283,6 +297,10 @@ export function JobsPage() {
       filters.jobType !== "all"
         ? (filters.jobType as "internship" | "full_time")
         : undefined,
+    // Location is a WHERE clause, never a client-side pass: this request is
+    // capped at 200 rows and the table is well past that.
+    locations: filters.locations.length > 0 ? filters.locations : undefined,
+    isIndia: filters.indiaOnly ? true : undefined,
     limit: 200,
   });
 
@@ -642,10 +660,14 @@ export function JobsPage() {
           ) : pagedJobs.length === 0 ? (
             <EmptyState
               hasFilters={activeFilterCount > 0}
+              locationFiltered={filters.locations.length > 0}
               onClear={() => {
                 setFilters(DEFAULT_FILTERS);
                 setSearchInput("");
               }}
+              onAllLocations={() =>
+                setFilters((f) => ({ ...f, locations: [], indiaOnly: false }))
+              }
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">

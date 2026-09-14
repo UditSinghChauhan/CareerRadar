@@ -3,6 +3,7 @@ import {
   text,
   integer,
   real,
+  boolean,
   timestamp,
   uuid,
   index,
@@ -26,7 +27,28 @@ export const jobsTable = pgTable(
     title: text("title").notNull(),
     department: text("department"),
     location: text("location"),
+    /**
+     * UNRELIABLE — do not read this for filtering. It reads 'India' for every
+     * row whose provider omitted the field (the default applies silently) and
+     * SmartRecruiters writes lowercase ISO-2 ('in', 'ca'). Kept because the
+     * schema is additive-only; the normalised columns below replace it.
+     */
     country: text("country").default("India"),
+
+    // Normalised location (Phase 2.0) — derived from `location` by
+    // relevance/location.ts at write time and by the location backfill.
+    // All nullable: rows the normaliser cannot place stay reviewable rather
+    // than silently disappearing (isIndia null = unknown, never false).
+    locationCity: text("location_city"),
+    /** Full state/province name, e.g. 'Maharashtra' (never the abbreviation). */
+    locationRegion: text("location_region"),
+    /** Uppercase ISO-2, null when unknown. */
+    locationCountry: text("location_country"),
+    /** 'NCR', 'MMR', or the canonical city name for everything else. */
+    locationMetro: text("location_metro"),
+    /** true / false / null = could not tell. */
+    isIndia: boolean("is_india"),
+    isRemote: boolean("is_remote").notNull().default(false),
 
     // Type & mode
     workMode: workModeEnum("work_mode").notNull().default("onsite"),
@@ -85,6 +107,9 @@ export const jobsTable = pgTable(
     index("jobs_posted_date_idx").on(table.postedDate),
     index("jobs_source_platform_idx").on(table.sourcePlatform),
     index("jobs_last_seen_at_idx").on(table.lastSeenAt),
+    index("jobs_is_india_idx").on(table.isIndia),
+    index("jobs_is_remote_idx").on(table.isRemote),
+    index("jobs_location_metro_idx").on(table.locationMetro),
   ],
 );
 

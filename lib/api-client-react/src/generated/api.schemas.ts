@@ -263,8 +263,38 @@ export interface Job {
   department?: string | null;
   /** @nullable */
   location?: string | null;
-  /** @nullable */
+  /**
+     * Unreliable — the schema default writes 'India' whenever a provider omits it. Kept for compatibility; use isIndia / locationCountry.
+     * @nullable
+     */
   country?: string | null;
+  /**
+     * Phase 2.0 normalised city, e.g. 'Bengaluru'. Null when unknown.
+     * @nullable
+     */
+  locationCity?: string | null;
+  /**
+     * Phase 2.0 normalised state/province, full name. Null when unknown.
+     * @nullable
+     */
+  locationRegion?: string | null;
+  /**
+     * Phase 2.0 uppercase ISO-2. Null when unknown.
+     * @nullable
+     */
+  locationCountry?: string | null;
+  /**
+     * Phase 2.0 metro bucket: 'NCR', 'MMR', or the city itself.
+     * @nullable
+     */
+  locationMetro?: string | null;
+  /**
+     * Phase 2.0 three-valued: true, false (names another country), or null (the location could not be placed — kept reviewable).
+     * @nullable
+     */
+  isIndia?: boolean | null;
+  /** Phase 2.0. The location carries a remote marker. */
+  isRemote?: boolean;
   workMode: JobWorkMode;
   jobType: JobJobType;
   /** @nullable */
@@ -595,6 +625,18 @@ status?: ListJobsStatus;
 eligibleBatch?: number;
 minCgpaLte?: number;
 deadlineBefore?: string;
+/**
+ * Phase 2.0. Only rows whose normalised location is (true) or is not (false) in India. Rows the normaliser could not place (isIndia null) never match either value — select the `unknown` bucket in `locations` to see them.
+ */
+isIndia?: boolean;
+/**
+ * Phase 2.0. Only rows whose location carries a remote marker.
+ */
+isRemote?: boolean;
+/**
+ * Phase 2.0 location buckets, OR-ed together; omit for no location filtering. A metro name (NCR, MMR, Bengaluru, Hyderabad, Pune, Chennai, Kolkata, or any other locationMetro value) matches that metro exactly. `remote` = remote roles not scoped to another country. `other_india` = India rows outside the seven featured metros, including bare 'India'. `unknown` = rows the normaliser could not place — kept reviewable rather than hidden. Filtering is server-side; the list is bounded, so nothing is filtered in the browser.
+ */
+locations?: string[];
 page?: number;
 limit?: number;
 };
