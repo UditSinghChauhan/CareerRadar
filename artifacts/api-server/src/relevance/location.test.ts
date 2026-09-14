@@ -629,7 +629,10 @@ describe("toLocationColumns / bucketOf", () => {
     expect(bucketOf(normalizeLocation("Thane"))).toBe("MMR");
     expect(bucketOf(normalizeLocation("Bengaluru"))).toBe("Bengaluru");
     expect(bucketOf(normalizeLocation("Jaipur"))).toBe("other_india");
-    expect(bucketOf(normalizeLocation("India"))).toBe("other_india");
+    // "Didn't say where" is not "said somewhere else": bare India is its own bucket.
+    expect(bucketOf(normalizeLocation("India"))).toBe("india_unspecified");
+    expect(bucketOf(normalizeLocation("IN"))).toBe("india_unspecified");
+    expect(bucketOf(normalizeLocation("TG"))).toBe("india_unspecified");
     expect(bucketOf(normalizeLocation("Worldwide"))).toBe("remote");
     expect(bucketOf(normalizeLocation("Posts, "))).toBe("unknown");
     expect(bucketOf(normalizeLocation("Toronto, "))).toBe("abroad");
@@ -657,7 +660,9 @@ describe("toLocationColumns / bucketOf", () => {
   it("the default buckets are all valid bucket keys", () => {
     for (const b of DEFAULT_LOCATION_BUCKETS) {
       expect(
-        (FEATURED_METROS as readonly string[]).includes(b) || b === "remote",
+        (FEATURED_METROS as readonly string[]).includes(b) ||
+          b === "remote" ||
+          b === "india_unspecified",
       ).toBe(true);
     }
   });

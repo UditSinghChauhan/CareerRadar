@@ -50,6 +50,9 @@ export const LOCATION_BUCKETS: Array<{ key: string; label: string }> = [
   { key: "Chennai", label: "Chennai" },
   { key: "Kolkata", label: "Kolkata" },
   { key: "other_india", label: "Other India" },
+  // Bare 'India' with no city. Labelled so the user knows it is NOT
+  // necessarily near them — it is unstated, not "elsewhere".
+  { key: "india_unspecified", label: "India (city unstated)" },
   { key: "remote", label: "Remote" },
   { key: "unknown", label: "Unknown location" },
 ];
@@ -61,6 +64,7 @@ export const DEFAULT_LOCATIONS = [
   "Hyderabad",
   "Pune",
   "remote",
+  "india_unspecified",
 ];
 
 export const DEFAULT_FILTERS: JobFiltersState = {

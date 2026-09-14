@@ -28,6 +28,7 @@ interface BucketCounts {
   Chennai: number;
   Kolkata: number;
   other_india: number;
+  india_unspecified: number;
   remote: number;
   unknown: number;
   abroad: number;
@@ -55,6 +56,7 @@ const BUCKET_KEYS: Array<keyof BucketCounts> = [
   "Chennai",
   "Kolkata",
   "other_india",
+  "india_unspecified",
   "remote",
   "unknown",
   "abroad",
@@ -124,14 +126,14 @@ async function setLocation(
 async function gotoJobs(page: Page): Promise<void> {
   await page.goto("/jobs");
   await page
-    .getByText(/^\d+ jobs?( matching filters)?$/)
+    .getByText(/^\d+( of [\d,]+)? jobs?( matching filters)?$/)
     .first()
     .waitFor({ state: "visible", timeout: 20_000 });
 }
 
 async function headerCount(page: Page): Promise<number> {
   const text = await page
-    .getByText(/^\d+ jobs?( matching filters)?$/)
+    .getByText(/^\d+( of [\d,]+)? jobs?( matching filters)?$/)
     .first()
     .textContent();
   return Number.parseInt(text?.trim() ?? "0", 10);
@@ -202,7 +204,14 @@ test.describe("Location normalisation (Phase 2.0)", () => {
     await runBackfill(page);
     await gotoJobs(page);
 
-    for (const key of ["NCR", "Bengaluru", "Hyderabad", "Pune", "remote"]) {
+    for (const key of [
+      "NCR",
+      "Bengaluru",
+      "Hyderabad",
+      "Pune",
+      "remote",
+      "india_unspecified",
+    ]) {
       await expect(bucket(page, key)).toHaveAttribute("aria-pressed", "true");
     }
     for (const key of ["MMR", "Chennai", "Kolkata", "other_india", "unknown"]) {
@@ -213,7 +222,7 @@ test.describe("Location normalisation (Phase 2.0)", () => {
     // request carries them as query params, nothing is filtered in the browser.
     const expected = await apiTotal(
       page,
-      "&locations=NCR&locations=Bengaluru&locations=Hyderabad&locations=Pune&locations=remote",
+      "&locations=NCR&locations=Bengaluru&locations=Hyderabad&locations=Pune&locations=remote&locations=india_unspecified",
     );
     expect(await headerCount(page)).toBe(expected);
 
@@ -297,7 +306,7 @@ test.describe("Location normalisation (Phase 2.0)", () => {
       expect(await headerCount(page)).toBe(
         await apiTotal(
           page,
-          "&isIndia=true&locations=NCR&locations=Bengaluru&locations=Hyderabad&locations=Pune&locations=remote&locations=unknown",
+          "&isIndia=true&locations=NCR&locations=Bengaluru&locations=Hyderabad&locations=Pune&locations=remote&locations=india_unspecified&locations=unknown",
         ),
       );
     } finally {

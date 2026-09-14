@@ -225,7 +225,10 @@ export function JobCard({
           )}
           {/* Phase 2.0: what the normaliser made of the raw string above, so a
               wrong bucket is visible on the card rather than only in the DB. */}
-          {(job.locationMetro || job.isRemote || job.isIndia === null) && (
+          {(job.locationMetro ||
+            job.isRemote ||
+            job.isIndia === true ||
+            job.isIndia === null) && (
             <div
               className="mt-1 flex items-center gap-1 flex-wrap"
               data-testid="location-badges"
@@ -241,6 +244,16 @@ export function JobCard({
                     : job.locationMetro === "MMR"
                       ? "Mumbai"
                       : job.locationMetro}
+                </Badge>
+              )}
+              {job.isIndia === true && !job.locationMetro && (
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] px-1.5 py-0 h-4 font-medium"
+                  data-location-bucket-badge="india_unspecified"
+                  title="The posting says India but names no city"
+                >
+                  India (city unstated)
                 </Badge>
               )}
               {job.isRemote && (

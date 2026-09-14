@@ -62,7 +62,7 @@ export function jobCards(page: Page) {
 /** Waits for the jobs grid to finish loading and returns the visible count. */
 export async function visibleJobCount(page: Page): Promise<number> {
   await page
-    .getByText(/\d+ jobs?( matching filters)?$/)
+    .getByText(/\d+( of [\d,]+)? jobs?( matching filters)?$/)
     .first()
     .waitFor({ state: "visible", timeout: 20_000 });
   return jobCards(page).count();

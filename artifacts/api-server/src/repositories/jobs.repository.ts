@@ -6,6 +6,7 @@ import {
   eq,
   ilike,
   inArray,
+  isNotNull,
   isNull,
   lte,
   notInArray,
@@ -46,8 +47,10 @@ export interface JobFilters {
    * OR-ed buckets. A metro name matches `location_metro` exactly;
    * `remote`       = is_remote AND is_india IS NOT false (remote-elsewhere
    *                  such as 'Remote - US' is excluded on purpose);
-   * `other_india`  = is_india AND metro not in FEATURED_METROS (includes bare
-   *                  'India');
+   * `other_india`  = is_india AND a metro that is not in FEATURED_METROS;
+   * `india_unspecified` = is_india AND no metro at all (bare 'India') — kept
+   *                  apart from other_india because "didn't say where" is not
+   *                  "said somewhere else";
    * `unknown`      = is_india IS NULL — rule 6's reviewable bucket.
    * Empty / absent = no location filtering at all.
    */
@@ -55,7 +58,12 @@ export interface JobFilters {
 }
 
 /** Bucket keys that are not metro names. Anything else in `locations` is a metro. */
-const SPECIAL_BUCKETS = new Set(["remote", "other_india", "unknown"]);
+const SPECIAL_BUCKETS = new Set([
+  "remote",
+  "other_india",
+  "india_unspecified",
+  "unknown",
+]);
 
 /**
  * The OR of every selected bucket, or undefined when nothing is selected.
@@ -81,11 +89,14 @@ export function locationBucketCondition(locations: string[]) {
     parts.push(
       and(
         eq(jobsTable.isIndia, true),
-        or(
-          isNull(jobsTable.locationMetro),
-          notInArray(jobsTable.locationMetro, [...FEATURED_METROS]),
-        ),
+        isNotNull(jobsTable.locationMetro),
+        notInArray(jobsTable.locationMetro, [...FEATURED_METROS]),
       ),
+    );
+  }
+  if (locations.includes("india_unspecified")) {
+    parts.push(
+      and(eq(jobsTable.isIndia, true), isNull(jobsTable.locationMetro)),
     );
   }
   if (locations.includes("unknown")) {

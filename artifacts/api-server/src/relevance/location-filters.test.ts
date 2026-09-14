@@ -108,11 +108,32 @@ describe("location filters — WHERE clauses over real rows", () => {
     ]);
   });
 
-  it("other_india is India rows outside the featured metros, bare 'India' included", async () => {
+  it("other_india is India rows naming a non-featured city; bare 'India' is india_unspecified", async () => {
     expect(await titles({ locations: ["other_india"] })).toEqual([
       "other-india-1",
+    ]);
+    expect(await titles({ locations: ["india_unspecified"] })).toEqual([
       "other-india-bare",
     ]);
+    // Together they are exactly the old other_india.
+    expect(
+      await titles({ locations: ["other_india", "india_unspecified"] }),
+    ).toEqual(["other-india-1", "other-india-bare"]);
+  });
+
+  it("the default buckets include india_unspecified", async () => {
+    expect(
+      await titles({
+        locations: [
+          "NCR",
+          "Bengaluru",
+          "Hyderabad",
+          "Pune",
+          "remote",
+          "india_unspecified",
+        ],
+      }),
+    ).toContain("other-india-bare");
   });
 
   it("unknown is is_india IS NULL — and never contains a row that names another country", async () => {
@@ -294,7 +315,8 @@ describe("backfillLocations — recompute-all, idempotent, derived columns only"
       Pune: 1,
       Chennai: 0,
       Kolkata: 0,
-      other_india: 2,
+      other_india: 1,
+      india_unspecified: 1,
       remote: 1,
       unknown: 2,
       abroad: 2,
