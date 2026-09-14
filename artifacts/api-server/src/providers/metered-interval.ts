@@ -30,7 +30,6 @@
  */
 
 import { and, desc, eq } from "drizzle-orm";
-import { db, providerSyncLogsTable } from "@workspace/db";
 import { logger } from "../lib/logger";
 
 export interface IntervalDecision {
@@ -55,6 +54,16 @@ export interface IntervalDecision {
 export async function lastSuccessfulRunOf(
   providerName: string,
 ): Promise<Date | null> {
+  // Imported lazily, on purpose. `@workspace/db` throws at module scope when
+  // DATABASE_URL is unset, and this module is reached from
+  // providers/registry.ts via the JSearch provider. A top-level import would
+  // therefore make merely *constructing the provider registry* require a
+  // database — which broke routes/providers.test.ts, a suite that had always
+  // been able to enumerate providers without one. Deferring the import keeps
+  // providers cheap to import and moves the database requirement to the point
+  // where a run actually needs it.
+  const { db, providerSyncLogsTable } = await import("@workspace/db");
+
   const [row] = await db
     .select({ startedAt: providerSyncLogsTable.startedAt })
     .from(providerSyncLogsTable)

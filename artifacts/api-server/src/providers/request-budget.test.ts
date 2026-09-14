@@ -1,4 +1,16 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
+
+// `./staleness` imports @workspace/db, which throws at module scope when
+// DATABASE_URL is unset. This suite only reads the AGGREGATOR_PLATFORMS
+// constant and never touches a row, so it stubs the module rather than
+// requiring every contributor (and every CI job that runs only unit tests) to
+// have a database provisioned just to check a list of strings.
+vi.mock("@workspace/db", () => ({
+  db: {},
+  jobsTable: {},
+  providerSyncLogsTable: {},
+}));
+
 import { RequestBudget, budgetFromEnv } from "./request-budget";
 import { AGGREGATOR_PLATFORMS, isAggregatorPlatform } from "./staleness";
 

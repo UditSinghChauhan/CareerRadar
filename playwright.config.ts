@@ -57,8 +57,21 @@ export default defineConfig({
 
   // Playwright owns the lifecycle of both servers: it boots them, polls the
   // URLs below until they answer, and kills them when the run ends.
-  // reuseExistingServer keeps a dev session you already have open from being
-  // torn down — locally it attaches, on CI it always starts clean.
+  //
+  // reuseExistingServer is FALSE EVERYWHERE, including locally. It used to be
+  // `!process.env.CI`, so a dev server you already had open was attached to
+  // instead of being replaced — which sounds convenient and is a correctness
+  // hazard: that server was started from whatever environment and whatever
+  // source it happened to have at the time. It produced a false verification
+  // once. A repaired .env was proved "working" against a Vite process that had
+  // been started before the repair and was still serving the broken value, and
+  // the suite reported the old behaviour with no indication anything was stale.
+  //
+  // With this false, a server already holding the port makes the run fail
+  // loudly on a port conflict rather than quietly testing the wrong build. That
+  // costs a rebuild on every local run; a suite whose green result cannot be
+  // trusted costs more. If a run fails because a port is taken, stop your dev
+  // server — that message is the feature.
   webServer: [
     {
       command: "pnpm --filter @workspace/api-server run dev",
@@ -77,7 +90,7 @@ export default defineConfig({
         PORT: String(API_PORT),
         SYNC_CRON_SECRET: "e2e-cron-secret-never-sent-by-the-suite",
       },
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 120_000,
       stdout: "pipe",
       stderr: "pipe",
@@ -86,7 +99,7 @@ export default defineConfig({
       command: "pnpm --filter @workspace/career-radar run dev",
       url: BASE_URL,
       env: { PORT: String(WEB_PORT) },
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 120_000,
       stdout: "pipe",
       stderr: "pipe",

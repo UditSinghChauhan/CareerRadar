@@ -3,29 +3,71 @@ import type { Page } from "@playwright/test";
 
 const HIDE_APPLIED = "Hide jobs I've applied to";
 
+/** Job ids in the order the explorer is currently rendering them. */
+async function renderedJobIds(page: Page): Promise<string[]> {
+  await expect(page.getByTestId("job-card").first()).toBeVisible();
+  return page
+    .locator("[data-job-id]")
+    .evaluateAll((els) =>
+      els
+        .map((el) => el.getAttribute("data-job-id"))
+        .filter((id): id is string => Boolean(id)),
+    );
+}
+
 /**
- * Reads the first active job straight from the API, so a spec can know the
- * applyUrl it expects *before* clicking Apply. The card's own "Open posting"
- * link only exists after an application is created.
+ * The first job that is ON SCREEN and has an applyUrl, with that URL — which a
+ * spec needs *before* clicking Apply, since the card's "Open posting" link only
+ * appears once an application exists.
+ *
+ * Picked from the rendered cards rather than from `/api/jobs?limit=200`, which
+ * is what this helper used to do. That older version replicated the page's
+ * "Newest" sort and took index 0, and it held only while the local database had
+ * the 13 seeded rows: the explorer paginates client-side at PAGE_SIZE = 20, so
+ * once sync fills the table the API's first row is usually several pages deep
+ * and every `[data-job-id="..."]` assertion fails against a perfectly healthy
+ * job. Phase 5 made the table grow on a schedule, so that is now the common
+ * case.
+ *
+ * Details come from `GET /api/jobs/:id` per candidate rather than from the list
+ * endpoint, because the list caps at 100 rows server-side and reintroduces the
+ * same "is it in the window?" problem this helper exists to remove.
  */
-async function firstJobFromApi(
+async function firstRenderedJobWithApplyUrl(
   page: Page,
 ): Promise<{ id: string; applyUrl: string }> {
-  return page.evaluate(async () => {
-    const res = await fetch("/api/jobs?status=active&limit=200", {
-      credentials: "include",
-    });
-    const body = (await res.json()) as {
-      data: Array<{ id: string; applyUrl?: string | null; createdAt: string }>;
-    };
-    // Match the page's default "Newest" sort so index 0 is the same job.
-    const sorted = [...body.data].sort(
-      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
-    );
-    const job = sorted.find((j) => j.applyUrl);
-    if (!job) throw new Error("no seeded job has an applyUrl");
-    return { id: job.id, applyUrl: job.applyUrl as string };
-  });
+  const ids = await renderedJobIds(page);
+  expect(ids.length, "the explorer rendered no jobs").toBeGreaterThan(0);
+
+  const job = await page.evaluate(async (candidates) => {
+    for (const id of candidates) {
+      const res = await fetch(`/api/jobs/${id}`, { credentials: "include" });
+      if (!res.ok) continue;
+      const j = (await res.json()) as { id: string; applyUrl?: string | null };
+      if (j.applyUrl) return { id: j.id, applyUrl: j.applyUrl };
+    }
+    return null;
+  }, ids);
+
+  if (!job) throw new Error("no job rendered on this page has an applyUrl");
+  return job;
+}
+
+/**
+ * The explorer's own count of the filtered set, read off the header line.
+ *
+ * Counting rendered cards instead would cap at PAGE_SIZE = 20: with a full
+ * table, hiding one applied job simply pulls the next one up from page 2 and
+ * the rendered count never changes. The header renders `sortedJobs.length`,
+ * i.e. the whole filtered set, which is the number these assertions are
+ * actually about.
+ */
+async function filteredJobCount(page: Page): Promise<number> {
+  const text = await page
+    .getByText(/^\d+ jobs?( matching filters)?$/)
+    .first()
+    .textContent();
+  return Number.parseInt(text?.trim() ?? "0", 10);
 }
 
 test.describe("Jobs explorer", () => {
@@ -45,7 +87,7 @@ test.describe("Jobs explorer", () => {
     context,
   }) => {
     await page.goto("/jobs");
-    const { id, applyUrl } = await firstJobFromApi(page);
+    const { id, applyUrl } = await firstRenderedJobWithApplyUrl(page);
 
     // Stub just the employer's host. The spec is about whether a popup opens
     // at the right URL, not about their site being reachable, and without this
@@ -87,8 +129,10 @@ test.describe("Jobs explorer", () => {
     appPage: page,
   }) => {
     await page.goto("/jobs");
-    const { id } = await firstJobFromApi(page);
+    // Uncheck first, then pick: unchecking adds the already-applied jobs back
+    // into the list, which can push a job picked beforehand onto a later page.
     await page.getByLabel(HIDE_APPLIED).uncheck();
+    const { id } = await firstRenderedJobWithApplyUrl(page);
 
     const card = page.locator(`[data-job-id="${id}"]`);
     await card.getByTestId("apply-button").click();
@@ -124,13 +168,17 @@ test.describe("Jobs explorer", () => {
     appPage: page,
   }) => {
     await page.goto("/jobs");
-    const { id } = await firstJobFromApi(page);
     const cards = page.getByTestId("job-card");
     const toggle = page.getByLabel(HIDE_APPLIED);
 
     await expect(cards.first()).toBeVisible();
     await toggle.uncheck();
-    const baseline = await cards.count();
+    await expect(cards.first()).toBeVisible();
+
+    // Pick the job AFTER unchecking the filter, so the card is guaranteed to be
+    // on screen in the state the assertions below run against.
+    const { id } = await firstRenderedJobWithApplyUrl(page);
+    const baseline = await filteredJobCount(page);
 
     await page
       .locator(`[data-job-id="${id}"]`)
@@ -147,11 +195,11 @@ test.describe("Jobs explorer", () => {
     await expect(cards.first()).toBeVisible();
 
     await expect(toggle).toBeChecked();
-    const withFilterOn = await cards.count();
+    const withFilterOn = await filteredJobCount(page);
 
     await toggle.uncheck();
     await expect(cards.first()).toBeVisible();
-    const withFilterOff = await cards.count();
+    const withFilterOff = await filteredJobCount(page);
 
     expect(withFilterOff).toBe(baseline);
     expect(withFilterOn).toBe(withFilterOff - 1);

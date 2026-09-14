@@ -18,22 +18,41 @@ import type { Page } from "@playwright/test";
 
 interface SeededJob {
   id: string;
-  title: string;
 }
 
-/** Two active jobs from the seeded catalogue. */
-async function twoActiveJobs(page: Page): Promise<[SeededJob, SeededJob]> {
-  const jobs = await page.evaluate(async () => {
-    const res = await fetch("/api/jobs?status=active&limit=200", {
-      credentials: "include",
-    });
-    const body = (await res.json()) as {
-      data: Array<{ id: string; title: string }>;
-    };
-    return body.data.map((j) => ({ id: j.id, title: j.title }));
-  });
-  expect(jobs.length).toBeGreaterThanOrEqual(2);
-  return [jobs[0], jobs[1]];
+/**
+ * Two jobs that are ACTUALLY ON SCREEN, read out of the rendered cards.
+ *
+ * The obvious version of this helper asks the API for `?status=active&limit=200`
+ * and takes `data[0]` and `data[1]`. That worked only while the local database
+ * held the 13 seeded rows. The explorer paginates client-side at PAGE_SIZE = 20
+ * and applies its own sort and filters on top, so as soon as the table grows
+ * past a page the API's first two rows are usually not the two on screen, and
+ * the spec fails on `toBeVisible()` for a job that is perfectly healthy — just
+ * on page 3.
+ *
+ * Phase 5 put sync on a six-hourly schedule, so the table growing is now the
+ * normal case rather than an accident. Reading the ids off the DOM makes the
+ * spec independent of page size, sort order and filter state: whatever the
+ * explorer chose to show, those are the jobs we act on.
+ */
+async function twoRenderedJobs(page: Page): Promise<[SeededJob, SeededJob]> {
+  await gotoJobs(page);
+
+  const ids = await page
+    .locator("[data-job-id]")
+    .evaluateAll((els) =>
+      els
+        .map((el) => el.getAttribute("data-job-id"))
+        .filter((id): id is string => Boolean(id)),
+    );
+
+  expect(
+    ids.length,
+    "the explorer must render at least two jobs for this spec to mean anything",
+  ).toBeGreaterThanOrEqual(2);
+
+  return [{ id: ids[0] as string }, { id: ids[1] as string }];
 }
 
 async function setStatus(
@@ -56,7 +75,14 @@ async function setStatus(
   expect(ok).toBe(true);
 }
 
-/** The explorer's own count, read off the header line. */
+/**
+ * The explorer's own count, read off the header line.
+ *
+ * This is the size of the whole filtered set, not the current page — the header
+ * renders `sortedJobs.length` before pagination slices it. That is deliberately
+ * what these specs assert on: counting rendered cards would cap at PAGE_SIZE
+ * and stop being able to see a single job appear or disappear.
+ */
 async function renderedJobCount(page: Page): Promise<number> {
   const text = await page
     .getByText(/^\d+ jobs?( matching filters)?$/)
@@ -74,9 +100,9 @@ test.describe("Stale jobs — closed postings leave the explorer", () => {
   test("closing a job removes it from the list and decrements the count, leaving the others alone", async ({
     appPage: page,
   }) => {
-    const [doomed, survivor] = await twoActiveJobs(page);
+    // twoRenderedJobs navigates to /jobs and picks from what is on screen.
+    const [doomed, survivor] = await twoRenderedJobs(page);
 
-    await gotoJobs(page);
     await expect(page.locator(`[data-job-id="${doomed.id}"]`)).toBeVisible();
     const countBefore = await renderedJobCount(page);
 
@@ -105,7 +131,7 @@ test.describe("Stale jobs — closed postings leave the explorer", () => {
   }) => {
     // Closing is reversible bookkeeping, not data loss: the application history
     // from Phase 1 joins against these rows and must not lose them.
-    const [target] = await twoActiveJobs(page);
+    const [target] = await twoRenderedJobs(page);
 
     try {
       await setStatus(page, target.id, "closed");
