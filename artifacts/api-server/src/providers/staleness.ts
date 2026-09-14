@@ -13,10 +13,11 @@
  *                                listing per company. A job that was in yesterday's
  *                                listing and is absent from today's is closed.
  *
- *   closeStaleAggregatorJobs()   RemoteOK / Remotive / Adzuna / JSearch return
- *                                paged, query-shaped, incomplete results. Absence
- *                                proves nothing there, so those platforms fall back
- *                                to an age cutoff (SYNC_MAX_AGE_DAYS).
+ *   closeStaleAggregatorJobs()   RemoteOK / Remotive / Adzuna / JSearch /
+ *                                Arbeitnow / Jobicy return paged, query-shaped,
+ *                                incomplete results. Absence proves nothing there,
+ *                                so those platforms fall back to an age cutoff
+ *                                (SYNC_MAX_AGE_DAYS). See AGGREGATOR_PLATFORMS.
  *
  *   closeExpiredDeadlineJobs()   Any platform: the posting stated a deadline and it
  *                                has passed.
@@ -47,6 +48,13 @@ export const AGGREGATOR_PLATFORMS = [
   "remotive",
   "adzuna",
   "jsearch",
+  // Phase 5.5. Both are search/feed-shaped multi-company boards: a posting
+  // absent from a response has not necessarily closed, and both can return a
+  // truncated result (Arbeitnow paginates under a request budget, Jobicy caps
+  // at 50 per call). Omitting either here would let closeUnseenJobs read a
+  // short response as "these employers closed everything".
+  "arbeitnow",
+  "jobicy",
 ] as const;
 
 const AGGREGATOR_SET = new Set<string>(AGGREGATOR_PLATFORMS);
