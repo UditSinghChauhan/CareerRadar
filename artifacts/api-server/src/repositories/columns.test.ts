@@ -171,21 +171,31 @@ describe("repository column lists — response shape is unchanged", () => {
     expect(JSON.stringify(after)).toBe(JSON.stringify(before));
   });
 
-  it("the only key Phase 1.5 adds to a job payload is lastSeenAt", async () => {
+  it("the only keys added since are lastSeenAt (1.5) and the six location columns (2.0)", async () => {
     const [application] = await applicationsRepository
       .findAll(CLERK_ID, {}, { page: 1, limit: 20 })
       .then((r) => r.data);
 
+    // Phase 2.0's columns sit after `country` in the schema, so that is where
+    // they appear. Every pre-existing key keeps its position.
+    const LOCATION_KEYS_PHASE_2_0 = [
+      "locationCity",
+      "locationRegion",
+      "locationCountry",
+      "locationMetro",
+      "isIndia",
+      "isRemote",
+    ];
+    const afterCountry = JOB_KEYS_BEFORE_PHASE_1_5.indexOf("country") + 1;
+    const afterStatus = JOB_KEYS_BEFORE_PHASE_1_5.indexOf("status") + 1;
+
     expect(Object.keys(application.job).filter((k) => k !== "company")).toEqual(
       [
-        ...JOB_KEYS_BEFORE_PHASE_1_5.slice(
-          0,
-          JOB_KEYS_BEFORE_PHASE_1_5.indexOf("status") + 1,
-        ),
+        ...JOB_KEYS_BEFORE_PHASE_1_5.slice(0, afterCountry),
+        ...LOCATION_KEYS_PHASE_2_0,
+        ...JOB_KEYS_BEFORE_PHASE_1_5.slice(afterCountry, afterStatus),
         "lastSeenAt",
-        ...JOB_KEYS_BEFORE_PHASE_1_5.slice(
-          JOB_KEYS_BEFORE_PHASE_1_5.indexOf("status") + 1,
-        ),
+        ...JOB_KEYS_BEFORE_PHASE_1_5.slice(afterStatus),
       ],
     );
   });

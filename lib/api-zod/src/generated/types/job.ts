@@ -20,8 +20,38 @@ export interface Job {
   department?: string | null;
   /** @nullable */
   location?: string | null;
-  /** @nullable */
+  /**
+     * Unreliable — the schema default writes 'India' whenever a provider omits it. Kept for compatibility; use isIndia / locationCountry.
+     * @nullable
+     */
   country?: string | null;
+  /**
+     * Phase 2.0 normalised city, e.g. 'Bengaluru'. Null when unknown.
+     * @nullable
+     */
+  locationCity?: string | null;
+  /**
+     * Phase 2.0 normalised state/province, full name. Null when unknown.
+     * @nullable
+     */
+  locationRegion?: string | null;
+  /**
+     * Phase 2.0 uppercase ISO-2. Null when unknown.
+     * @nullable
+     */
+  locationCountry?: string | null;
+  /**
+     * Phase 2.0 metro bucket: 'NCR', 'MMR', or the city itself.
+     * @nullable
+     */
+  locationMetro?: string | null;
+  /**
+     * Phase 2.0 three-valued: true, false (names another country), or null (the location could not be placed — kept reviewable).
+     * @nullable
+     */
+  isIndia?: boolean | null;
+  /** Phase 2.0. The location carries a remote marker. */
+  isRemote?: boolean;
   workMode: JobWorkMode;
   jobType: JobJobType;
   /** @nullable */

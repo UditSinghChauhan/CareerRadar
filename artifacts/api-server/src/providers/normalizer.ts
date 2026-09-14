@@ -16,6 +16,7 @@ import {
   type InsertJob,
 } from "@workspace/db";
 import { logger } from "../lib/logger";
+import { normalizeLocation, toLocationColumns } from "../relevance/location";
 import type { ProviderJob } from "./types";
 
 export type NormalizedJob = InsertJob;
@@ -129,6 +130,15 @@ export class JobNormalizer {
     const workMode = job.workMode ?? "onsite";
     const jobType = job.jobType ?? "full_time";
 
+    // Phase 2.0: the six normalised location columns, derived here at write
+    // time. `job.country` is the value THIS provider emitted for THIS job,
+    // which is a legitimate hint (Adzuna's /in/ endpoint, JSearch's
+    // job_country). The stored jobs.country column is never read — see
+    // relevance/location.ts.
+    const location = toLocationColumns(
+      normalizeLocation(job.location, job.country),
+    );
+
     return {
       companyId,
       sourceId: sourceId ?? undefined,
@@ -136,6 +146,7 @@ export class JobNormalizer {
       department: job.department,
       location: job.location,
       country: job.country,
+      ...location,
       workMode,
       jobType,
       description: job.description,

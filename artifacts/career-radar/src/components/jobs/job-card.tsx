@@ -223,6 +223,45 @@ export function JobCard({
               )}
             </p>
           )}
+          {/* Phase 2.0: what the normaliser made of the raw string above, so a
+              wrong bucket is visible on the card rather than only in the DB. */}
+          {(job.locationMetro || job.isRemote || job.isIndia === null) && (
+            <div
+              className="mt-1 flex items-center gap-1 flex-wrap"
+              data-testid="location-badges"
+            >
+              {job.locationMetro && (
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] px-1.5 py-0 h-4 font-medium"
+                  data-location-metro={job.locationMetro}
+                >
+                  {job.locationMetro === "NCR"
+                    ? "Delhi NCR"
+                    : job.locationMetro === "MMR"
+                      ? "Mumbai"
+                      : job.locationMetro}
+                </Badge>
+              )}
+              {job.isRemote && (
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] px-1.5 py-0 h-4 font-medium"
+                >
+                  Remote
+                </Badge>
+              )}
+              {job.isIndia === null && job.location && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] px-1.5 py-0 h-4 font-medium text-muted-foreground"
+                  title="The location string couldn't be placed — review it"
+                >
+                  Unknown location
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Top-right actions */}

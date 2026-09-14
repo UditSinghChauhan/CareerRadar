@@ -253,6 +253,38 @@ paths:
             type: string
             format: date
         - in: query
+          name: isIndia
+          description: >-
+            Phase 2.0. Only rows whose normalised location is (true) or is not
+            (false) in India. Rows the normaliser could not place (isIndia null)
+            never match either value — select the `unknown` bucket in
+            `locations` to see them.
+          schema:
+            type: boolean
+        - in: query
+          name: isRemote
+          description: Phase 2.0. Only rows whose location carries a remote marker.
+          schema:
+            type: boolean
+        - in: query
+          name: locations
+          description: >-
+            Phase 2.0 location buckets, OR-ed together; omit for no location
+            filtering. A metro name (NCR, MMR, Bengaluru, Hyderabad, Pune,
+            Chennai, Kolkata, or any other locationMetro value) matches that
+            metro exactly. `remote` = remote roles not scoped to another country.
+            `other_india` = India rows outside the seven featured metros,
+            including bare 'India'. `unknown` = rows the normaliser could not
+            place — kept reviewable rather than hidden. Filtering is
+            server-side; the list is bounded, so nothing is filtered in the
+            browser.
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - in: query
           name: page
           schema:
             type: integer
@@ -1013,7 +1045,30 @@ components:
         location:
           type: ["string", "null"]
         country:
+          description: >-
+            Unreliable — the schema default writes 'India' whenever a provider
+            omits it. Kept for compatibility; use isIndia / locationCountry.
           type: ["string", "null"]
+        locationCity:
+          description: Phase 2.0 normalised city, e.g. 'Bengaluru'. Null when unknown.
+          type: ["string", "null"]
+        locationRegion:
+          description: Phase 2.0 normalised state/province, full name. Null when unknown.
+          type: ["string", "null"]
+        locationCountry:
+          description: Phase 2.0 uppercase ISO-2. Null when unknown.
+          type: ["string", "null"]
+        locationMetro:
+          description: "Phase 2.0 metro bucket: 'NCR', 'MMR', or the city itself."
+          type: ["string", "null"]
+        isIndia:
+          description: >-
+            Phase 2.0 three-valued: true, false (names another country), or
+            null (the location could not be placed — kept reviewable).
+          type: ["boolean", "null"]
+        isRemote:
+          description: Phase 2.0. The location carries a remote marker.
+          type: boolean
         workMode:
           type: string
           enum: [remote, hybrid, onsite]
