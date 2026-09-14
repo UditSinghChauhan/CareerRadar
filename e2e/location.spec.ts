@@ -248,7 +248,21 @@ test.describe("Location normalisation (Phase 2.0)", () => {
           .filter((id): id is string => Boolean(id)),
       );
     expect(ids.length).toBeGreaterThan(0);
-    const victim = ids[0] as string;
+
+    // A NON-remote job. The provider's workMode is a remote signal in its own
+    // right (RemoteOK and Jobicy are remote-only boards), so a remote job whose
+    // location becomes unplaceable is still `remote` — and the remote bucket is
+    // part of the default feed. This scenario is about the on-site case.
+    const victim = await page.evaluate(async (candidates) => {
+      for (const id of candidates) {
+        const res = await fetch(`/api/jobs/${id}`, { credentials: "include" });
+        if (!res.ok) continue;
+        const j = (await res.json()) as { id: string; workMode: string };
+        if (j.workMode !== "remote") return j.id;
+      }
+      return null;
+    }, ids);
+    if (!victim) throw new Error("no non-remote job rendered on this page");
     const original = await getJob(page, victim);
     expect(original.isIndia).toBe(true);
 

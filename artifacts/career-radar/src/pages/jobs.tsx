@@ -464,6 +464,7 @@ export function JobsPage() {
   );
 
   const allJobs = jobsData?.data ?? [];
+  const serverTotal = jobsData?.meta?.total ?? allJobs.length;
 
   const filteredJobs = useMemo(
     () => applyClientFilters(allJobs, filters, statusMap),
@@ -615,7 +616,20 @@ export function JobsPage() {
                   <span className="font-medium text-foreground">
                     {sortedJobs.length}
                   </span>{" "}
-                  {sortedJobs.length === 1 ? "job" : "jobs"}
+                  {/* The list request is capped server-side; when the filter
+                      matches more than one window, say so rather than
+                      presenting the window as the whole result. */}
+                  {serverTotal > allJobs.length ? (
+                    <>
+                      of{" "}
+                      <span className="font-medium text-foreground">
+                        {serverTotal.toLocaleString("en-IN")}
+                      </span>{" "}
+                    </>
+                  ) : null}
+                  {sortedJobs.length === 1 && serverTotal <= allJobs.length
+                    ? "job"
+                    : "jobs"}
                   {activeFilterCount > 0 ? " matching filters" : ""}
                 </>
               )}

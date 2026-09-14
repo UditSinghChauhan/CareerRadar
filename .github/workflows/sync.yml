@@ -23,10 +23,23 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Wake the service (cold start tolerated)
+      # Tolerates a cold start (connection refused / timeout after retries) but
+      # NOT a 503: that is the schema drift check saying the code expects columns
+      # the database does not have. A sync against that schema fails on the
+      # first INSERT, so fail here, loudly, with the columns and the fix in the
+      # body. `|| true` on the whole curl used to swallow exactly this.
+      - name: Wake the service (cold start tolerated, schema drift is not)
         run: |
-          curl -sS --max-time 120 --retry 3 --retry-all-errors --retry-delay 20 \
-            "${{ secrets.CAREERRADAR_URL }}/api/health" || true
+          code=$(curl -sS -o /tmp/health.json -w '%{http_code}' \
+            --max-time 120 --retry 3 --retry-all-errors --retry-delay 20 \
+            "${{ secrets.CAREERRADAR_URL }}/api/health" || echo "000")
+          echo "GET /api/health → HTTP $code"
+          cat /tmp/health.json 2>/dev/null; echo
+          if [ "$code" = "503" ]; then
+            echo "::error::Schema drift on production — the migration in lib/db/sql/ has not been applied. See the body above."
+            exit 1
+          fi
+          # Anything else (000 = still asleep, 200 = fine) falls through to the trigger.
 
       - name: Trigger sync
         run: |

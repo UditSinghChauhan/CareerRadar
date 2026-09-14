@@ -12,7 +12,8 @@ import * as zod from 'zod';
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
-  "status": zod.string()
+  "status": zod.string(),
+  "schema": zod.string().optional().describe('Result of the boot-time schema drift check: `ok`, or `unchecked` when the database could not be reached. A drifted schema is not a 200 at all — see the 503 response.')
 })
 
 

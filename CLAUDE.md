@@ -15,7 +15,7 @@ Violating any of these breaks the live deployment at `https://careerradar-34ec.o
 - **Drizzle ORM only.** Never introduce Prisma. Schema lives in `lib/db/src/schema/`.
 - **The API contract is generated, not hand-written.** Pipeline: `lib/api-spec/openapi.yaml` → orval → `lib/api-zod/src/generated/**` and `lib/api-client-react/src/generated/**`. Any new or changed endpoint goes into `openapi.yaml` **first**, then regenerate. Never hand-edit anything under a `generated/` directory — it will be overwritten.
 - **Build order after touching `lib/*`:** `pnpm run typecheck:libs` **then** `pnpm --filter @workspace/api-server run typecheck`. Skipping the first produces phantom `TS2305 "no exported member"` errors from stale `.tsbuildinfo`.
-- **Migrations:** `pnpm --filter @workspace/db run push`, only ever against a local `DATABASE_URL`.
+- **Migrations:** `pnpm --filter @workspace/db run push`, only ever against a local `DATABASE_URL`. Production gets a hand-written additive `.sql` file — see "Deploying a schema change" below. **A schema change is not done until that file has been applied to Neon.** Twice (Phase 1.5, Phase 2.0) the code reached production before the columns did and every `/api/jobs` request 500'd.
 - **Auth:** browser calls use Clerk **session cookies**. Never add `getToken()`, `setAuthTokenGetter`, or `Authorization: Bearer` to any web/browser code. Debug 401s by checking `clerkMiddleware` ordering and `requireAuth`, not token handling.
 - **Vite:** `tailwindcss({ optimize: false })` in `vite.config.ts` must stay. Removing `optimize: false` reorders nested `@layer` imports from `@clerk/themes/*.css` and breaks Clerk UI **in production builds only** — it looks fine in dev, so you will not catch it locally.
 - **esbuild:** never put a CLI `main()` guard using `import.meta.url` in a module the server bundle also imports. esbuild inlines everything into one `dist/index.mjs`, so the guard fires for every module. Expose scripts as authenticated API routes, or run them un-bundled with `tsx`.
@@ -32,6 +32,24 @@ Violating any of these breaks the live deployment at `https://careerradar-34ec.o
 - **Never run `git` commands.** The user handles all commits, pushes, and merges.
 
 ---
+
+## Deploying a schema change
+
+The code and the database ship separately: Render deploys the code on merge, nothing deploys the schema. Every change to `lib/db/src/schema/` therefore has three parts, and the phase is not complete until all three are done:
+
+1. **Schema + local push.** Edit `lib/db/src/schema/`, run `pnpm --filter @workspace/db run push` against the local `DATABASE_URL`.
+2. **The migration file.** Write `lib/db/sql/<YYYY-MM-DD>-<phase>.sql` with the same change as additive, idempotent DDL (`ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, ending with a `SELECT` from `information_schema.columns` that reads the result back). Prove it is a no-op against the already-pushed local DB before trusting it.
+3. **Apply it to Neon before or with the merge**, using the **direct** endpoint (the pooled one cannot serve introspection and `drizzle-kit push` must never point at Neon):
+   ```bash
+   # DATABASE_URL_PROD lives in .env.prod (gitignored). Source it per-command only —
+   # never into .env, never into a shell that also runs seed, db push or test:e2e.
+   ( URL=$(grep '^DATABASE_URL_PROD=' .env.prod | cut -d= -f2-); psql "$URL" -v ON_ERROR_STOP=1 -f lib/db/sql/<file>.sql )
+   ```
+   Then `curl -s https://careerradar-34ec.onrender.com/api/health` must say `"schema":"ok"`.
+
+**The safety net:** `artifacts/api-server/src/lib/schema-check.ts` compares every column the Drizzle schema declares against `information_schema` at boot and on each `/api/health` / `/api/healthz` call. A missing column makes both return **503** with the exact columns and this section's name, `POST /api/sync/cron` refuses to run, and the sync workflow's wake step fails instead of swallowing it. An unreachable database is `"schema":"unchecked"` with a 200 — the check reports drift, never outages. It never modifies the database.
+
+If a backfill accompanies the change (Phase 1.5, 2.0), it runs **after** step 3, through its authenticated admin route — there is no shell on the Render box.
 
 ## Deployment facts
 
@@ -88,4 +106,6 @@ pnpm --filter @workspace/career-radar run dev   # :5173
 - Change `tailwindcss({ optimize: false })` in `vite.config.ts`.
 - Drop or rename a database column.
 - Run `drizzle push` against a non-local `DATABASE_URL`.
+- Merge a schema change without its `lib/db/sql/` file applied to Neon (see "Deploying a schema change").
+- Put `DATABASE_URL_PROD` into `.env`, or export it into a shell that runs seed, `db push`, or `test:e2e`.
 - Run any `git` command.

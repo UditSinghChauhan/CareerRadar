@@ -150,6 +150,8 @@ The endpoint must return **202 immediately** and run the sync in the background.
 
 Cold start first — the first call will be slow, that's expected.
 
+`/api/health` (and `/api/healthz`) carry the schema drift check: `"schema":"ok"` means every column the code selects exists on Neon; a **503** with `"status":"schema_drift"` lists the missing columns and means the `lib/db/sql/` file for the last schema change has not been applied yet (CLAUDE.md → "Deploying a schema change"). `"schema":"unchecked"` is a 200 — the database could not be reached for the check, which is a connectivity question, not a schema one.
+
 ```bash
 BASE=https://careerradar-34ec.onrender.com
 

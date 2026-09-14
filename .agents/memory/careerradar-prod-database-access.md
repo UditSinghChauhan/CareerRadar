@@ -1,0 +1,9 @@
+# Production database access and schema deploys
+
+- The Neon DIRECT (non-pooled) connection string is `DATABASE_URL_PROD` in `.env.prod` (gitignored). Render itself uses the pooled string; the pooler cannot serve `information_schema` introspection, so diagnostics and DDL go through the direct one.
+- Source it per-command in a subshell, e.g. `( URL=$(grep '^DATABASE_URL_PROD=' .env.prod | cut -d= -f2-); psql "$URL" -f lib/db/sql/<file>.sql )`. Never put it in `.env`, never export it into a shell that also runs seed, `db push`, or `test:e2e` — `e2e/global-setup.ts` refuses a non-localhost `DATABASE_URL` for exactly this reason. In zsh, `DATABASE_URL='…' psql "$DATABASE_URL"` does NOT work (expansion precedes the assignment); pass the URL directly.
+- Node against Neon from this WSL box needs `NODE_OPTIONS=--dns-result-order=ipv4first`.
+- **Always tell the user before any command that writes to production.** A read-only dry run of a backfill (`--allow-remote` without `--yes`) is allowed by the script rail; a remote write needs a TTY to type the host name, which the Bash tool cannot provide — production backfills run through the authenticated admin route instead.
+- Production's admin routes run the DEPLOYED bundle. A rules change in the repo does not reach Neon until the user deploys and the route is called again; report projections from a local dry run as projections.
+- Schema changes ship as `lib/db/sql/<date>-<phase>.sql` (additive, idempotent), applied with psql BEFORE/with the merge. `lib/schema-check.ts` makes `/api/health(z)` 503 on a missing column; the sync workflow's wake step fails on 503. Incident history: Phase 1.5 and Phase 2.0 both shipped code before columns (every `/api/jobs` 500'd).
+- On 2026-09-15 `.env` was found with `DATABASE_URL` pointing at Neon (and an unquoted `&` on line 14 that breaks `source .env`). Check `.env`'s host before running anything that reads it.
