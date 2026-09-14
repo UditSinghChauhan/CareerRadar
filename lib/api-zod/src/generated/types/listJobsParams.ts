@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { ListJobsJobType } from './listJobsJobType';
+import type { ListJobsRelevanceTrackItem } from './listJobsRelevanceTrackItem';
+import type { ListJobsSort } from './listJobsSort';
 import type { ListJobsStatus } from './listJobsStatus';
 import type { ListJobsWorkMode } from './listJobsWorkMode';
 
@@ -30,6 +32,24 @@ isRemote?: boolean;
  * Phase 2.0 location buckets, OR-ed together; omit for no location filtering. A metro name (NCR, MMR, Bengaluru, Hyderabad, Pune, Chennai, Kolkata, or any other locationMetro value) matches that metro exactly. `remote` = remote roles not scoped to another country. `other_india` = India rows naming a city outside the seven featured metros. `india_unspecified` = India rows that state no city at all (bare 'India') — not "elsewhere", just unstated. `unknown` = rows the normaliser could not place — kept reviewable rather than hidden. Filtering is server-side; the list is bounded, so nothing is filtered in the browser.
  */
 locations?: string[];
+/**
+ * Phase 2.1. Only rows the relevance classifier put on the internship, new_grad or early_career track (true) or ruled out (false). Rows not yet classified count as false. Omit for no relevance filtering — the pre-2.1 behaviour exactly.
+ */
+isFresherEligible?: boolean;
+/**
+ * Phase 2.1 tracks, OR-ed together. Unclassified rows never match.
+ */
+relevanceTrack?: ListJobsRelevanceTrackItem[];
+/**
+ * Phase 2.1. Only rows scoring at least this (0–100).
+ * @minimum 0
+ * @maximum 100
+ */
+minRelevanceScore?: number;
+/**
+ * `newest` (default, the pre-2.1 order — posted date desc) or `relevance` (Phase 2.1 — relevanceScore desc, unclassified last, newest first among equal scores).
+ */
+sort?: ListJobsSort;
 page?: number;
 limit?: number;
 };

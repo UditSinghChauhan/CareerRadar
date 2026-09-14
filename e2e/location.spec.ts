@@ -90,6 +90,25 @@ async function apiTotal(page: Page, query: string): Promise<number> {
   }, query);
 }
 
+/**
+ * Since Phase 2.1 the untouched Jobs page also asks for fresher-eligible rows,
+ * scoped to the profile's batch when it has one. Every "what the header must
+ * equal" total in this file carries these on top of its location params, so
+ * the location assertions stay about location. relevance.spec.ts covers the
+ * relevance side, and "Show everything" for the fully unfiltered count.
+ */
+async function relevanceDefaults(page: Page): Promise<string> {
+  const year = await page.evaluate(async () => {
+    const res = await fetch("/api/profile", { credentials: "include" });
+    const body = (await res.json()) as { graduationYear: number | null };
+    return body.graduationYear ?? null;
+  });
+  return (
+    "&isFresherEligible=true&sort=relevance" +
+    (year ? `&eligibleBatch=${year}` : "")
+  );
+}
+
 async function getJob(page: Page, id: string) {
   return page.evaluate(async (jobId) => {
     const res = await fetch(`/api/jobs/${jobId}`, { credentials: "include" });
@@ -222,7 +241,8 @@ test.describe("Location normalisation (Phase 2.0)", () => {
     // request carries them as query params, nothing is filtered in the browser.
     const expected = await apiTotal(
       page,
-      "&locations=NCR&locations=Bengaluru&locations=Hyderabad&locations=Pune&locations=remote&locations=india_unspecified",
+      "&locations=NCR&locations=Bengaluru&locations=Hyderabad&locations=Pune&locations=remote&locations=india_unspecified" +
+        (await relevanceDefaults(page)),
     );
     expect(await headerCount(page)).toBe(expected);
 
@@ -306,7 +326,8 @@ test.describe("Location normalisation (Phase 2.0)", () => {
       expect(await headerCount(page)).toBe(
         await apiTotal(
           page,
-          "&isIndia=true&locations=NCR&locations=Bengaluru&locations=Hyderabad&locations=Pune&locations=remote&locations=india_unspecified&locations=unknown",
+          "&isIndia=true&locations=NCR&locations=Bengaluru&locations=Hyderabad&locations=Pune&locations=remote&locations=india_unspecified&locations=unknown" +
+            (await relevanceDefaults(page)),
         ),
       );
     } finally {
@@ -319,13 +340,15 @@ test.describe("Location normalisation (Phase 2.0)", () => {
     expect(restored.locationMetro).toBe(original.locationMetro);
   });
 
-  test("'All locations' restores the unfiltered count exactly", async ({
+  test("'All locations' restores the location-unfiltered count exactly", async ({
     appPage: page,
   }) => {
     await runBackfill(page);
     await gotoJobs(page);
 
-    const unfiltered = await apiTotal(page, "");
+    // Location filtering off; the Phase 2.1 relevance default stays on — the
+    // fully unfiltered count is "Show everything", proved in relevance.spec.ts.
+    const unfiltered = await apiTotal(page, await relevanceDefaults(page));
     const responded = page.waitForResponse(
       (r) =>
         r.url().includes("/api/jobs?") &&

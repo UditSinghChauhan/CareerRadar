@@ -7,6 +7,7 @@
  *
  * POST /api/admin/verify-providers — live health audit of every provider config
  * POST /api/admin/backfill-location — recompute the normalised location columns
+ * POST /api/admin/backfill-relevance — recompute the relevance track and score
  *
  * Not in `lib/api-spec/openapi.yaml`: no browser code calls these, matching the
  * convention already used for the sync routes.
@@ -19,6 +20,10 @@ import {
   backfillLocations,
   locationBucketCountsFromDb,
 } from "../relevance/backfill-location";
+import {
+  backfillRelevance,
+  relevanceTrackCountsFromDb,
+} from "../relevance/backfill-relevance";
 
 const router = Router();
 
@@ -79,6 +84,41 @@ router.post("/admin/backfill-location", requireAuth, async (req, res) => {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     req.log.error({ err }, "POST /admin/backfill-location — backfill failed");
+    res.status(500).json({ error: msg });
+  }
+});
+
+// ─── POST /api/admin/backfill-relevance ───────────────────────────────────────
+// Classifies EVERY job row — relevance_track, relevance_score,
+// is_fresher_eligible, seniority_excluded, relevance_signals, classified_at —
+// 500 rows at a time. Same shape and same reasons as backfill-location above:
+// no shell on Render, tsx script cannot live in the bundle, recompute-all and
+// idempotent, touches only the six derived columns.
+//
+// Re-running it is also how the time-based modifiers (posted within 7 days,
+// over 45 days) stay current for rows the sync no longer rewrites.
+//
+// ?dryRun=true computes and reports without writing.
+// ?top=N      ranks N titles instead of 20 (max 200).
+//
+// The response carries the track distribution (all rows and active rows) and
+// the top-N active titles by score with their signals — the ranking the
+// operator sanity-checks after a rules change.
+
+router.post("/admin/backfill-relevance", requireAuth, async (req, res) => {
+  const dryRun = req.query["dryRun"] === "true";
+  const topRaw = Number(req.query["top"]);
+  const topN =
+    Number.isInteger(topRaw) && topRaw >= 1 && topRaw <= 200 ? topRaw : 20;
+  try {
+    const report = await backfillRelevance({ dryRun, topN });
+    // Straight from the stored columns — equals report.activeTracks after a
+    // real run, and shows the pre-run state after a dry run.
+    const stored = await relevanceTrackCountsFromDb();
+    res.json({ dryRun, ...report, storedActiveTracks: stored });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    req.log.error({ err }, "POST /admin/backfill-relevance — backfill failed");
     res.status(500).json({ error: msg });
   }
 });

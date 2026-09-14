@@ -85,20 +85,21 @@ export abstract class AbstractProvider implements JobProvider {
 
   /**
    * Infer job type from title/commitment string.
-   * Returns "internship" if any keyword matches, else "full_time".
+   * Returns "internship" if any keyword matches as a whole word, else
+   * "full_time".
+   *
+   * Whole words, not substrings: `includes("intern")` classified "Internal
+   * Audit Manager" and "International Voice Process" as internships — 64 of
+   * the 81 live rows where job_type said internship and the title did not
+   * (measured 2026-09-15). The relevance classifier treats this field as a
+   * strong signal, so it has to mean what it says.
    */
   protected inferJobType(text: string): "internship" | "full_time" {
-    const lower = text.toLowerCase();
-    if (
-      lower.includes("intern") ||
-      lower.includes("internship") ||
-      lower.includes("co-op") ||
-      lower.includes("coop") ||
-      lower.includes("trainee")
-    ) {
-      return "internship";
-    }
-    return "full_time";
+    return /\b(interns?|internships?|trainees?|traineeships?|apprentices?|apprenticeships?|co-?op|coop)\b/i.test(
+      text,
+    )
+      ? "internship"
+      : "full_time";
   }
 
   /**

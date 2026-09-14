@@ -7,6 +7,7 @@
  */
 import type { Company } from './company';
 import type { JobJobType } from './jobJobType';
+import type { JobRelevanceTrack } from './jobRelevanceTrack';
 import type { JobStatus } from './jobStatus';
 import type { JobWorkMode } from './jobWorkMode';
 
@@ -52,6 +53,24 @@ export interface Job {
   isIndia?: boolean | null;
   /** Phase 2.0. The location carries a remote marker. */
   isRemote?: boolean;
+  /**
+     * Phase 2.1 classifier verdict. Null until the row has been classified (the relevance backfill has not run yet).
+     * @nullable
+     */
+  relevanceTrack?: JobRelevanceTrack;
+  /**
+     * Phase 2.1. 0–100; 0 for not_relevant; null until classified.
+     * @nullable
+     */
+  relevanceScore?: number | null;
+  /** Phase 2.1. True for every track except not_relevant. False until classified. */
+  isFresherEligible?: boolean;
+  /** Phase 2.1. A seniority/level/years marker ruled the row out. */
+  seniorityExcluded?: boolean;
+  /** Phase 2.1. Human-readable reasons behind the track and score, in the order they fired — shown on hover so a wrong verdict can be debugged without opening the database. */
+  relevanceSignals?: string[];
+  /** @nullable */
+  classifiedAt?: Date | null;
   workMode: JobWorkMode;
   jobType: JobJobType;
   /** @nullable */

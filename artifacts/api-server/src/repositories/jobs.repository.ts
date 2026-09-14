@@ -4,6 +4,7 @@ import {
   count,
   desc,
   eq,
+  gte,
   ilike,
   inArray,
   isNotNull,
@@ -23,6 +24,7 @@ import {
 } from "@workspace/db";
 import { type PaginationParams, buildPaginatedResult } from "../lib/pagination";
 import { FEATURED_METROS } from "../relevance/location";
+import type { RelevanceTrack } from "../relevance/classifier";
 import { companyColumns, jobColumns } from "./columns";
 
 export type JobWithCompany = Job & { company: Company };
@@ -55,7 +57,23 @@ export interface JobFilters {
    * Empty / absent = no location filtering at all.
    */
   locations?: string[];
+  // ── Phase 2.1 relevance filters. Same rule: server-side, never a pass
+  // over the fetched window. Absent = the pre-2.1 behaviour exactly. ──
+  /** AND `is_fresher_eligible = <value>`. Unclassified rows are false. */
+  isFresherEligible?: boolean;
+  /** AND `relevance_track IN (...)`. Unclassified rows (NULL) never match. */
+  relevanceTrack?: RelevanceTrack[];
+  /** AND `relevance_score >= n`. Unclassified rows (NULL) never match. */
+  minRelevanceScore?: number;
 }
+
+/**
+ * `relevance` = score desc, newest first among equals — the score caps at 100
+ * and hundreds of active internships sit there, so recency is the tie-break
+ * that keeps the feed a feed. Unclassified rows (NULL score) sort last.
+ * `newest` is the pre-2.1 order, unchanged.
+ */
+export type JobSort = "newest" | "relevance";
 
 /** Bucket keys that are not metro names. Anything else in `locations` is a metro. */
 const SPECIAL_BUCKETS = new Set([
@@ -162,19 +180,43 @@ function buildConditions(filters: JobFilters) {
     const bucket = locationBucketCondition(filters.locations);
     if (bucket) conditions.push(bucket);
   }
+  if (filters.isFresherEligible !== undefined) {
+    conditions.push(eq(jobsTable.isFresherEligible, filters.isFresherEligible));
+  }
+  if (filters.relevanceTrack && filters.relevanceTrack.length > 0) {
+    conditions.push(inArray(jobsTable.relevanceTrack, filters.relevanceTrack));
+  }
+  if (filters.minRelevanceScore !== undefined) {
+    conditions.push(gte(jobsTable.relevanceScore, filters.minRelevanceScore));
+  }
 
   return conditions.length > 0 ? and(...conditions) : undefined;
 }
 
+function orderBy(sort: JobSort | undefined) {
+  if (sort === "relevance") {
+    return [
+      sql`${jobsTable.relevanceScore} DESC NULLS LAST`,
+      desc(jobsTable.postedDate),
+      desc(jobsTable.createdAt),
+    ];
+  }
+  return [desc(jobsTable.postedDate), desc(jobsTable.createdAt)];
+}
+
 export const jobsRepository = {
-  async findAll(filters: JobFilters, pagination: PaginationParams) {
+  async findAll(
+    filters: JobFilters,
+    pagination: PaginationParams,
+    sort: JobSort = "newest",
+  ) {
     const where = buildConditions(filters);
     const offset = (pagination.page - 1) * pagination.limit;
 
     const [rows, countResult] = await Promise.all([
       buildJobSelect()
         .where(where)
-        .orderBy(desc(jobsTable.postedDate), desc(jobsTable.createdAt))
+        .orderBy(...orderBy(sort))
         .limit(pagination.limit)
         .offset(offset),
       db

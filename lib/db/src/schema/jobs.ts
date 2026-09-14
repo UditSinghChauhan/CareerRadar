@@ -50,6 +50,22 @@ export const jobsTable = pgTable(
     isIndia: boolean("is_india"),
     isRemote: boolean("is_remote").notNull().default(false),
 
+    // Relevance (Phase 2.1/2.2) — written by relevance/classifier.ts at
+    // ingest time and by the relevance backfill. Deterministic rules, no LLM.
+    // Nullable / defaulted so rows that predate the classifier are simply
+    // "unclassified" (is_fresher_eligible false) until the backfill runs.
+    /** 'internship' | 'new_grad' | 'early_career' | 'not_relevant'. */
+    relevanceTrack: text("relevance_track"),
+    /** 0–100. Track base plus location/batch/recency modifiers. */
+    relevanceScore: integer("relevance_score"),
+    /** True for every track except not_relevant — the default Jobs-page filter. */
+    isFresherEligible: boolean("is_fresher_eligible").notNull().default(false),
+    /** A seniority/level/years marker in the title ruled the row out. */
+    seniorityExcluded: boolean("seniority_excluded").notNull().default(false),
+    /** Human-readable reasons, shown on hover so a wrong track is debuggable. */
+    relevanceSignals: text("relevance_signals").array().notNull().default([]),
+    classifiedAt: timestamp("classified_at", { withTimezone: true }),
+
     // Type & mode
     workMode: workModeEnum("work_mode").notNull().default("onsite"),
     jobType: jobTypeEnum("job_type").notNull(),
@@ -110,6 +126,13 @@ export const jobsTable = pgTable(
     index("jobs_is_india_idx").on(table.isIndia),
     index("jobs_is_remote_idx").on(table.isRemote),
     index("jobs_location_metro_idx").on(table.locationMetro),
+    index("jobs_is_fresher_eligible_idx").on(table.isFresherEligible),
+    index("jobs_relevance_score_idx").on(table.relevanceScore),
+    index("jobs_fresher_status_score_idx").on(
+      table.isFresherEligible,
+      table.status,
+      table.relevanceScore.desc(),
+    ),
   ],
 );
 
