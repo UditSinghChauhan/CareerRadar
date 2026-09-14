@@ -136,7 +136,11 @@ export class JobNormalizer {
     // job_country). The stored jobs.country column is never read — see
     // relevance/location.ts.
     const location = toLocationColumns(
-      normalizeLocation(job.location, job.country),
+      normalizeLocation(job.location, job.country, {
+        // RemoteOK / Jobicy are remote-only boards and JSearch has
+        // job_is_remote; the location string alone under-reports remote.
+        providerRemote: workMode === "remote",
+      }),
     );
 
     return {

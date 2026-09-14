@@ -27,6 +27,7 @@ import { getEnabledConfigs } from "../providers/config";
 import { runVerification } from "../providers/verify";
 import { requireAuth } from "../middlewares/requireAuth";
 import { verifyCronSecret } from "../lib/cron-auth";
+import { currentSchemaStatus } from "../lib/schema-check";
 
 const router = Router();
 
@@ -105,7 +106,7 @@ router.post("/sync/all", requireAuth, (req, res) => {
 // not "finished" — the outcome lands in provider_sync_logs and is readable at
 // GET /api/sync/status.
 
-router.post("/sync/cron", (req, res) => {
+router.post("/sync/cron", async (req, res) => {
   const auth = verifyCronSecret(req.headers["x-cron-secret"]);
 
   if (!auth.ok) {
@@ -118,6 +119,21 @@ router.post("/sync/cron", (req, res) => {
       "POST /sync/cron — rejected unauthenticated cron trigger",
     );
     res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  // A sync against a drifted schema fails on the first INSERT that names a
+  // missing column, one provider at a time, with the reason buried in the
+  // provider logs. Refuse up front with the same message /api/health gives.
+  const schema = await currentSchemaStatus();
+  if (schema.status === "drift") {
+    req.log.error(
+      { drift: schema.drift },
+      "POST /sync/cron — refused: schema drift",
+    );
+    res
+      .status(503)
+      .json({ error: "schema_drift", drift: schema.drift, hint: schema.hint });
     return;
   }
 

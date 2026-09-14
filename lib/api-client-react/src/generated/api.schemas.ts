@@ -26,6 +26,8 @@ export interface JobMatchScore {
 
 export interface HealthStatus {
   status: string;
+  /** Result of the boot-time schema drift check: `ok`, or `unchecked` when the database could not be reached. A drifted schema is not a 200 at all — see the 503 response. */
+  schema?: string;
 }
 
 export interface PaginationMeta {

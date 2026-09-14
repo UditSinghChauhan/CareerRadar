@@ -53,3 +53,4 @@ Thumbs.db
 /test-results
 /e2e/.report
 /playwright/.cache
+.env.prod

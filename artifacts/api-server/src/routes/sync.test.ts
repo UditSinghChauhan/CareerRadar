@@ -29,6 +29,18 @@ vi.mock("../providers/verify", () => ({
 
 // The status route is the only one that touches the database, and it stays
 // public. Mocking the db module keeps the suite free of a live connection.
+// The cron route refuses to start a sync on a drifted schema (lib/schema-check).
+// Default it to "ok" so the auth tests below exercise the gate they are about,
+// and flip it in the one test that is about drift.
+const schemaStatus = vi.fn().mockResolvedValue({
+  status: "ok",
+  checkedAt: "2026-09-15T00:00:00.000Z",
+  drift: [],
+});
+vi.mock("../lib/schema-check", () => ({
+  currentSchemaStatus: () => schemaStatus(),
+}));
+
 vi.mock("@workspace/db", () => ({
   db: { select: vi.fn() },
   providerSyncLogsTable: {},
@@ -300,6 +312,26 @@ describe("POST /api/sync/cron — Phase 5.1 machine-to-machine trigger", () => {
 
     expect(res.status).toBe(202);
     expect(mockRunAll).toHaveBeenCalledTimes(1);
+  });
+
+  it("503s on schema drift with the correct secret, and starts nothing", async () => {
+    process.env["SYNC_CRON_SECRET"] = SECRET;
+    schemaStatus.mockResolvedValueOnce({
+      status: "drift",
+      checkedAt: "2026-09-15T00:00:00.000Z",
+      drift: [
+        { table: "jobs", missingColumns: ["is_india"], missingTable: false },
+      ],
+      hint: 'SCHEMA DRIFT: "jobs" is missing "is_india". …',
+    });
+
+    const res = await post({ "x-cron-secret": SECRET });
+
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.error).toBe("schema_drift");
+    expect(body.hint).toContain('"jobs" is missing "is_india"');
+    expect(mockRunAll).not.toHaveBeenCalled();
   });
 
   it("returns 202 without waiting for the sync to finish", async () => {

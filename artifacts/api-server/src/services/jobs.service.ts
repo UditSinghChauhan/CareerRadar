@@ -96,7 +96,11 @@ export const jobsService = {
     return jobsRepository.create({
       ...data,
       // Hand-entered jobs get the same normalised location as synced ones.
-      ...toLocationColumns(normalizeLocation(data.location, data.country)),
+      ...toLocationColumns(
+        normalizeLocation(data.location, data.country, {
+          providerRemote: data.workMode === "remote",
+        }),
+      ),
       deadline: data.deadline ? new Date(data.deadline) : undefined,
       postedDate: data.postedDate ? new Date(data.postedDate) : new Date(),
       eligibleBatch: data.eligibleBatch ?? [],
@@ -113,7 +117,7 @@ export const jobsService = {
     if (!job) return null;
 
     const updateData: Record<string, unknown> = { ...data };
-    if ("location" in data || "country" in data) {
+    if ("location" in data || "country" in data || "workMode" in data) {
       const location =
         "location" in data ? (data.location as string | null) : job.location;
       // Only a country the caller is sending right now may act as a hint. The
@@ -121,9 +125,16 @@ export const jobsService = {
       // and must never feed the normaliser — see relevance/location.ts.
       const country =
         "country" in data ? (data.country as string | null) : undefined;
+      // workMode, unlike country, is a column the providers set deliberately.
+      const workMode =
+        "workMode" in data ? (data.workMode as string) : job.workMode;
       Object.assign(
         updateData,
-        toLocationColumns(normalizeLocation(location, country)),
+        toLocationColumns(
+          normalizeLocation(location, country, {
+            providerRemote: workMode === "remote",
+          }),
+        ),
       );
     }
     if (data.deadline) updateData.deadline = new Date(data.deadline as string);

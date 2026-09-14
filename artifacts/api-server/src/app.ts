@@ -1,3 +1,4 @@
+import { healthHandler } from "./routes/health";
 import express, { type Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -73,9 +74,8 @@ app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
 // Health check routes — must be BEFORE Clerk middleware so deploy healthcheck passes
 app.get("/api", (_req, res) => res.json({ ok: true, status: "running" }));
-app.get("/api/health", (_req, res) =>
-  res.json({ ok: true, status: "running" }),
-);
+// Drift-aware: 503 with the missing columns when the migration has not landed.
+app.get("/api/health", healthHandler);
 
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());

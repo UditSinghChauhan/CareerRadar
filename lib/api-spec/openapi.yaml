@@ -42,6 +42,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+        "503":
+          description: >-
+            Schema drift — the code expects columns the database does not
+            have. The body lists them per table and names the migration to
+            apply. Callers that tolerate a cold start must still treat this
+            as a failure.
 
   /profile:
     get:
@@ -781,6 +787,12 @@ components:
       type: object
       properties:
         status:
+          type: string
+        schema:
+          description: >-
+            Result of the boot-time schema drift check: `ok`, or `unchecked`
+            when the database could not be reached. A drifted schema is not
+            a 200 at all — see the 503 response.
           type: string
       required: [status]
 

@@ -137,8 +137,8 @@ describe("normalizeLocation — values named in the spec", () => {
       "LSNYC Central Office",
       "Black Bess, ",
       "Posts, ",
-      "Greater Newcastle Area, ",
-      "Uluberia-II, ",
+      "Other Side Of The Moon, ",
+      "Puzzle Pocket, ",
       "مسقط, مسقط مسقط عمان",
       "Head Office",
     ]) {
@@ -441,6 +441,106 @@ describe("normalizeLocation — RemoteOK / Remotive / Jobicy formats", () => {
       metro: "Bengaluru",
       isIndia: true,
     });
+  });
+});
+
+describe("normalizeLocation — second pass from the live unknown bucket (2026-09-15)", () => {
+  it("provider remote signal: RemoteOK's poster town stays unknown-country but is remote", () => {
+    const n = normalizeLocation("Bedford Falls, ", null, {
+      providerRemote: true,
+    });
+    expect(n).toMatchObject({ isRemote: true, isIndia: null });
+    // Without the signal the same string is not remote — the string alone
+    // says nothing about it.
+    expect(normalizeLocation("Bedford Falls, ").isRemote).toBe(false);
+  });
+
+  it("provider remote + a recognised foreign town → abroad, not remote-for-India", () => {
+    expect(
+      normalizeLocation("Winnipeg, ", null, { providerRemote: true }),
+    ).toMatchObject({ isRemote: true, isIndia: false, country: "CA" });
+    expect(
+      bucketOf(normalizeLocation("Winnipeg, ", null, { providerRemote: true })),
+    ).toBe("abroad");
+  });
+
+  it("provider remote + India town → India and remote", () => {
+    expect(
+      normalizeLocation("Anupgarh, ", null, { providerRemote: true }),
+    ).toMatchObject({ isRemote: true, isIndia: true, region: "Rajasthan" });
+  });
+
+  it("ISO-2 prefix: IN-Bengaluru (Greenhouse)", () => {
+    expect(normalizeLocation("IN-Bengaluru")).toMatchObject({
+      city: "Bengaluru",
+      metro: "Bengaluru",
+      isIndia: true,
+    });
+    expect(normalizeLocation("US-Austin")).toMatchObject({
+      country: "US",
+      isIndia: false,
+    });
+  });
+
+  it.each([
+    ["Pune Division, ", "Pune"],
+    ["Visakhapatnam Rural mandal, ", "Visakhapatnam"],
+    ["Greater Chennai Area, ", "Chennai"],
+    ["Greater Kolkata Area, ", "Kolkata"],
+    ["Greater Nagpur Area, ", "Nagpur"],
+    ["Greater Surat Area, ", "Surat"],
+    ["Kharagpur-I, ", "Kharagpur"],
+    ["Coimbatore South, ", "Coimbatore"],
+    ["Warangal Rural, ", "Warangal"],
+    ["Uluberia-II, ", "Kolkata"],
+  ])("administrative wrapping stripped: %s → metro %s", (raw, metro) => {
+    expect(normalizeLocation(raw)).toMatchObject({ isIndia: true, metro });
+  });
+
+  it("Greater Noida is still its own NCR city, not reduced to Noida", () => {
+    expect(normalizeLocation("Greater Noida")).toMatchObject({
+      city: "Greater Noida",
+      metro: "NCR",
+    });
+  });
+
+  it.each([
+    ["Daman, Daman and Diu", "Dadra and Nagar Haveli and Daman and Diu"],
+    ["Dadra &amp; Nagar Haveli, ", "Dadra and Nagar Haveli and Daman and Diu"],
+    [
+      "Sri Vijaya Puram, Andaman and Nicobar Islands",
+      "Andaman and Nicobar Islands",
+    ],
+    ["Mapusa, North Goa", "Goa"],
+    ["Shahada, Nandurbar", "Maharashtra"],
+    ["Somwarpet, Kodagu", "Karnataka"],
+    ["Deoria, UP_East", "Uttar Pradesh"],
+  ])("union territories and districts: %s → %s", (raw, region) => {
+    expect(normalizeLocation(raw)).toMatchObject({ isIndia: true, region });
+  });
+
+  it.each([
+    ["Bedford, ", "GB"],
+    ["Belfast, ", "GB"],
+    ["Greater Newcastle Area, ", "GB"],
+    ["London Area, ", "GB"],
+    ["Edmonton, ", "CA"],
+    ["Etobicoke, ", "CA"],
+    ["Canberra, ", "AU"],
+    ["Queensland, ", "AU"],
+    ["Greater Sydney Area, ", "AU"],
+    ["Bridgetown, ", "BB"],
+    ["San Juan, ", "PR"],
+    ["Phnom Penh, ", "KH"],
+    ["Rio de Janeiro e Região, ", "BR"],
+  ])("recurring foreign poster towns: %s → %s, abroad", (raw, country) => {
+    const n = normalizeLocation(raw, null, { providerRemote: true });
+    expect(n).toMatchObject({ country, isIndia: false });
+    expect(bucketOf(n)).toBe("abroad");
+  });
+
+  it("'Victoria' alone is too ambiguous to place (BC city, AU state, and more)", () => {
+    expect(normalizeLocation("Victoria, ").isIndia).toBeNull();
   });
 });
 

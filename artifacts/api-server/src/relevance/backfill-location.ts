@@ -24,7 +24,10 @@
  *
  * NEVER READS `jobs.country`. The write-time path gets the provider's own
  * emitted value as a hint; a backfill only has the stored column, which is
- * exactly the unreliable one, so it passes nothing.
+ * exactly the unreliable one, so it passes nothing. It DOES read `work_mode`:
+ * that column is set by each provider from its own knowledge of the board
+ * (RemoteOK and Jobicy are remote-only), has no silent default problem, and
+ * is the only way a 'Bedford, ' RemoteOK row can be known to be remote.
  */
 
 import { asc, eq, gt, sql } from "drizzle-orm";
@@ -78,6 +81,7 @@ type Row = {
   id: string;
   status: string;
   location: string | null;
+  workMode: string;
   locationCity: string | null;
   locationRegion: string | null;
   locationCountry: string | null;
@@ -130,6 +134,7 @@ export async function backfillLocations(
         id: jobsTable.id,
         status: jobsTable.status,
         location: jobsTable.location,
+        workMode: jobsTable.workMode,
         locationCity: jobsTable.locationCity,
         locationRegion: jobsTable.locationRegion,
         locationCountry: jobsTable.locationCountry,
@@ -147,7 +152,14 @@ export async function backfillLocations(
 
     for (const row of rows) {
       scanned += 1;
-      const next = toLocationColumns(normalizeLocation(row.location));
+      // `work_mode` is a column the providers set from their own knowledge
+      // (RemoteOK and Jobicy are remote-only boards) — reliable, unlike
+      // `country`, which is still never read here.
+      const next = toLocationColumns(
+        normalizeLocation(row.location, null, {
+          providerRemote: row.workMode === "remote",
+        }),
+      );
       const bucket = bucketOf(next);
 
       buckets[bucket] += 1;

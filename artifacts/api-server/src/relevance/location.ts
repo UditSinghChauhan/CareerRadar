@@ -116,6 +116,9 @@ const IN_STATES = new Set<string>([
   "Jammu and Kashmir",
   "Ladakh",
   "Puducherry",
+  "Andaman and Nicobar Islands",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Lakshadweep",
 ]);
 
 const IN_STATE_BY_KEY = new Map<string, string>(
@@ -134,6 +137,12 @@ const IN_STATE_ALIASES: Record<string, string> = {
   tamilnadu: "Tamil Nadu",
   telengana: "Telangana",
   chattisgarh: "Chhattisgarh",
+  "daman and diu": "Dadra and Nagar Haveli and Daman and Diu",
+  "daman & diu": "Dadra and Nagar Haveli and Daman and Diu",
+  "dadra & nagar haveli": "Dadra and Nagar Haveli and Daman and Diu",
+  "dadra and nagar haveli": "Dadra and Nagar Haveli and Daman and Diu",
+  "andaman & nicobar islands": "Andaman and Nicobar Islands",
+  "andaman and nicobar": "Andaman and Nicobar Islands",
 };
 
 interface CityEntry {
@@ -308,6 +317,43 @@ const IN_CITIES: Record<string, CityEntry> = {
   "mumbai city": { city: "Mumbai", region: "Maharashtra", ...MMR },
   "greater delhi area": { city: "Delhi", region: "Delhi", ...NCR },
   "delhi metropolitan area": { city: "Delhi", region: "Delhi", ...NCR },
+  // ── Seen in the live unknown bucket, 2026-09-15 ──
+  bhubaneshwar: { city: "Bhubaneswar", region: "Odisha" },
+  nellore: { city: "Nellore", region: "Andhra Pradesh" },
+  chittoor: { city: "Chittoor", region: "Andhra Pradesh" },
+  kharagpur: { city: "Kharagpur", region: "West Bengal" },
+  krishnagiri: { city: "Krishnagiri", region: "Tamil Nadu" },
+  ambattur: { city: "Chennai", region: "Tamil Nadu" },
+  jamnagar: { city: "Jamnagar", region: "Gujarat" },
+  itanagar: { city: "Itanagar", region: "Arunachal Pradesh" },
+  wayanad: { city: "Wayanad", region: "Kerala" },
+  tikamgarh: { city: "Tikamgarh", region: "Madhya Pradesh" },
+  dhar: { city: "Dhar", region: "Madhya Pradesh" },
+  sikar: { city: "Sikar", region: "Rajasthan" },
+  anupgarh: { city: "Anupgarh", region: "Rajasthan" },
+  "marwar junction": { city: "Marwar Junction", region: "Rajasthan" },
+  bijnor: { city: "Bijnor", region: "Uttar Pradesh" },
+  sardhana: { city: "Sardhana", region: "Uttar Pradesh" },
+  deoria: { city: "Deoria", region: "Uttar Pradesh" },
+  hunterganj: { city: "Hunterganj", region: "Jharkhand" },
+  nirsa: { city: "Nirsa", region: "Jharkhand" },
+  kotalpur: { city: "Kotalpur", region: "West Bengal" },
+  gorubathan: { city: "Gorubathan", region: "West Bengal" },
+  uluberia: { city: "Uluberia", region: "West Bengal", metro: "Kolkata" },
+  mapusa: { city: "Mapusa", region: "Goa", metro: "Goa" },
+  bambolim: { city: "Bambolim", region: "Goa", metro: "Goa" },
+  shahada: { city: "Shahada", region: "Maharashtra" },
+  somwarpet: { city: "Somwarpet", region: "Karnataka" },
+  daman: { city: "Daman", region: "Dadra and Nagar Haveli and Daman and Diu" },
+  "sri vijaya puram": {
+    city: "Sri Vijaya Puram",
+    region: "Andaman and Nicobar Islands",
+  },
+  "port blair": {
+    city: "Sri Vijaya Puram",
+    region: "Andaman and Nicobar Islands",
+  },
+  khajuripada: { city: "Khajuripada", region: "Odisha" },
 };
 
 /**
@@ -341,6 +387,14 @@ const IN_DISTRICTS: Record<string, { region: string; metro?: string }> = {
   "south 24 parganas": { region: "West Bengal", metro: "Kolkata" },
   "sas nagar": { region: "Punjab", metro: "Chandigarh" },
   "mohali district": { region: "Punjab", metro: "Chandigarh" },
+  "north goa": { region: "Goa", metro: "Goa" },
+  "south goa": { region: "Goa", metro: "Goa" },
+  kodagu: { region: "Karnataka" },
+  nandurbar: { region: "Maharashtra" },
+  up_east: { region: "Uttar Pradesh" },
+  "up east": { region: "Uttar Pradesh" },
+  up_west: { region: "Uttar Pradesh" },
+  "up west": { region: "Uttar Pradesh" },
 };
 
 /**
@@ -453,7 +507,42 @@ const COUNTRIES: Record<string, string> = {
   bulgaria: "BG",
   slovakia: "SK",
   slovenia: "SI",
+  cambodia: "KH",
+  ecuador: "EC",
+  nicaragua: "NI",
+  albania: "AL",
+  montenegro: "ME",
+  macau: "MO",
+  maldives: "MV",
+  suriname: "SR",
+  panama: "PA",
+  barbados: "BB",
+  "puerto rico": "PR",
+  grenada: "GD",
+  "turks and caicos islands": "TC",
+  "turks and caicos": "TC",
+  guyana: "GY",
+  uganda: "UG",
+  ghana: "GH",
+  morocco: "MA",
+  tunisia: "TN",
+  jordan: "JO",
+  lebanon: "LB",
 };
+
+/** Australian states — 'Queensland, ' on its own is enough to place a string. */
+const AU_STATE_NAMES = new Map<string, string>(
+  [
+    "New South Wales",
+    "Victoria",
+    "Queensland",
+    "Western Australia",
+    "South Australia",
+    "Tasmania",
+    "Australian Capital Territory",
+    "Northern Territory",
+  ].map((name) => [name.toLowerCase(), name]),
+);
 
 /**
  * Multi-country regions Remotive and RemoteOK use. These scope a remote role
@@ -714,6 +803,192 @@ const FOREIGN_CITIES: Record<
   santiago: { city: "Santiago", country: "CL" },
   lima: { city: "Lima", country: "PE" },
   "port of spain": { city: "Port of Spain", country: "TT" },
+  // ── Recurring in the live unknown bucket, 2026-09-15 (RemoteOK posters) ──
+  bedford: { city: "Bedford", region: "England", country: "GB" },
+  belfast: { city: "Belfast", region: "Northern Ireland", country: "GB" },
+  glasgow: { city: "Glasgow", region: "Scotland", country: "GB" },
+  leeds: { city: "Leeds", region: "England", country: "GB" },
+  oxford: { city: "Oxford", region: "England", country: "GB" },
+  exeter: { city: "Exeter", region: "England", country: "GB" },
+  coventry: { city: "Coventry", region: "England", country: "GB" },
+  southampton: { city: "Southampton", region: "England", country: "GB" },
+  norwich: { city: "Norwich", region: "England", country: "GB" },
+  ipswich: { city: "Ipswich", region: "England", country: "GB" },
+  northampton: { city: "Northampton", region: "England", country: "GB" },
+  aberdeen: { city: "Aberdeen", region: "Scotland", country: "GB" },
+  dunfermline: { city: "Dunfermline", region: "Scotland", country: "GB" },
+  "newcastle upon tyne": {
+    city: "Newcastle upon Tyne",
+    region: "England",
+    country: "GB",
+  },
+  "greater newcastle area": {
+    city: "Newcastle upon Tyne",
+    region: "England",
+    country: "GB",
+  },
+  "london area": { city: "London", region: "England", country: "GB" },
+  hammersmith: { city: "London", region: "England", country: "GB" },
+  hounslow: { city: "London", region: "England", country: "GB" },
+  enfield: { city: "London", region: "England", country: "GB" },
+  "bury st edmunds": {
+    city: "Bury St Edmunds",
+    region: "England",
+    country: "GB",
+  },
+  warrington: { city: "Warrington", region: "England", country: "GB" },
+  londonderry: { city: "Derry", region: "Northern Ireland", country: "GB" },
+  newry: { city: "Newry", region: "Northern Ireland", country: "GB" },
+  cork: { city: "Cork", country: "IE" },
+  edmonton: { city: "Edmonton", region: "Alberta", country: "CA" },
+  winnipeg: { city: "Winnipeg", region: "Manitoba", country: "CA" },
+  regina: { city: "Regina", region: "Saskatchewan", country: "CA" },
+  saskatoon: { city: "Saskatoon", region: "Saskatchewan", country: "CA" },
+  brampton: { city: "Brampton", region: "Ontario", country: "CA" },
+  etobicoke: { city: "Toronto", region: "Ontario", country: "CA" },
+  kitchener: { city: "Kitchener", region: "Ontario", country: "CA" },
+  moncton: { city: "Moncton", region: "New Brunswick", country: "CA" },
+  "thunder bay": { city: "Thunder Bay", region: "Ontario", country: "CA" },
+  kamloops: { city: "Kamloops", region: "British Columbia", country: "CA" },
+  barrie: { city: "Barrie", region: "Ontario", country: "CA" },
+  "swift current": {
+    city: "Swift Current",
+    region: "Saskatchewan",
+    country: "CA",
+  },
+  "prince george": {
+    city: "Prince George",
+    region: "British Columbia",
+    country: "CA",
+  },
+  "prince albert": {
+    city: "Prince Albert",
+    region: "Saskatchewan",
+    country: "CA",
+  },
+  "trois-rivieres": { city: "Trois-Rivières", region: "Quebec", country: "CA" },
+  quebec: { city: "Quebec City", region: "Quebec", country: "CA" },
+  "st john's": {
+    city: "St. John's",
+    region: "Newfoundland and Labrador",
+    country: "CA",
+  },
+  "st johns": {
+    city: "St. John's",
+    region: "Newfoundland and Labrador",
+    country: "CA",
+  },
+  "greater st john's metropolitan area": {
+    city: "St. John's",
+    region: "Newfoundland and Labrador",
+    country: "CA",
+  },
+  canberra: {
+    city: "Canberra",
+    region: "Australian Capital Territory",
+    country: "AU",
+  },
+  adelaide: { city: "Adelaide", region: "South Australia", country: "AU" },
+  hobart: { city: "Hobart", region: "Tasmania", country: "AU" },
+  darwin: { city: "Darwin", region: "Northern Territory", country: "AU" },
+  "gold coast": { city: "Gold Coast", region: "Queensland", country: "AU" },
+  geelong: { city: "Geelong", region: "Victoria", country: "AU" },
+  bendigo: { city: "Bendigo", region: "Victoria", country: "AU" },
+  shepparton: { city: "Shepparton", region: "Victoria", country: "AU" },
+  townsville: { city: "Townsville", region: "Queensland", country: "AU" },
+  wollongong: { city: "Wollongong", region: "New South Wales", country: "AU" },
+  "port macquarie": {
+    city: "Port Macquarie",
+    region: "New South Wales",
+    country: "AU",
+  },
+  "alice springs": {
+    city: "Alice Springs",
+    region: "Northern Territory",
+    country: "AU",
+  },
+  "coffs harbour": {
+    city: "Coffs Harbour",
+    region: "New South Wales",
+    country: "AU",
+  },
+  bunbury: { city: "Bunbury", region: "Western Australia", country: "AU" },
+  parramatta: { city: "Sydney", region: "New South Wales", country: "AU" },
+  "north sydney": { city: "Sydney", region: "New South Wales", country: "AU" },
+  chatswood: { city: "Sydney", region: "New South Wales", country: "AU" },
+  "greater sydney area": {
+    city: "Sydney",
+    region: "New South Wales",
+    country: "AU",
+  },
+  "greater perth area": {
+    city: "Perth",
+    region: "Western Australia",
+    country: "AU",
+  },
+  "phnom penh": { city: "Phnom Penh", country: "KH" },
+  quito: { city: "Quito", country: "EC" },
+  managua: { city: "Managua", country: "NI" },
+  curitiba: { city: "Curitiba", country: "BR" },
+  salvador: { city: "Salvador", country: "BR" },
+  florianopolis: { city: "Florianópolis", country: "BR" },
+  sorocaba: { city: "Sorocaba", country: "BR" },
+  "ribeirao preto": { city: "Ribeirão Preto", country: "BR" },
+  blumenau: { city: "Blumenau", country: "BR" },
+  belem: { city: "Belém", country: "BR" },
+  tirana: { city: "Tirana", country: "AL" },
+  podgorica: { city: "Podgorica", country: "ME" },
+  valletta: { city: "Valletta", country: "MT" },
+  msida: { city: "Msida", country: "MT" },
+  macau: { city: "Macau", country: "MO" },
+  male: { city: "Malé", country: "MV" },
+  paramaribo: { city: "Paramaribo", country: "SR" },
+  stavanger: { city: "Stavanger", country: "NO" },
+  panama: { city: "Panama City", country: "PA" },
+  "el paso": { city: "El Paso", region: "Texas", country: "US" },
+  wichita: { city: "Wichita", region: "Kansas", country: "US" },
+  "fort wayne": { city: "Fort Wayne", region: "Indiana", country: "US" },
+  evansville: { city: "Evansville", region: "Indiana", country: "US" },
+  temecula: { city: "Temecula", region: "California", country: "US" },
+  carlsbad: { city: "Carlsbad", region: "California", country: "US" },
+  "newport news": { city: "Newport News", region: "Virginia", country: "US" },
+  hagerstown: { city: "Hagerstown", region: "Maryland", country: "US" },
+  "greater anchorage area": {
+    city: "Anchorage",
+    region: "Alaska",
+    country: "US",
+  },
+  "greater rockford area": {
+    city: "Rockford",
+    region: "Illinois",
+    country: "US",
+  },
+  "redstone arsenal": { city: "Huntsville", region: "Alabama", country: "US" },
+  "montego bay": { city: "Montego Bay", country: "JM" },
+  bridgetown: { city: "Bridgetown", country: "BB" },
+  oistins: { city: "Oistins", country: "BB" },
+  "christ church": { city: "Christ Church", country: "BB" },
+  freeport: { city: "Freeport", country: "BS" },
+  "new providence": { city: "Nassau", country: "BS" },
+  "marsh harbour": { city: "Marsh Harbour", country: "BS" },
+  "san juan": { city: "San Juan", country: "PR" },
+  ponce: { city: "Ponce", country: "PR" },
+  bayamon: { city: "Bayamón", country: "PR" },
+  aguadilla: { city: "Aguadilla", country: "PR" },
+  barceloneta: { city: "Barceloneta", country: "PR" },
+  canovanas: { city: "Canóvanas", country: "PR" },
+  providenciales: { city: "Providenciales", country: "TC" },
+  "st. george's": { city: "St. George's", country: "GD" },
+  "st george's": { city: "St. George's", country: "GD" },
+  piarco: { city: "Piarco", country: "TT" },
+  "san fernando": { city: "San Fernando", country: "TT" },
+  "los cabos": { city: "Los Cabos", country: "MX" },
+  albufeira: { city: "Albufeira", country: "PT" },
+  "herceg-novi": { city: "Herceg Novi", country: "ME" },
+  tivat: { city: "Tivat", country: "ME" },
+  "greater rijeka area": { city: "Rijeka", country: "HR" },
+  maadi: { city: "Cairo", country: "EG" },
+  "enschede en omgeving": { city: "Enschede", country: "NL" },
   bishkek: { city: "Bishkek", country: "KG" },
   almaty: { city: "Almaty", country: "KZ" },
   tashkent: { city: "Tashkent", country: "UZ" },
@@ -766,6 +1041,24 @@ function tokenize(raw: string): string[] {
     .filter((t) => t.length > 0);
 }
 
+/**
+ * Remove the administrative noise RemoteOK and Adzuna wrap around a place
+ * name so the bare name can be looked up. Applied only as a fallback after
+ * the exact key misses, so 'Greater Noida' (a real NCR city) is never
+ * reduced to 'noida'.
+ */
+function stripAdminWrapping(key: string): string {
+  return key
+    .replace(/^greater\s+/, "")
+    .replace(
+      /\s+(metropolitan\s+area|metropolitan\s+region|area|division|district|rural\s+mandal|mandal|rural\s+municipality|rural|urban|taluka|tehsil|south|north|east|west|central|city)$/,
+      "",
+    )
+    .replace(/-(i|ii|iii|iv)$/, "")
+    .replace(/\s+e\s+regiao$/, "")
+    .trim();
+}
+
 /** Resolve a country hint the provider emitted ('India', 'in', 'IN', 'CA'). */
 function resolveCountryHint(hint?: string | null): string | undefined {
   if (!hint) return undefined;
@@ -780,14 +1073,42 @@ function resolveCountryHint(hint?: string | null): string | undefined {
 
 // ─── The normaliser ───────────────────────────────────────────────────────────
 
+export interface NormalizeLocationOptions {
+  /**
+   * The provider says this posting is remote — RemoteOK and Jobicy are
+   * remote-only boards, JSearch has `job_is_remote`. Their `location` is where
+   * the poster sits ('Bedford, ', 'Winnipeg, '), not a constraint, so the
+   * string alone under-reports remote by hundreds of rows. Maps to
+   * `workMode === "remote"`, which every provider sets from its own knowledge.
+   */
+  providerRemote?: boolean;
+}
+
 export function normalizeLocation(
   raw?: string | null,
   providerCountry?: string | null,
+  options: NormalizeLocationOptions = {},
 ): NormalizedLocation {
-  const hintCountry = resolveCountryHint(providerCountry);
-  const text = (raw ?? "").trim();
+  let hintCountry = resolveCountryHint(providerCountry);
+  let text = (raw ?? "")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;|&rsquo;|\u2019/g, "'")
+    .trim();
 
-  const result: NormalizedLocation = { isIndia: null, isRemote: false };
+  // 'IN-Bengaluru', 'US-Austin': an ISO-2 prefix is a country statement.
+  const isoPrefix = /^([A-Za-z]{2})[-–_]\s*(\S.*)$/.exec(text);
+  if (isoPrefix && COUNTRIES[isoPrefix[1]!.toLowerCase()] !== undefined) {
+    hintCountry = hintCountry ?? COUNTRIES[isoPrefix[1]!.toLowerCase()];
+    text = isoPrefix[2]!;
+  } else if (isoPrefix && /^[A-Z]{2}$/.test(isoPrefix[1]!)) {
+    hintCountry = hintCountry ?? isoPrefix[1]!.toUpperCase();
+    text = isoPrefix[2]!;
+  }
+
+  const result: NormalizedLocation = {
+    isIndia: null,
+    isRemote: options.providerRemote === true,
+  };
 
   // Rule 1 — remote markers. Detected on the whole string before tokenising so
   // 'Work From Home' survives being split on spaces.
@@ -814,6 +1135,15 @@ export function normalizeLocation(
     })
     .filter((t) => t.key.length > 0);
 
+  /**
+   * Look a token up under its exact key, then with administrative wrapping
+   * removed: 'Greater Chennai Area' → 'chennai', 'Pune Division' → 'pune',
+   * 'Visakhapatnam Rural mandal' → 'visakhapatnam', 'Kharagpur-I' →
+   * 'kharagpur', 'Coimbatore South' → 'coimbatore'.
+   */
+  const lookup = <T>(table: Record<string, T>, key: string): T | undefined =>
+    table[key] ?? table[stripAdminWrapping(key)];
+
   // Pass 1 — unambiguous tokens: Indian cities, districts, full state names,
   // country names, foreign cities, US/CA full names, non-India regions.
   const ambiguous: Array<{ original: string; key: string }> = [];
@@ -821,7 +1151,11 @@ export function normalizeLocation(
   for (const t of tokens) {
     const k = t.key;
 
-    const inCity = IN_CITIES[k];
+    // An exact district key ('bangalore rural') must not be reduced to the
+    // city it contains — the district table decides region and metro for it.
+    const inCity =
+      IN_CITIES[k] ??
+      (IN_DISTRICTS[k] === undefined ? lookup(IN_CITIES, k) : undefined);
     if (inCity) {
       if (!city) {
         city = inCity.city;
@@ -832,7 +1166,7 @@ export function normalizeLocation(
       continue;
     }
 
-    const district = IN_DISTRICTS[k];
+    const district = lookup(IN_DISTRICTS, k);
     if (district) {
       region = region ?? district.region;
       metro = metro ?? district.metro;
@@ -861,7 +1195,7 @@ export function normalizeLocation(
       continue;
     }
 
-    const foreign = FOREIGN_CITIES[k];
+    const foreign = lookup(FOREIGN_CITIES, k);
     if (foreign) {
       if (!city) {
         city = foreign.city;
@@ -886,6 +1220,14 @@ export function normalizeLocation(
     if (caName) {
       region = region ?? caName;
       country = country ?? "CA";
+      scopedAwayFromIndia = true;
+      continue;
+    }
+
+    const auName = AU_STATE_NAMES.get(k);
+    if (auName && k !== "victoria") {
+      region = region ?? auName;
+      country = country ?? "AU";
       scopedAwayFromIndia = true;
       continue;
     }
