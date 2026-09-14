@@ -116,7 +116,9 @@ test.describe("Jobs explorer", () => {
     await card.getByTestId("apply-button").click();
     const popup = await popupPromise;
 
-    expect(popup.url()).toBe(applyUrl);
+    // Compare canonical forms: a bare-origin applyUrl ('https://x.com') is
+    // reported by the browser as 'https://x.com/'.
+    expect(popup.url()).toBe(new URL(applyUrl).href);
     await popup.close();
 
     // No reload between the click and this assertion — the flip is optimistic.

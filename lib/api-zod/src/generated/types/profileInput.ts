@@ -11,7 +11,11 @@ export interface ProfileInput {
   college?: string;
   degree?: string;
   branch?: string;
-  graduationYear?: number;
+  /**
+     * Null clears it.
+     * @nullable
+     */
+  graduationYear?: number | null;
   cgpa?: number;
   skills?: string[];
   resumeUrl?: string;

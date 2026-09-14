@@ -17,6 +17,8 @@ import {
 } from "@workspace/db";
 import { logger } from "../lib/logger";
 import { normalizeLocation, toLocationColumns } from "../relevance/location";
+import { classifyJob, toRelevanceColumns } from "../relevance/classifier";
+import { resolveGraduationYear } from "../relevance/graduation-year";
 import type { ProviderJob } from "./types";
 
 export type NormalizedJob = InsertJob;
@@ -143,6 +145,25 @@ export class JobNormalizer {
       }),
     );
 
+    // Phase 2.1: track + score from the same deterministic rules the backfill
+    // uses, so a freshly synced row and a backfilled one cannot disagree.
+    // Reads the location columns computed just above — never `job.country`.
+    const postedDate = job.postedDate ?? new Date();
+    const relevance = toRelevanceColumns(
+      classifyJob({
+        title: job.title,
+        description: job.description,
+        requirements: job.requirements,
+        jobType,
+        isIndia: location.isIndia,
+        isRemote: location.isRemote,
+        eligibleBatch: job.eligibleBatch,
+        deadline: job.deadline,
+        postedDate,
+        graduationYear: await resolveGraduationYear(),
+      }),
+    );
+
     return {
       companyId,
       sourceId: sourceId ?? undefined,
@@ -151,6 +172,7 @@ export class JobNormalizer {
       location: job.location,
       country: job.country,
       ...location,
+      ...relevance,
       workMode,
       jobType,
       description: job.description,
@@ -158,7 +180,7 @@ export class JobNormalizer {
       applyUrl: job.applyUrl,
       sourceUrl: job.sourceUrl,
       sourcePlatform: job.sourceProvider,
-      postedDate: job.postedDate ?? new Date(),
+      postedDate,
       deadline: job.deadline,
       salaryMin: job.salaryMin,
       salaryMax: job.salaryMax,

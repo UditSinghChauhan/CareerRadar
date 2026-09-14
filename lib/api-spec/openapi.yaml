@@ -293,6 +293,43 @@ paths:
           style: form
           explode: true
         - in: query
+          name: isFresherEligible
+          description: >-
+            Phase 2.1. Only rows the relevance classifier put on the internship,
+            new_grad or early_career track (true) or ruled out (false). Rows
+            not yet classified count as false. Omit for no relevance filtering
+            — the pre-2.1 behaviour exactly.
+          schema:
+            type: boolean
+        - in: query
+          name: relevanceTrack
+          description: >-
+            Phase 2.1 tracks, OR-ed together. Unclassified rows never match.
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [internship, new_grad, early_career, not_relevant]
+          style: form
+          explode: true
+        - in: query
+          name: minRelevanceScore
+          description: Phase 2.1. Only rows scoring at least this (0–100).
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+        - in: query
+          name: sort
+          description: >-
+            `newest` (default, the pre-2.1 order — posted date desc) or
+            `relevance` (Phase 2.1 — relevanceScore desc, unclassified last,
+            newest first among equal scores).
+          schema:
+            type: string
+            enum: [newest, relevance]
+            default: newest
+        - in: query
           name: page
           schema:
             type: integer
@@ -864,7 +901,8 @@ components:
         branch:
           type: string
         graduationYear:
-          type: integer
+          description: Null clears it.
+          type: ["integer", "null"]
         cgpa:
           type: number
         skills:
@@ -1083,6 +1121,32 @@ components:
         isRemote:
           description: Phase 2.0. The location carries a remote marker.
           type: boolean
+        relevanceTrack:
+          description: >-
+            Phase 2.1 classifier verdict. Null until the row has been
+            classified (the relevance backfill has not run yet).
+          type: ["string", "null"]
+          enum: [internship, new_grad, early_career, not_relevant, null]
+        relevanceScore:
+          description: Phase 2.1. 0–100; 0 for not_relevant; null until classified.
+          type: ["integer", "null"]
+        isFresherEligible:
+          description: Phase 2.1. True for every track except not_relevant. False until classified.
+          type: boolean
+        seniorityExcluded:
+          description: Phase 2.1. A seniority/level/years marker ruled the row out.
+          type: boolean
+        relevanceSignals:
+          description: >-
+            Phase 2.1. Human-readable reasons behind the track and score, in
+            the order they fired — shown on hover so a wrong verdict can be
+            debugged without opening the database.
+          type: array
+          items:
+            type: string
+        classifiedAt:
+          type: ["string", "null"]
+          format: date-time
         workMode:
           type: string
           enum: [remote, hybrid, onsite]

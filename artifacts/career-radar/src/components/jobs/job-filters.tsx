@@ -15,6 +15,9 @@ import type { Company } from "@workspace/api-client-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+/** The three tracks the user can filter to. not_relevant is what fresherOnly hides. */
+export type RelevanceTrackFilter = "internship" | "new_grad" | "early_career";
+
 export interface JobFiltersState {
   jobType: "all" | "internship" | "full_time";
   workModes: Array<"remote" | "hybrid" | "onsite">;
@@ -34,7 +37,34 @@ export interface JobFiltersState {
   locations: string[];
   /** Phase 2.0. `?isIndia=true`. Off by default so unplaced rows stay reviewable. */
   indiaOnly: boolean;
+  /**
+   * Phase 2.1. `?isFresherEligible=true` — only rows the classifier put on
+   * the internship / new_grad / early_career track. ON by default: this is
+   * the point of the classifier. Off = the pre-2.1 list, and the "Show
+   * everything" escape hatch for when the classifier is wrong.
+   */
+  fresherOnly: boolean;
+  /** Phase 2.1. `?relevanceTrack=` OR-ed. Empty = every fresher-eligible track. */
+  tracks: RelevanceTrackFilter[];
+  /** Phase 2.1. `?minRelevanceScore=`. 0 = no floor. */
+  minScore: number;
 }
+
+export const TRACK_OPTIONS: Array<{
+  key: RelevanceTrackFilter;
+  label: string;
+}> = [
+  { key: "internship", label: "Internship" },
+  { key: "new_grad", label: "New Grad" },
+  { key: "early_career", label: "Early Career" },
+];
+
+export const MIN_SCORE_OPTIONS: Array<{ value: number; label: string }> = [
+  { value: 0, label: "Any score" },
+  { value: 60, label: "60+" },
+  { value: 80, label: "80+" },
+  { value: 90, label: "90+" },
+];
 
 /**
  * The buckets the Jobs page offers. Keys are what the API accepts in
@@ -80,7 +110,44 @@ export const DEFAULT_FILTERS: JobFiltersState = {
   hideApplied: true,
   locations: DEFAULT_LOCATIONS,
   indiaOnly: false,
+  fresherOnly: true,
+  tracks: [],
+  minScore: 0,
 };
+
+/**
+ * The escape hatch (UPGRADE.md §2.3). The classifier and the location
+ * normaliser will both be wrong sometimes, and the user must be able to see
+ * past them in one click: every server-side narrowing off, every batch chip
+ * off. `hideApplied` is left alone — that is the tracker's own state, not a
+ * guess about the job. Sort is left alone too; it changes order, not
+ * membership.
+ */
+export function showEverything(filters: JobFiltersState): JobFiltersState {
+  return {
+    ...filters,
+    jobType: "all",
+    batches: [],
+    locations: [],
+    indiaOnly: false,
+    fresherOnly: false,
+    tracks: [],
+    minScore: 0,
+  };
+}
+
+/** True when nothing server-side is narrowing the list — the pre-2.0/2.1 view. */
+export function isShowingEverything(filters: JobFiltersState): boolean {
+  return (
+    filters.jobType === "all" &&
+    filters.batches.length === 0 &&
+    filters.locations.length === 0 &&
+    !filters.indiaOnly &&
+    !filters.fresherOnly &&
+    filters.tracks.length === 0 &&
+    filters.minScore === 0
+  );
+}
 
 function sameSet(a: string[], b: string[]): boolean {
   return a.length === b.length && a.every((x) => b.includes(x));
@@ -141,8 +208,12 @@ export function countActiveFilters(filters: JobFiltersState): number {
   // as hideApplied below: an untouched page must not show a badge.
   if (!sameSet(filters.locations, DEFAULT_LOCATIONS)) n++;
   if (filters.indiaOnly) n++;
-  // hideApplied is deliberately not counted. It is on by default, so counting
-  // it would show a permanent "1 active filter" badge on an untouched page.
+  if (filters.tracks.length > 0) n++;
+  if (filters.minScore > 0) n++;
+  // hideApplied and fresherOnly are deliberately not counted. Both are on by
+  // default, so counting them would show a permanent "1 active filter" badge
+  // on an untouched page; and turning fresherOnly OFF is widening, not
+  // filtering — the "Back to my feed" link covers the way back.
   return n;
 }
 
@@ -289,6 +360,88 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
             </button>
           ))}
         </div>
+      </FilterSection>
+
+      <Separator />
+
+      {/* Relevance — Phase 2.1. The classifier's verdict, filtered on the
+          server. fresherOnly is the default view; "Show everything" is the
+          escape hatch for when the classifier is wrong. */}
+      <FilterSection title="Relevance">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="filter-fresher-only"
+            checked={filters.fresherOnly}
+            onCheckedChange={(checked) => set("fresherOnly", checked === true)}
+          />
+          <Label
+            htmlFor="filter-fresher-only"
+            className="text-xs font-normal cursor-pointer"
+          >
+            Fresher-eligible only
+            <span className="block text-[10px] text-muted-foreground/70">
+              Hides senior, level II+, and 2+ years roles
+            </span>
+          </Label>
+        </div>
+        <div className="flex flex-wrap gap-1.5" data-testid="track-chips">
+          {TRACK_OPTIONS.map(({ key, label }) => {
+            const active = filters.tracks.includes(key);
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={active}
+                data-track-chip={key}
+                onClick={() => toggleArray("tracks", key, filters.tracks)}
+                className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        <Select
+          value={String(filters.minScore)}
+          onValueChange={(v) => set("minScore", Number(v))}
+        >
+          <SelectTrigger
+            className="h-8 text-xs"
+            aria-label="Minimum relevance score"
+          >
+            <SelectValue placeholder="Any score" />
+          </SelectTrigger>
+          <SelectContent>
+            {MIN_SCORE_OPTIONS.map(({ value, label }) => (
+              <SelectItem key={value} value={String(value)} className="text-xs">
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {isShowingEverything(filters) ? (
+          <button
+            type="button"
+            onClick={() => onChange(DEFAULT_FILTERS)}
+            className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+          >
+            Back to my feed
+          </button>
+        ) : (
+          <button
+            type="button"
+            data-testid="show-everything"
+            onClick={() => onChange(showEverything(filters))}
+            className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+            title="Every active job, no relevance or location filtering — for when the classifier is wrong"
+          >
+            Show everything
+          </button>
+        )}
       </FilterSection>
 
       <Separator />

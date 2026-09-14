@@ -120,6 +120,32 @@ const workModeLabels: Record<string, string> = {
   onsite: "On-site",
 };
 
+/**
+ * Phase 2.1 track badge. not_relevant gets a muted badge too — it only shows
+ * when the user has chosen "Show everything", and there the reason it was
+ * ruled out is exactly what they want to see on hover.
+ */
+const trackBadge: Record<string, { label: string; className: string }> = {
+  internship: {
+    label: "Internship",
+    className:
+      "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+  },
+  new_grad: {
+    label: "New Grad",
+    className: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30",
+  },
+  early_career: {
+    label: "Early Career",
+    className:
+      "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30",
+  },
+  not_relevant: {
+    label: "Not for freshers",
+    className: "bg-muted text-muted-foreground border-border",
+  },
+};
+
 const sourcePlatformLabels: Record<string, string> = {
   greenhouse: "Greenhouse",
   lever: "Lever",
@@ -309,6 +335,47 @@ export function JobCard({
 
       {/* Badges row */}
       <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+        {/* Phase 2.1: the classifier's verdict, with its reasons on hover so a
+            wrong track is debuggable from the card. Absent until the row has
+            been classified. */}
+        {job.relevanceTrack && trackBadge[job.relevanceTrack] && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="outline"
+                className={`text-xs font-medium cursor-default ${trackBadge[job.relevanceTrack]!.className}`}
+                data-relevance-track={job.relevanceTrack}
+                data-relevance-score={job.relevanceScore ?? ""}
+              >
+                {trackBadge[job.relevanceTrack]!.label}
+                {job.relevanceScore != null && (
+                  <span className="ml-1 opacity-70 tabular-nums">
+                    {job.relevanceScore}
+                  </span>
+                )}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              align="start"
+              className="text-xs max-w-xs"
+              data-testid="relevance-signals"
+            >
+              <p className="font-semibold mb-1">
+                Score {job.relevanceScore ?? "—"} / 100
+              </p>
+              {(job.relevanceSignals ?? []).length > 0 ? (
+                <ul className="list-disc pl-3 space-y-0.5">
+                  {(job.relevanceSignals ?? []).map((signal) => (
+                    <li key={signal}>{signal}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">No signals recorded</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        )}
         <Badge variant="secondary" className="text-xs font-medium">
           {job.jobType === "internship" ? "Internship" : "Full Time"}
         </Badge>

@@ -69,7 +69,11 @@ export interface ProfileInput {
   college?: string;
   degree?: string;
   branch?: string;
-  graduationYear?: number;
+  /**
+     * Null clears it.
+     * @nullable
+     */
+  graduationYear?: number | null;
   cgpa?: number;
   skills?: string[];
   resumeUrl?: string;
@@ -229,6 +233,20 @@ export interface JobSource {
   createdAt: string;
 }
 
+/**
+ * Phase 2.1 classifier verdict. Null until the row has been classified (the relevance backfill has not run yet).
+ * @nullable
+ */
+export type JobRelevanceTrack = typeof JobRelevanceTrack[keyof typeof JobRelevanceTrack] | null;
+
+
+export const JobRelevanceTrack = {
+  internship: 'internship',
+  new_grad: 'new_grad',
+  early_career: 'early_career',
+  not_relevant: 'not_relevant',
+} as const;
+
 export type JobWorkMode = typeof JobWorkMode[keyof typeof JobWorkMode];
 
 
@@ -297,6 +315,24 @@ export interface Job {
   isIndia?: boolean | null;
   /** Phase 2.0. The location carries a remote marker. */
   isRemote?: boolean;
+  /**
+     * Phase 2.1 classifier verdict. Null until the row has been classified (the relevance backfill has not run yet).
+     * @nullable
+     */
+  relevanceTrack?: JobRelevanceTrack;
+  /**
+     * Phase 2.1. 0–100; 0 for not_relevant; null until classified.
+     * @nullable
+     */
+  relevanceScore?: number | null;
+  /** Phase 2.1. True for every track except not_relevant. False until classified. */
+  isFresherEligible?: boolean;
+  /** Phase 2.1. A seniority/level/years marker ruled the row out. */
+  seniorityExcluded?: boolean;
+  /** Phase 2.1. Human-readable reasons behind the track and score, in the order they fired — shown on hover so a wrong verdict can be debugged without opening the database. */
+  relevanceSignals?: string[];
+  /** @nullable */
+  classifiedAt?: string | null;
   workMode: JobWorkMode;
   jobType: JobJobType;
   /** @nullable */
@@ -639,6 +675,24 @@ isRemote?: boolean;
  * Phase 2.0 location buckets, OR-ed together; omit for no location filtering. A metro name (NCR, MMR, Bengaluru, Hyderabad, Pune, Chennai, Kolkata, or any other locationMetro value) matches that metro exactly. `remote` = remote roles not scoped to another country. `other_india` = India rows naming a city outside the seven featured metros. `india_unspecified` = India rows that state no city at all (bare 'India') — not "elsewhere", just unstated. `unknown` = rows the normaliser could not place — kept reviewable rather than hidden. Filtering is server-side; the list is bounded, so nothing is filtered in the browser.
  */
 locations?: string[];
+/**
+ * Phase 2.1. Only rows the relevance classifier put on the internship, new_grad or early_career track (true) or ruled out (false). Rows not yet classified count as false. Omit for no relevance filtering — the pre-2.1 behaviour exactly.
+ */
+isFresherEligible?: boolean;
+/**
+ * Phase 2.1 tracks, OR-ed together. Unclassified rows never match.
+ */
+relevanceTrack?: ListJobsRelevanceTrackItem[];
+/**
+ * Phase 2.1. Only rows scoring at least this (0–100).
+ * @minimum 0
+ * @maximum 100
+ */
+minRelevanceScore?: number;
+/**
+ * `newest` (default, the pre-2.1 order — posted date desc) or `relevance` (Phase 2.1 — relevanceScore desc, unclassified last, newest first among equal scores).
+ */
+sort?: ListJobsSort;
 page?: number;
 limit?: number;
 };
@@ -667,6 +721,24 @@ export const ListJobsStatus = {
   active: 'active',
   closed: 'closed',
   draft: 'draft',
+} as const;
+
+export type ListJobsRelevanceTrackItem = typeof ListJobsRelevanceTrackItem[keyof typeof ListJobsRelevanceTrackItem];
+
+
+export const ListJobsRelevanceTrackItem = {
+  internship: 'internship',
+  new_grad: 'new_grad',
+  early_career: 'early_career',
+  not_relevant: 'not_relevant',
+} as const;
+
+export type ListJobsSort = typeof ListJobsSort[keyof typeof ListJobsSort];
+
+
+export const ListJobsSort = {
+  newest: 'newest',
+  relevance: 'relevance',
 } as const;
 
 export type GetJobsClosingSoonParams = {

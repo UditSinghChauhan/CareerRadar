@@ -11,6 +11,7 @@
     "seed": "tsx src/seed/seed.ts",
     "backfill:stale-jobs": "tsx src/scripts/backfill-close-stale-jobs.ts",
     "backfill:location": "tsx src/scripts/backfill-location.ts",
+    "backfill:relevance": "tsx src/scripts/backfill-relevance.ts",
     "verify:providers": "tsx src/scripts/verify-providers.ts",
     "project:intake": "tsx src/scripts/project-intake.ts",
     "aggregator:probe": "tsx src/scripts/aggregator-probe.ts",

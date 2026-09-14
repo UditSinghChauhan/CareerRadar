@@ -48,6 +48,7 @@ import {
   JobFilters,
   DEFAULT_FILTERS,
   countActiveFilters,
+  showEverything,
 } from "@/components/jobs/job-filters";
 import type { JobFiltersState } from "@/components/jobs/job-filters";
 import type { ApplicationStatusMap, Job } from "@workspace/api-client-react";
@@ -58,9 +59,10 @@ import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
 
-type SortKey = "newest" | "deadline" | "salary" | "company";
+type SortKey = "relevance" | "newest" | "deadline" | "salary" | "company";
 
 const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+  { value: "relevance", label: "Relevance" },
   { value: "newest", label: "Newest" },
   { value: "deadline", label: "Deadline" },
   { value: "salary", label: "Salary" },
@@ -72,6 +74,15 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
 function sortJobs(jobs: Job[], key: SortKey): Job[] {
   const sorted = [...jobs];
   switch (key) {
+    case "relevance":
+      // Same order the server used for the window: score desc (unclassified
+      // last), newest first among equals.
+      return sorted.sort(
+        (a, b) =>
+          (b.relevanceScore ?? -1) - (a.relevanceScore ?? -1) ||
+          new Date(b.postedDate ?? b.createdAt).getTime() -
+            new Date(a.postedDate ?? a.createdAt).getTime(),
+      );
     case "newest":
       return sorted.sort(
         (a, b) =>
@@ -199,14 +210,19 @@ function JobCardSkeleton() {
 function EmptyState({
   hasFilters,
   locationFiltered,
+  relevanceFiltered,
   onClear,
   onAllLocations,
+  onShowEverything,
 }: {
   hasFilters: boolean;
   /** The location buckets are narrowing the list — including the defaults. */
   locationFiltered: boolean;
+  /** The fresher-eligible / track / score filters are narrowing the list — including the default. */
+  relevanceFiltered: boolean;
   onClear: () => void;
   onAllLocations: () => void;
+  onShowEverything: () => void;
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -219,19 +235,31 @@ function EmptyState({
       <p className="text-sm text-muted-foreground mb-4 max-w-xs">
         {hasFilters
           ? "Try adjusting your filters or search query."
-          : locationFiltered
-            ? "Nothing in your default locations. If the location backfill hasn't run yet, every job is still in the Unknown bucket."
-            : "No active job listings right now. Check back soon."}
+          : relevanceFiltered
+            ? "Nothing fresher-eligible in your default view. If the relevance backfill hasn't run yet, every job is still unclassified — Show everything sees past the classifier."
+            : locationFiltered
+              ? "Nothing in your default locations. If the location backfill hasn't run yet, every job is still in the Unknown bucket."
+              : "No active job listings right now. Check back soon."}
       </p>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap justify-center">
         {hasFilters && (
           <Button variant="outline" size="sm" onClick={onClear}>
             Clear filters
           </Button>
         )}
-        {locationFiltered && (
+        {locationFiltered && !relevanceFiltered && (
           <Button variant="outline" size="sm" onClick={onAllLocations}>
             Show all locations
+          </Button>
+        )}
+        {(relevanceFiltered || locationFiltered) && (
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="empty-show-everything"
+            onClick={onShowEverything}
+          >
+            Show everything
           </Button>
         )}
       </div>
@@ -274,7 +302,9 @@ export function JobsPage() {
 
   // ── Filters & sort ────────────────────────────────────────────────────────
   const [filters, setFilters] = useState<JobFiltersState>(DEFAULT_FILTERS);
-  const [sort, setSort] = useState<SortKey>("newest");
+  // Relevance by default (UPGRADE.md §2.3). The server sorts the window the
+  // same way, so page 1 is the real top of the feed, not the newest 200.
+  const [sort, setSort] = useState<SortKey>("relevance");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
 
@@ -284,6 +314,11 @@ export function JobsPage() {
   }, [debouncedSearch, filters, sort]);
 
   // ── Data fetching ─────────────────────────────────────────────────────────
+  const { data: bookmarksData } = useListBookmarks();
+  const { data: companiesData } = useListCompanies({ limit: 100 });
+  const { data: profileData } = useGetProfile();
+  const profileBatch = profileData?.graduationYear ?? null;
+
   const {
     data: jobsData,
     isLoading: jobsLoading,
@@ -301,12 +336,20 @@ export function JobsPage() {
     // capped at 200 rows and the table is well past that.
     locations: filters.locations.length > 0 ? filters.locations : undefined,
     isIndia: filters.indiaOnly ? true : undefined,
+    // Relevance (Phase 2.1) — same rule. Absent params = the pre-2.1 list.
+    isFresherEligible: filters.fresherOnly ? true : undefined,
+    relevanceTrack: filters.tracks.length > 0 ? filters.tracks : undefined,
+    minRelevanceScore: filters.minScore > 0 ? filters.minScore : undefined,
+    // §2.3: for a profile with a graduation year, the default feed is also
+    // scoped to that batch (rows naming no batch still match). Only while
+    // the fresher view is on, so "Show everything" really is everything.
+    eligibleBatch:
+      filters.fresherOnly && profileBatch ? profileBatch : undefined,
+    // The server orders the 200-row window; the other sort keys are
+    // client-side over a newest-first window, as before.
+    sort: sort === "relevance" ? "relevance" : undefined,
     limit: 200,
   });
-
-  const { data: bookmarksData } = useListBookmarks();
-  const { data: companiesData } = useListCompanies({ limit: 100 });
-  const { data: profileData } = useGetProfile();
 
   // Long staleTime: this only changes when the user applies or saves, and both
   // of those paths invalidate it explicitly below.
@@ -486,7 +529,8 @@ export function JobsPage() {
   const activeFilterCount =
     countActiveFilters(filters) + (debouncedSearch ? 1 : 0);
   const companies = companiesData?.data ?? [];
-  const profileBatch = profileData?.graduationYear ?? null;
+  const relevanceFiltered =
+    filters.fresherOnly || filters.tracks.length > 0 || filters.minScore > 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -634,14 +678,26 @@ export function JobsPage() {
                 </>
               )}
             </p>
-            {profileBatch && (
-              <p className="text-xs text-muted-foreground">
-                Your batch:{" "}
-                <span className="font-medium text-foreground">
-                  {profileBatch}
-                </span>
-              </p>
-            )}
+            <p
+              className="text-xs text-muted-foreground"
+              data-testid="view-mode"
+            >
+              {filters.fresherOnly ? (
+                <>
+                  Fresher-eligible
+                  {profileBatch ? (
+                    <>
+                      {" · "}batch{" "}
+                      <span className="font-medium text-foreground">
+                        {profileBatch}
+                      </span>
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                "All jobs"
+              )}
+            </p>
           </div>
 
           {/* Jobs grid */}
@@ -675,6 +731,7 @@ export function JobsPage() {
             <EmptyState
               hasFilters={activeFilterCount > 0}
               locationFiltered={filters.locations.length > 0}
+              relevanceFiltered={relevanceFiltered}
               onClear={() => {
                 setFilters(DEFAULT_FILTERS);
                 setSearchInput("");
@@ -682,6 +739,7 @@ export function JobsPage() {
               onAllLocations={() =>
                 setFilters((f) => ({ ...f, locations: [], indiaOnly: false }))
               }
+              onShowEverything={() => setFilters((f) => showEverything(f))}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">

@@ -7,6 +7,7 @@ import {
 } from "../middlewares/requireAuth";
 import { UpdateProfileBody } from "@workspace/api-zod";
 import { createClerkClient } from "@clerk/express";
+import { resetGraduationYearCache } from "../relevance/graduation-year";
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
@@ -70,6 +71,11 @@ router.put("/profile", requireAuth, async (req, res) => {
       .set({ ...parsed.data, updatedAt: new Date() })
       .where(eq(profilesTable.clerkId, clerkUserId))
       .returning();
+
+    // The relevance classifier scores against this year and caches it per
+    // sync run; a profile edit must reach the next classification, not the
+    // one after the cache expires.
+    if ("graduationYear" in parsed.data) resetGraduationYearCache();
 
     res.json(updated);
   } catch (err) {

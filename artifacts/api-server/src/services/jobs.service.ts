@@ -1,10 +1,18 @@
 import {
   jobsRepository,
   type JobFilters,
+  type JobSort,
 } from "../repositories/jobs.repository";
 import { companiesRepository } from "../repositories/companies.repository";
 import { paginate } from "../lib/pagination";
 import { normalizeLocation, toLocationColumns } from "../relevance/location";
+import {
+  classifyJob,
+  RELEVANCE_TRACKS,
+  toRelevanceColumns,
+  type RelevanceTrack,
+} from "../relevance/classifier";
+import { resolveGraduationYear } from "../relevance/graduation-year";
 
 /** 'true' / 'false' from the query string; anything else is "not given". */
 function parseBoolean(value: unknown): boolean | undefined {
@@ -27,6 +35,22 @@ function parseList(value: unknown): string[] | undefined {
   return items.length > 0 ? items : undefined;
 }
 
+/** Only the four known tracks survive; anything else in the list is dropped. */
+function parseTracks(value: unknown): RelevanceTrack[] | undefined {
+  const items = parseList(value)?.filter((v): v is RelevanceTrack =>
+    (RELEVANCE_TRACKS as readonly string[]).includes(v),
+  );
+  return items && items.length > 0 ? items : undefined;
+}
+
+/** An integer 0–100, else "not given". */
+function parseScore(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0 || n > 100) return undefined;
+  return n;
+}
+
 export const jobsService = {
   async list(rawQuery: Record<string, unknown>) {
     const filters: JobFilters = {
@@ -45,9 +69,14 @@ export const jobsService = {
       isIndia: parseBoolean(rawQuery.isIndia),
       isRemote: parseBoolean(rawQuery.isRemote),
       locations: parseList(rawQuery.locations),
+      isFresherEligible: parseBoolean(rawQuery.isFresherEligible),
+      relevanceTrack: parseTracks(rawQuery.relevanceTrack),
+      minRelevanceScore: parseScore(rawQuery.minRelevanceScore),
     };
     const pagination = paginate(rawQuery);
-    return jobsRepository.findAll(filters, pagination);
+    const sort: JobSort =
+      rawQuery.sort === "relevance" ? "relevance" : "newest";
+    return jobsRepository.findAll(filters, pagination, sort);
   },
 
   async get(id: string) {
@@ -93,16 +122,38 @@ export const jobsService = {
       throw new Error(`Company "${data.companyId}" not found`);
     }
 
+    // Hand-entered jobs get the same normalised location and the same
+    // relevance verdict as synced ones.
+    const location = toLocationColumns(
+      normalizeLocation(data.location, data.country, {
+        providerRemote: data.workMode === "remote",
+      }),
+    );
+    const deadline = data.deadline ? new Date(data.deadline) : undefined;
+    const postedDate = data.postedDate ? new Date(data.postedDate) : new Date();
+    const relevance = toRelevanceColumns(
+      classifyJob({
+        title: data.title,
+        description: data.description,
+        requirements: data.requirements,
+        experienceMin: data.experienceMin,
+        experienceMax: data.experienceMax,
+        jobType: data.jobType,
+        isIndia: location.isIndia,
+        isRemote: location.isRemote,
+        eligibleBatch: data.eligibleBatch,
+        deadline,
+        postedDate,
+        graduationYear: await resolveGraduationYear(),
+      }),
+    );
+
     return jobsRepository.create({
       ...data,
-      // Hand-entered jobs get the same normalised location as synced ones.
-      ...toLocationColumns(
-        normalizeLocation(data.location, data.country, {
-          providerRemote: data.workMode === "remote",
-        }),
-      ),
-      deadline: data.deadline ? new Date(data.deadline) : undefined,
-      postedDate: data.postedDate ? new Date(data.postedDate) : new Date(),
+      ...location,
+      ...relevance,
+      deadline,
+      postedDate,
       eligibleBatch: data.eligibleBatch ?? [],
       eligibleBranches: data.eligibleBranches ?? [],
       requiredSkills: data.requiredSkills ?? [],
@@ -140,6 +191,46 @@ export const jobsService = {
     if (data.deadline) updateData.deadline = new Date(data.deadline as string);
     if (data.postedDate)
       updateData.postedDate = new Date(data.postedDate as string);
+
+    // Re-classify when anything the classifier reads has changed. The merged
+    // view (stored row overlaid with this update) is what gets classified,
+    // so a title edit alone re-scores against the stored description.
+    const classifierInputs = [
+      "title",
+      "description",
+      "requirements",
+      "experienceMin",
+      "experienceMax",
+      "jobType",
+      "eligibleBatch",
+      "deadline",
+      "postedDate",
+      "location",
+      "country",
+      "workMode",
+    ];
+    if (classifierInputs.some((k) => k in data)) {
+      const merged = { ...job, ...updateData } as typeof job;
+      Object.assign(
+        updateData,
+        toRelevanceColumns(
+          classifyJob({
+            title: merged.title,
+            description: merged.description,
+            requirements: merged.requirements,
+            experienceMin: merged.experienceMin,
+            experienceMax: merged.experienceMax,
+            jobType: merged.jobType,
+            isIndia: merged.isIndia,
+            isRemote: merged.isRemote,
+            eligibleBatch: merged.eligibleBatch,
+            deadline: merged.deadline,
+            postedDate: merged.postedDate,
+            graduationYear: await resolveGraduationYear(),
+          }),
+        ),
+      );
+    }
 
     return jobsRepository.update(
       id,

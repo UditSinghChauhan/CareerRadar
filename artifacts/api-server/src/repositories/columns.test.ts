@@ -171,13 +171,14 @@ describe("repository column lists — response shape is unchanged", () => {
     expect(JSON.stringify(after)).toBe(JSON.stringify(before));
   });
 
-  it("the only keys added since are lastSeenAt (1.5) and the six location columns (2.0)", async () => {
+  it("the only keys added since are lastSeenAt (1.5), the six location columns (2.0) and the six relevance columns (2.1)", async () => {
     const [application] = await applicationsRepository
       .findAll(CLERK_ID, {}, { page: 1, limit: 20 })
       .then((r) => r.data);
 
-    // Phase 2.0's columns sit after `country` in the schema, so that is where
-    // they appear. Every pre-existing key keeps its position.
+    // Phase 2.0's columns sit after `country` in the schema, and Phase 2.1's
+    // directly after them, so that is where they appear. Every pre-existing
+    // key keeps its position.
     const LOCATION_KEYS_PHASE_2_0 = [
       "locationCity",
       "locationRegion",
@@ -186,6 +187,14 @@ describe("repository column lists — response shape is unchanged", () => {
       "isIndia",
       "isRemote",
     ];
+    const RELEVANCE_KEYS_PHASE_2_1 = [
+      "relevanceTrack",
+      "relevanceScore",
+      "isFresherEligible",
+      "seniorityExcluded",
+      "relevanceSignals",
+      "classifiedAt",
+    ];
     const afterCountry = JOB_KEYS_BEFORE_PHASE_1_5.indexOf("country") + 1;
     const afterStatus = JOB_KEYS_BEFORE_PHASE_1_5.indexOf("status") + 1;
 
@@ -193,6 +202,7 @@ describe("repository column lists — response shape is unchanged", () => {
       [
         ...JOB_KEYS_BEFORE_PHASE_1_5.slice(0, afterCountry),
         ...LOCATION_KEYS_PHASE_2_0,
+        ...RELEVANCE_KEYS_PHASE_2_1,
         ...JOB_KEYS_BEFORE_PHASE_1_5.slice(afterCountry, afterStatus),
         "lastSeenAt",
         ...JOB_KEYS_BEFORE_PHASE_1_5.slice(afterStatus),
@@ -202,8 +212,8 @@ describe("repository column lists — response shape is unchanged", () => {
 
   it("a column added to the schema does not reach the API until it is listed", async () => {
     // Guards the reason these lists exist: the bare select this replaced would
-    // have returned every jobs column, so Phase 2's nine new columns would have
-    // entered the payload unreviewed. `jobColumns` is the gate.
+    // have returned every jobs column, so Phase 2's twelve new columns would
+    // have entered the payload unreviewed. `jobColumns` is the gate.
     const { jobColumns } = await import("./columns");
     const declared = Object.keys(jobColumns);
     const [application] = await applicationsRepository
