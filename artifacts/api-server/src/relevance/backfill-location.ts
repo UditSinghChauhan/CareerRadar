@@ -68,6 +68,7 @@ export interface BackfillLocationReport {
 const BUCKET_KEYS: LocationBucket[] = [
   ...FEATURED_METROS,
   "other_india",
+  "india_unspecified",
   "remote",
   "unknown",
   "abroad",
@@ -252,6 +253,7 @@ export async function locationBucketCountsFromDb(): Promise<{
             featured.map((m) => sql`${m}`),
             sql`, `,
           )}) THEN ${jobsTable.locationMetro}
+          WHEN ${jobsTable.isIndia} = true AND ${jobsTable.locationMetro} IS NULL THEN 'india_unspecified'
           WHEN ${jobsTable.isIndia} = true THEN 'other_india'
           WHEN ${jobsTable.isIndia} IS NULL AND ${jobsTable.isRemote} = true THEN 'remote'
           WHEN ${jobsTable.isIndia} IS NULL THEN 'unknown'

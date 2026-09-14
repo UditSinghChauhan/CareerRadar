@@ -636,7 +636,7 @@ isIndia?: boolean;
  */
 isRemote?: boolean;
 /**
- * Phase 2.0 location buckets, OR-ed together; omit for no location filtering. A metro name (NCR, MMR, Bengaluru, Hyderabad, Pune, Chennai, Kolkata, or any other locationMetro value) matches that metro exactly. `remote` = remote roles not scoped to another country. `other_india` = India rows outside the seven featured metros, including bare 'India'. `unknown` = rows the normaliser could not place — kept reviewable rather than hidden. Filtering is server-side; the list is bounded, so nothing is filtered in the browser.
+ * Phase 2.0 location buckets, OR-ed together; omit for no location filtering. A metro name (NCR, MMR, Bengaluru, Hyderabad, Pune, Chennai, Kolkata, or any other locationMetro value) matches that metro exactly. `remote` = remote roles not scoped to another country. `other_india` = India rows naming a city outside the seven featured metros. `india_unspecified` = India rows that state no city at all (bare 'India') — not "elsewhere", just unstated. `unknown` = rows the normaliser could not place — kept reviewable rather than hidden. Filtering is server-side; the list is bounded, so nothing is filtered in the browser.
  */
 locations?: string[];
 page?: number;

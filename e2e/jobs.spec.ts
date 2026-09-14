@@ -64,7 +64,7 @@ async function firstRenderedJobWithApplyUrl(
  */
 async function filteredJobCount(page: Page): Promise<number> {
   const text = await page
-    .getByText(/^\d+ jobs?( matching filters)?$/)
+    .getByText(/^\d+( of [\d,]+)? jobs?( matching filters)?$/)
     .first()
     .textContent();
   return Number.parseInt(text?.trim() ?? "0", 10);

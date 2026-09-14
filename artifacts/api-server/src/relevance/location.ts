@@ -1009,13 +1009,18 @@ export const FEATURED_METROS = [
   "Kolkata",
 ] as const;
 
-/** Default buckets: where the user is, the big SDE hubs, and location-agnostic remote. */
+/**
+ * Default buckets: where the user is, the big SDE hubs, location-agnostic
+ * remote, and India postings that state no city — those are not "elsewhere",
+ * they are unknown-within-India and usually applicable.
+ */
 export const DEFAULT_LOCATION_BUCKETS = [
   "NCR",
   "Bengaluru",
   "Hyderabad",
   "Pune",
   "remote",
+  "india_unspecified",
 ] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -1358,7 +1363,15 @@ export function toLocationColumns(n: NormalizedLocation): {
  */
 export type LocationBucket =
   | (typeof FEATURED_METROS)[number]
+  /** India, and the posting names a city that is not a featured metro. */
   | "other_india"
+  /**
+   * India, and no city at all — Adzuna's bare 'India' is 31% of its results.
+   * Its own bucket because "didn't say where" and "said somewhere else" are
+   * different facts: 267 internship-titled live rows sat here unseen when
+   * they shared a bucket with Jaipur and Indore (measured 2026-09-15).
+   */
+  | "india_unspecified"
   | "remote"
   | "unknown"
   | "abroad";
@@ -1373,6 +1386,7 @@ export function bucketOf(n: {
 }): LocationBucket {
   const metro = n.metro ?? n.locationMetro ?? null;
   if (n.isIndia === true) {
+    if (!metro) return "india_unspecified";
     const featured = FEATURED_METROS.find((m) => m === metro);
     return featured ?? "other_india";
   }
