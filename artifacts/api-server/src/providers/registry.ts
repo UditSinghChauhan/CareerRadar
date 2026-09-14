@@ -70,6 +70,8 @@ import remoteOkProvider from "./remoteok/provider";
 import remotiveProvider from "./remotive/provider";
 import adzunaProvider from "./adzuna/provider";
 import jSearchProvider from "./jsearch/provider";
+import arbeitnowProvider from "./arbeitnow/provider";
+import jobicyProvider from "./jobicy/provider";
 
 providerRegistry.register(greenhouseProvider);
 providerRegistry.register(leverProvider);
@@ -83,3 +85,5 @@ providerRegistry.register(remoteOkProvider);
 providerRegistry.register(remotiveProvider);
 providerRegistry.register(adzunaProvider);
 providerRegistry.register(jSearchProvider);
+providerRegistry.register(arbeitnowProvider);
+providerRegistry.register(jobicyProvider);

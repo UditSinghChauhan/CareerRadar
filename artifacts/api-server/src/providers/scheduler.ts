@@ -30,6 +30,7 @@
  *   SYNC_MAX_AGE_DAYS     number              default: 45
  */
 
+import { desc, eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { db, providerSyncLogsTable } from "@workspace/db";
 import { providerRegistry } from "./registry";
@@ -77,6 +78,110 @@ async function writeSyncLog(entry: {
 
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
+/**
+ * How recent a successful run has to be for the boot sync to be skipped.
+ *
+ * WHY THIS EXISTS
+ * ────────────────
+ * A Render free-tier instance spins down after 15 minutes idle and boots again
+ * on the next request. With PROVIDER_RUN_ON_START=true that means every wake —
+ * a page load, a health check, the cron workflow's own wake-up curl — starts a
+ * full pass over every enabled config. Several wakes in an afternoon becomes
+ * several full syncs, and Adzuna (250 req/day) and JSearch (200 req/month) are
+ * metered tightly enough that this alone can exhaust the month.
+ *
+ * Two hours sits comfortably inside the 6-hour cron cadence, so the scheduled
+ * run is never suppressed by the boot of the instance serving it, while a burst
+ * of wakes collapses to at most one sync.
+ */
+export const BOOT_SYNC_MIN_GAP_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+export interface BootSyncDecision {
+  run: boolean;
+  reason:
+    | "no-successful-run-recorded"
+    | "last-success-is-old"
+    | "last-success-is-recent"
+    | "lookup-failed";
+  lastSuccessAt: Date | null;
+  ageMs: number | null;
+}
+
+/**
+ * Timestamp of the most recent `status = "success"` row in provider_sync_logs,
+ * or null if there has never been one.
+ *
+ * `startedAt` rather than `finishedAt`: it is NOT NULL in the schema, whereas
+ * `finishedAt` is nullable, and a run interrupted mid-write would otherwise sort
+ * as if it had never happened.
+ */
+export async function lastSuccessfulSyncAt(): Promise<Date | null> {
+  const [row] = await db
+    .select({ startedAt: providerSyncLogsTable.startedAt })
+    .from(providerSyncLogsTable)
+    .where(eq(providerSyncLogsTable.status, "success"))
+    .orderBy(desc(providerSyncLogsTable.startedAt))
+    .limit(1);
+
+  return row?.startedAt ?? null;
+}
+
+/**
+ * Should the run-on-start sync actually run?
+ *
+ * FAILS OPEN. If the lookup itself throws, this returns `run: true`. The guard
+ * is a quota optimisation, not a safety mechanism — and when the database is
+ * unreachable `runAll()` aborts at `warmUp()` anyway, so an over-eager decision
+ * here costs nothing while an over-cautious one could suppress ingestion
+ * indefinitely on a flaky connection.
+ */
+export async function decideBootSync(
+  now: Date = new Date(),
+  minGapMs: number = BOOT_SYNC_MIN_GAP_MS,
+): Promise<BootSyncDecision> {
+  let lastSuccessAt: Date | null;
+
+  try {
+    lastSuccessAt = await lastSuccessfulSyncAt();
+  } catch (err) {
+    logger.warn(
+      { err },
+      "Boot-sync guard could not read provider_sync_logs — running the boot sync anyway",
+    );
+    return {
+      run: true,
+      reason: "lookup-failed",
+      lastSuccessAt: null,
+      ageMs: null,
+    };
+  }
+
+  if (lastSuccessAt === null) {
+    return {
+      run: true,
+      reason: "no-successful-run-recorded",
+      lastSuccessAt: null,
+      ageMs: null,
+    };
+  }
+
+  const ageMs = now.getTime() - lastSuccessAt.getTime();
+
+  // A negative age means the row is stamped in the future — clock skew between
+  // the app instance and Postgres. Treat it as recent: the conservative read is
+  // that a sync just happened.
+  if (ageMs < minGapMs) {
+    return {
+      run: false,
+      reason: "last-success-is-recent",
+      lastSuccessAt,
+      ageMs,
+    };
+  }
+
+  return { run: true, reason: "last-success-is-old", lastSuccessAt, ageMs };
+}
+
 export class SchedulerService {
   private timer: ReturnType<typeof setInterval> | null = null;
   private isRunning = false;
@@ -114,14 +219,13 @@ export class SchedulerService {
     );
 
     if (this.runOnStart) {
-      // Small delay so the server finishes booting first
+      // Small delay so the server finishes booting first.
+      //
+      // The guard is evaluated here rather than in start() so that start()
+      // stays synchronous — index.ts calls it from inside app.listen and must
+      // not have to await anything to finish booting.
       setTimeout(() => {
-        this.runAll().catch((err) => {
-          logger.error(
-            { err },
-            "Unhandled error in scheduler run — server remains up",
-          );
-        });
+        void this.runBootSync();
       }, 5_000);
     }
 
@@ -136,6 +240,49 @@ export class SchedulerService {
         );
       });
     }, this.intervalMs);
+  }
+
+  /**
+   * The run-on-start sync, behind the two-hour guard.
+   *
+   * Separate from start() and exported on the instance so the guard can be
+   * tested against real rows without booting a server or waiting 5 seconds.
+   */
+  async runBootSync(): Promise<BootSyncDecision> {
+    const decision = await decideBootSync();
+
+    if (!decision.run) {
+      logger.info(
+        {
+          lastSuccessAt: decision.lastSuccessAt,
+          ageMinutes:
+            decision.ageMs === null
+              ? null
+              : Math.round(decision.ageMs / 60_000),
+          minGapMinutes: Math.round(BOOT_SYNC_MIN_GAP_MS / 60_000),
+          reason: decision.reason,
+        },
+        "Boot sync skipped — a successful sync finished less than 2 hours ago. " +
+          "The interval timer is unaffected and the external cron trigger still works.",
+      );
+      return decision;
+    }
+
+    logger.info(
+      { reason: decision.reason, lastSuccessAt: decision.lastSuccessAt },
+      "Boot sync proceeding",
+    );
+
+    try {
+      await this.runAll();
+    } catch (err) {
+      logger.error(
+        { err },
+        "Unhandled error in scheduler run — server remains up",
+      );
+    }
+
+    return decision;
   }
 
   /** Gracefully stop the scheduler. */

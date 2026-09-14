@@ -1,0 +1,38 @@
+# CareerRadar sync — the external scheduler.
+#
+# Render's free tier has no cron jobs and no background workers, and free web
+# services spin down after 15 minutes idle, killing the in-process setInterval
+# scheduler with them. This workflow is what actually makes sync happen in
+# production. It is copied from section C of CAREERRADAR_PHASE0_SETUP.md, which
+# supersedes UPGRADE.md §5.1.
+#
+# The two-step shape is deliberate: the first request after a spin-down takes
+# 30–60 seconds, so a naive single curl times out and the job looks broken.
+# Step one absorbs the cold start and is allowed to fail; step two does the work.
+#
+# Repo secrets required (Settings → Secrets and variables → Actions):
+#   CAREERRADAR_URL   https://careerradar-34ec.onrender.com
+#   SYNC_CRON_SECRET  must match SYNC_CRON_SECRET in the Render environment
+name: CareerRadar sync
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake the service (cold start tolerated)
+        run: |
+          curl -sS --max-time 120 --retry 3 --retry-all-errors --retry-delay 20 \
+            "${{ secrets.CAREERRADAR_URL }}/api/health" || true
+
+      - name: Trigger sync
+        run: |
+          curl -sS -X POST \
+            --max-time 120 --retry 2 --retry-all-errors --retry-delay 15 \
+            -H "x-cron-secret: ${{ secrets.SYNC_CRON_SECRET }}" \
+            -H "content-type: application/json" \
+            --fail-with-body \
+            "${{ secrets.CAREERRADAR_URL }}/api/sync/cron"
