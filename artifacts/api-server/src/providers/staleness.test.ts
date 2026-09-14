@@ -380,6 +380,52 @@ describe("staleness sweeps", () => {
       });
     });
 
+    /**
+     * Phase 5.5 — the specific failure a request budget could cause.
+     *
+     * JSearch now runs 8 queries × 2 pages behind JSEARCH_MAX_REQUESTS. When
+     * that budget runs out mid-run the provider returns only what it managed to
+     * fetch — here, 2 jobs on a run that would normally return 40. On an ATS
+     * provider that shortfall is exactly the signal that closes jobs.
+     *
+     * It must close nothing, because the platform check runs first. If someone
+     * reorders the guard so `fetchedCount` is consulted before
+     * `isAggregatorPlatform`, this test fails and the live table does not.
+     */
+    it.each(["jsearch", "adzuna", "arbeitnow", "jobicy"])(
+      "%s: a budget-truncated run closes nothing, even though it fetched far fewer jobs than it stamped",
+      async (platform) => {
+        await db.insert(jobsTable).values([
+          providerJob(1, {
+            sourcePlatform: platform,
+            sourceUrl: `https://${platform}.test/1`,
+            lastSeenAt: T0,
+          }),
+          providerJob(2, {
+            sourcePlatform: platform,
+            sourceUrl: `https://${platform}.test/2`,
+            lastSeenAt: T0,
+          }),
+        ]);
+
+        const sweep = await closeUnseenJobs({
+          sourcePlatform: platform,
+          companyIds: [acmeId],
+          runStartedAt: T1,
+          // A truncated run: 2 fetched where a complete run returns ~40.
+          fetchedCount: 2,
+          persistedCount: 2,
+        });
+
+        expect(sweep.skipped).toBe("aggregator-platform");
+        expect(sweep.closed).toBe(0);
+        expect(await statuses()).toEqual({
+          "SDE Intern 1": "active",
+          "SDE Intern 2": "active",
+        });
+      },
+    );
+
     it("are closed by the age fallback once past SYNC_MAX_AGE_DAYS", async () => {
       const now = new Date("2026-09-13T00:00:00.000Z");
       const old = new Date("2026-06-01T00:00:00.000Z"); // ~104 days

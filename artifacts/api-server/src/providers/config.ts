@@ -10,8 +10,17 @@
  *   Lever:            curl -s "https://api.lever.co/v0/postings/<slug>?mode=json&limit=1" | head -c 200
  *   SmartRecruiters:  curl -s "https://api.smartrecruiters.com/v1/companies/<id>/postings?limit=1" | head -c 200
  *
- *   Ashby: API returned HTTP 401 Unauthorized as of 2025-06-27. Public access
- *   is no longer available. Do not enable Ashby entries until this is resolved.
+ *   Ashby:            curl -s "https://api.ashbyhq.com/posting-api/job-board/<board>" | head -c 200
+ *
+ *   Ashby NOTE: the old POST api.ashbyhq.com/posting-public/jobs endpoint is
+ *   dead (re-confirmed HTTP 401 on 2026-09-14). The GET posting-api endpoint
+ *   above is public and answers 200 with no credential. An unknown board name
+ *   returns 404 there, which is a wrong-slug signal, NOT an auth wall.
+ *
+ *   SmartRecruiters CAUTION: this API has no 404. Measured 2026-09-14,
+ *   /v1/companies/<anything>/postings returns 200 with totalFound=0 even for a
+ *   company that does not exist. A zero is therefore NOT evidence the account
+ *   exists; only a non-zero count proves a board is real.
  *
  *   Workday: CXS endpoint returns HTTP 401 from non-browser environments.
  *   Requires browser session cookies. hasPublicApi = false until resolved.
@@ -24,7 +33,7 @@
  *   <co>.wd1.myworkdayjobs.com         → Workday     (providerName: "workday")
  *   careers.smartrecruiters.com/<id>   → SmartRecruiters (providerName: "smartrecruiters")
  *
- * LAST FULL AUDIT: 2025-06-27
+ * LAST FULL AUDIT: 2026-09-14 — see docs/provider-health.md for the measured run.
  */
 
 import type { CompanyProviderConfig } from "./types";
@@ -73,13 +82,15 @@ const ALL_CONFIGS: EnabledConfig[] = [
   },
 
   {
-    // NEW 2026-07-10: PhonePe confirmed 53 jobs — ALL in Bengaluru, India.
-    // No filterCountry needed: PhonePe is India-only by nature.
+    // REGRESSED 2026-09-14: the board that served 53 Bengaluru jobs in July now
+    // 404s. Also 404 on Lever and Ashby, and SmartRecruiters cannot confirm
+    // either way (see the SmartRecruiters caution in the header). PhonePe's
+    // current ATS is unresolved, so this stays off rather than guessing.
     companySlug: "phonepe",
     providerName: "greenhouse",
     providerId: "phonepe",
-    enabled: true,
-    note: "VERIFIED 2026-07-10 — 53 Bengaluru jobs live on boards-api.greenhouse.io/phonepe.",
+    enabled: false,
+    note: "BROKEN 2026-09-14 — boards-api.greenhouse.io/v1/boards/phonepe/jobs returns 404 (was 53 jobs on 2026-07-10). Tried phonepe/PhonePe/phonepeltd on Greenhouse, Lever and Ashby: all 404. Current ATS unresolved.",
   },
 
   {
@@ -202,6 +213,56 @@ const ALL_CONFIGS: EnabledConfig[] = [
     extra: { filterCountry: "India" },
     note: "VERIFIED 2026-07-10 — 212 total, 42 India jobs. filterCountry=India. AI/Market Intelligence, India R&D.",
   },
+  // ─── Phase 5.4: India coverage, all verified live on 2026-09-14 ───────────
+  // Counts are "total on the board" / "kept after filterCountry=India".
+
+  {
+    // VERIFIED 2026-09-14: 83 total, 60 India. Order-to-cash SaaS; Hyderabad
+    // and Chennai engineering centres, hires freshers in volume.
+    companySlug: "highradius",
+    providerName: "greenhouse",
+    providerId: "highradius",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-09-14 — 83 total, 60 India after filterCountry. Hyderabad/Chennai; strong fresher intake.",
+  },
+  {
+    // VERIFIED 2026-09-14: 29 total, 22 India.
+    companySlug: "hackerrank",
+    providerName: "greenhouse",
+    providerId: "hackerrank",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-09-14 — 29 total, 22 India after filterCountry. Bengaluru HQ engineering.",
+  },
+  {
+    // VERIFIED 2026-09-14: 45 total, 26 India.
+    companySlug: "glance",
+    providerName: "greenhouse",
+    providerId: "glance",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-09-14 — 45 total, 26 India after filterCountry. InMobi group, Bengaluru.",
+  },
+  {
+    // VERIFIED 2026-09-14: 41 total, 15 India.
+    companySlug: "druva",
+    providerName: "greenhouse",
+    providerId: "druva",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-09-14 — 41 total, 15 India after filterCountry. Pune engineering centre.",
+  },
+  {
+    // VERIFIED 2026-09-14: 17 total, 12 India.
+    companySlug: "observeai",
+    providerName: "greenhouse",
+    providerId: "observeai",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-09-14 — 17 total, 12 India after filterCountry. Bengaluru AI/contact-centre.",
+  },
+
   {
     // BROKEN 2025-06-27: returns "Job not found". Atlassian migrated to Workday.
     // Workday tenant: atlassian.wd5.myworkdayjobs.com — requires session auth (401).
@@ -346,7 +407,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "lever",
     providerId: "meesho",
     enabled: true,
-    note: "Verified 2025-06-27 — jobs.lever.co/meesho returns live postings.",
+    note: "VERIFIED 2026-09-14 — 50 live postings on api.lever.co/v0/postings/meesho.",
   },
   {
     // VERIFIED 2025-06-27: returns live postings.
@@ -354,15 +415,17 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "lever",
     providerId: "cred",
     enabled: true,
-    note: "Verified 2025-06-27 — jobs.lever.co/cred returns live postings.",
+    note: "VERIFIED 2026-09-14 — 11 live postings on api.lever.co/v0/postings/cred.",
   },
   {
-    // VERIFIED 2025-06-27: returns live postings.
+    // REGRESSED 2026-09-14: api.lever.co/v0/postings/dreamsports returns 404.
+    // dream11, dreamsports and dream11-sports all 404 on Greenhouse, Lever and
+    // Ashby. Current ATS unresolved — left off rather than guessed at.
     companySlug: "dream11",
     providerName: "lever",
     providerId: "dreamsports",
-    enabled: true,
-    note: "Verified 2025-06-27 — jobs.lever.co/dreamsports returns live postings.",
+    enabled: false,
+    note: "BROKEN 2026-09-14 — api.lever.co/v0/postings/dreamsports returns 404 (was live 2025-06-27). dream11 / dreamsports / dream11-sports all 404 across Greenhouse, Lever and Ashby.",
   },
 
   {
@@ -372,7 +435,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "lever",
     providerId: "paytm",
     enabled: true,
-    note: "VERIFIED 2026-07-10 — 5 live jobs on api.lever.co/v0/postings/paytm. Noida fintech.",
+    note: "VERIFIED 2026-09-14 — 210 live postings on api.lever.co/v0/postings/paytm (was 5 on 2026-07-10). Noida fintech.",
   },
   {
     // NEW 2026-07-10: Hevo Data confirmed 5 live postings on Lever.
@@ -380,7 +443,53 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "lever",
     providerId: "hevodata",
     enabled: true,
-    note: "VERIFIED 2026-07-10 — 5 live jobs on Lever. Bengaluru data integration startup.",
+    note: "VERIFIED 2026-09-14 — 46 live postings on Lever (was 5 on 2026-07-10). Bengaluru data integration startup.",
+  },
+
+  // ─── Phase 5.4: India coverage, all verified live on 2026-09-14 ───────────
+  // No filterCountry on these — each is India-native, so the board is already
+  // almost entirely India and a filter would only risk dropping valid rows.
+
+  {
+    // VERIFIED 2026-09-14: 19 postings, all India (16 Pune, 3 Bengaluru).
+    companySlug: "mindtickle",
+    providerName: "lever",
+    providerId: "mindtickle",
+    enabled: true,
+    note: "VERIFIED 2026-09-14 — 19 live postings, all India (Pune 16, Bengaluru 3). Sales-enablement SaaS.",
+  },
+  {
+    // VERIFIED 2026-09-14: 18 postings, 16 India (Bengaluru/Hyderabad/Mumbai).
+    companySlug: "zeta",
+    providerName: "lever",
+    providerId: "zeta",
+    enabled: true,
+    note: "VERIFIED 2026-09-14 — 18 live postings, 16 India (Bengaluru, Hyderabad, Mumbai); 2 US. Banking-tech unicorn.",
+  },
+  {
+    // VERIFIED 2026-09-14: 13 postings, all Bengaluru.
+    companySlug: "fampay",
+    providerName: "lever",
+    providerId: "fampay",
+    enabled: true,
+    note: "VERIFIED 2026-09-14 — 13 live postings, all Bengaluru. Teen-fintech, hires freshers.",
+  },
+  {
+    // VERIFIED 2026-09-14: 11 postings, all Bangalore. 4 are internships.
+    companySlug: "epifi",
+    providerName: "lever",
+    providerId: "epifi",
+    enabled: true,
+    note: "VERIFIED 2026-09-14 — 11 live postings, all Bangalore, 4 tagged internship. Fi Money neobank.",
+  },
+  {
+    // VERIFIED 2026-09-14: 9 postings, all Bengaluru. Previously configured as
+    // an Ashby entry, where the board name 404s — Lever is the real ATS.
+    companySlug: "100ms",
+    providerName: "lever",
+    providerId: "100ms",
+    enabled: true,
+    note: "VERIFIED 2026-09-14 — 9 live postings, all Bengaluru, on api.lever.co/v0/postings/100ms. Moved here from the Ashby section, where the board 404s.",
   },
 
   {
@@ -498,105 +607,158 @@ const ALL_CONFIGS: EnabledConfig[] = [
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // ASHBY — api.ashbyhq.com/posting-public/jobs
+  // ASHBY — api.ashbyhq.com/posting-api/job-board/{board}
   //
-  // STATUS AS OF 2025-06-27: HTTP 401 UNAUTHORIZED
-  // Ashby's previously public /posting-public/jobs endpoint now requires
-  // authentication. All companies below are disabled until Ashby restores
-  // public access or provides an alternative endpoint.
+  // STATUS 2026-09-14: PUBLIC ACCESS WORKS.
+  // The old POST /posting-public/jobs endpoint these entries were disabled
+  // against in June 2025 is still 401 and is not coming back. The GET
+  // posting-api job-board endpoint is public, needs no credential, and answers
+  // 200. Re-measured every board below on 2026-09-14.
+  //
+  // A 404 here means the board name is wrong or the company left Ashby — it is
+  // NOT an auth wall, so a 404 entry is a research task, not a blocked one.
+  //
+  // filterCountry: "India" is stricter on Ashby than on Greenhouse. Ashby boards
+  // mark nearly everything isRemote while scoping it in the location string
+  // ("Remote (EMEA)", "Remote (US)"), so AshbyProvider keeps a remote posting
+  // only when nothing scopes it elsewhere. See providers/ashby/provider.ts.
   // ═══════════════════════════════════════════════════════════════════════════
+
+  {
+    // VERIFIED 2026-09-14: 110 postings, 88 of them India after filterCountry.
+    // Automotive retail SaaS with a large Bengaluru/Chennai engineering base —
+    // the single highest-yield board found in this audit.
+    companySlug: "tekion",
+    providerName: "ashby",
+    providerId: "tekion",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-09-14 — 110 total postings, 88 India after filterCountry, on api.ashbyhq.com/posting-api/job-board/tekion.",
+  },
+  {
+    // VERIFIED 2026-09-14: 8 postings, 6 India after filterCountry.
+    companySlug: "atlan",
+    providerName: "ashby",
+    providerId: "atlan",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-09-14 — 8 total postings, 6 India after filterCountry. Data catalog startup, Delhi NCR + remote India.",
+  },
+  {
+    // VERIFIED 2026-09-14: 11 postings, 5 India after filterCountry.
+    companySlug: "skyflow",
+    providerName: "ashby",
+    providerId: "skyflow",
+    enabled: true,
+    extra: { filterCountry: "India" },
+    note: "VERIFIED 2026-09-14 — 11 total postings, 5 India after filterCountry. Data-privacy vault, Bengaluru engineering.",
+  },
+
+  // ─── Boards that are LIVE but yield nothing for an India-based applicant ────
+  // Each of these answers 200 with real postings. They stay disabled because
+  // every posting is scoped to a region this app's user cannot apply from, so
+  // enabling them would add noise to the daily queue and nothing else. The
+  // measured counts are recorded so a future session does not re-test the
+  // endpoint and mistake "filtered to zero" for "endpoint broken".
 
   {
     companySlug: "linear",
     providerName: "ashby",
     providerId: "linear",
     enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API (api.ashbyhq.com/posting-public/jobs) returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "retool",
-    providerName: "ashby",
-    providerId: "retool",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "cal",
-    providerName: "ashby",
-    providerId: "cal",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
+    extra: { filterCountry: "India" },
+    note: "Board LIVE 2026-09-14 — 30 postings — but 0 survive filterCountry=India: every role is North America (19), Europe (7+2) or London (2). Enable only if Linear opens India-eligible roles.",
   },
   {
     companySlug: "posthog",
     providerName: "ashby",
     providerId: "posthog",
     enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "hasura",
-    providerName: "ashby",
-    providerId: "hasura",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "chargebee",
-    providerName: "ashby",
-    providerId: "chargebee",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "darwinbox",
-    providerName: "ashby",
-    providerId: "darwinbox",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "100ms",
-    providerName: "ashby",
-    providerId: "100ms",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "setu",
-    providerName: "ashby",
-    providerId: "setu",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "dukaan",
-    providerName: "ashby",
-    providerId: "dukaan",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "leadsquared",
-    providerName: "ashby",
-    providerId: "leadsquared",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
-  },
-  {
-    companySlug: "vercel",
-    providerName: "ashby",
-    providerId: "vercel",
-    enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
+    extra: { filterCountry: "India" },
+    note: "Board LIVE 2026-09-14 — 11 postings — but 0 survive filterCountry=India: all are Remote (US/EMEA/UK) or San Francisco.",
   },
   {
     companySlug: "ycombinator",
     providerName: "ashby",
     providerId: "ycombinator",
     enabled: false,
-    note: "DISABLED 2025-06-27 — Ashby API returns HTTP 401. Public access revoked.",
+    extra: { filterCountry: "India" },
+    note: "Board LIVE 2026-09-14 — 8 postings — but 0 survive filterCountry=India: all San Francisco Bay Area.",
   },
+  {
+    companySlug: "vercel",
+    providerName: "ashby",
+    providerId: "vercel",
+    enabled: false,
+    note: "Board LIVE 2026-09-14 — HTTP 200 — but 0 postings open. Endpoint is healthy; re-check later.",
+  },
+
+  // ─── Board name not resolved — 404 on Ashby, Greenhouse and Lever ──────────
+  // These were disabled in 2025 against the wrong diagnosis (the dead
+  // posting-public endpoint). Re-tested on the working endpoint 2026-09-14:
+  // each 404s, meaning the board name is not hosted on Ashby at all. None was
+  // resolvable from Greenhouse or Lever either. They stay disabled with a dated
+  // note rather than being enabled on a guessed slug.
+
+  {
+    companySlug: "retool",
+    providerName: "ashby",
+    providerId: "retool",
+    enabled: false,
+    note: "UNRESOLVED 2026-09-14 — api.ashbyhq.com/posting-api/job-board/retool returns 404, i.e. this board name is not hosted on Ashby. Also 404 on Greenhouse and Lever. Current ATS not identified; do not enable without a live non-zero count.",
+  },
+  {
+    companySlug: "cal",
+    providerName: "ashby",
+    providerId: "cal",
+    enabled: false,
+    note: "UNRESOLVED 2026-09-14 — api.ashbyhq.com/posting-api/job-board/cal returns 404, i.e. this board name is not hosted on Ashby. Also 404 on Greenhouse and Lever. Current ATS not identified; do not enable without a live non-zero count.",
+  },
+  {
+    companySlug: "hasura",
+    providerName: "ashby",
+    providerId: "hasura",
+    enabled: false,
+    note: "UNRESOLVED 2026-09-14 — api.ashbyhq.com/posting-api/job-board/hasura returns 404, i.e. this board name is not hosted on Ashby. Also 404 on Greenhouse and Lever. Current ATS not identified; do not enable without a live non-zero count.",
+  },
+  {
+    companySlug: "chargebee",
+    providerName: "ashby",
+    providerId: "chargebee",
+    enabled: false,
+    note: "UNRESOLVED 2026-09-14 — api.ashbyhq.com/posting-api/job-board/chargebee returns 404, i.e. this board name is not hosted on Ashby. Also 404 on Greenhouse and Lever. Current ATS not identified; do not enable without a live non-zero count.",
+  },
+  {
+    companySlug: "darwinbox",
+    providerName: "ashby",
+    providerId: "darwinbox",
+    enabled: false,
+    note: "UNRESOLVED 2026-09-14 — api.ashbyhq.com/posting-api/job-board/darwinbox returns 404, i.e. this board name is not hosted on Ashby. Also 404 on Greenhouse and Lever. Current ATS not identified; do not enable without a live non-zero count.",
+  },
+  {
+    companySlug: "setu",
+    providerName: "ashby",
+    providerId: "setu",
+    enabled: false,
+    note: "UNRESOLVED 2026-09-14 — api.ashbyhq.com/posting-api/job-board/setu returns 404, i.e. this board name is not hosted on Ashby. Also 404 on Greenhouse and Lever. Current ATS not identified; do not enable without a live non-zero count.",
+  },
+  {
+    companySlug: "dukaan",
+    providerName: "ashby",
+    providerId: "dukaan",
+    enabled: false,
+    note: "UNRESOLVED 2026-09-14 — api.ashbyhq.com/posting-api/job-board/dukaan returns 404, i.e. this board name is not hosted on Ashby. Also 404 on Greenhouse and Lever. Current ATS not identified; do not enable without a live non-zero count.",
+  },
+  {
+    companySlug: "leadsquared",
+    providerName: "ashby",
+    providerId: "leadsquared",
+    enabled: false,
+    note: "UNRESOLVED 2026-09-14 — api.ashbyhq.com/posting-api/job-board/leadsquared returns 404, i.e. this board name is not hosted on Ashby. Also 404 on Greenhouse and Lever. Current ATS not identified; do not enable without a live non-zero count.",
+  },
+
+  // 100ms moved off Ashby entirely — it is on Lever now, and that entry lives
+  // in the Lever section below with its verified count.
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SMARTRECRUITERS — api.smartrecruiters.com/v1/companies
@@ -614,7 +776,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "smartrecruiters",
     providerId: "Freshworks",
     enabled: true,
-    note: "VERIFIED 2026-07-10 — 121 live jobs on SmartRecruiters, ~41 in India. Chennai/Bengaluru/Hyderabad.",
+    note: "VERIFIED 2026-09-14 — 139 live postings on SmartRecruiters (was 121 on 2026-07-10). Chennai/Bengaluru/Hyderabad.",
   },
 
   {
@@ -623,7 +785,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "smartrecruiters",
     providerId: "Swiggy",
     enabled: true,
-    note: "VERIFIED 2026-07-10 — 2 jobs live on SmartRecruiters. Monitor for tech role ramp-up.",
+    note: "VERIFIED 2026-09-14 — 71 live postings on SmartRecruiters (was 2 on 2026-07-10).",
   },
 
   {
@@ -632,7 +794,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "smartrecruiters",
     providerId: "Delhivery",
     enabled: true,
-    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
+    note: "UNVERIFIABLE 2026-09-14 — 0 postings. SmartRecruiters returns 200/totalFound=0 for companies that do not exist, so this does NOT confirm the account. Left enabled: an empty fetch costs one request and cannot close jobs (the last-seen sweep is disarmed at fetchedCount=0). Confirm via the careers page before relying on it.",
   },
   {
     // REVERIFIED 2026-07-10: 0 postings.
@@ -640,7 +802,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "smartrecruiters",
     providerId: "Juspay",
     enabled: true,
-    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
+    note: "UNVERIFIABLE 2026-09-14 — 0 postings. SmartRecruiters returns 200/totalFound=0 for companies that do not exist, so this does NOT confirm the account. Left enabled: an empty fetch costs one request and cannot close jobs (the last-seen sweep is disarmed at fetchedCount=0). Confirm via the careers page before relying on it.",
   },
   {
     // REVERIFIED 2026-07-10: 0 postings.
@@ -648,7 +810,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "smartrecruiters",
     providerId: "InMobi",
     enabled: true,
-    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
+    note: "UNVERIFIABLE 2026-09-14 — 0 postings. SmartRecruiters returns 200/totalFound=0 for companies that do not exist, so this does NOT confirm the account. Left enabled: an empty fetch costs one request and cannot close jobs (the last-seen sweep is disarmed at fetchedCount=0). Confirm via the careers page before relying on it.",
   },
   {
     // REVERIFIED 2026-07-10: 0 postings.
@@ -656,7 +818,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "smartrecruiters",
     providerId: "Ola",
     enabled: true,
-    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
+    note: "UNVERIFIABLE 2026-09-14 — 0 postings. SmartRecruiters returns 200/totalFound=0 for companies that do not exist, so this does NOT confirm the account. Left enabled: an empty fetch costs one request and cannot close jobs (the last-seen sweep is disarmed at fetchedCount=0). Confirm via the careers page before relying on it.",
   },
   {
     // REVERIFIED 2026-07-10: 0 postings.
@@ -664,7 +826,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "smartrecruiters",
     providerId: "ZSAssociates",
     enabled: true,
-    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
+    note: "UNVERIFIABLE 2026-09-14 — 0 postings. SmartRecruiters returns 200/totalFound=0 for companies that do not exist, so this does NOT confirm the account. Left enabled: an empty fetch costs one request and cannot close jobs (the last-seen sweep is disarmed at fetchedCount=0). Confirm via the careers page before relying on it.",
   },
   {
     // REVERIFIED 2026-07-10: 0 postings.
@@ -672,7 +834,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "smartrecruiters",
     providerId: "KPMGIndia",
     enabled: true,
-    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
+    note: "UNVERIFIABLE 2026-09-14 — 0 postings. SmartRecruiters returns 200/totalFound=0 for companies that do not exist, so this does NOT confirm the account. Left enabled: an empty fetch costs one request and cannot close jobs (the last-seen sweep is disarmed at fetchedCount=0). Confirm via the careers page before relying on it.",
   },
   {
     // REVERIFIED 2026-07-10: 0 postings.
@@ -680,7 +842,7 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "smartrecruiters",
     providerId: "Nielsen",
     enabled: true,
-    note: "SR account exists. 0 postings 2026-07-10 — will auto-import when roles post.",
+    note: "UNVERIFIABLE 2026-09-14 — 0 postings. SmartRecruiters returns 200/totalFound=0 for companies that do not exist, so this does NOT confirm the account. Left enabled: an empty fetch costs one request and cannot close jobs (the last-seen sweep is disarmed at fetchedCount=0). Confirm via the careers page before relying on it.",
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -750,14 +912,47 @@ const ALL_CONFIGS: EnabledConfig[] = [
     providerName: "adzuna",
     providerId: "india",
     enabled: true,
-    note: "Adzuna India API — intern-focused queries. Needs ADZUNA_APP_ID and ADZUNA_APP_KEY.",
+    note: "Adzuna India API — 8 fresher/intern queries, 3 pages each, capped by ADZUNA_MAX_REQUESTS (default 40). Needs ADZUNA_APP_ID and ADZUNA_APP_KEY. NOT verifiable in the 2026-09-14 audit: no keys were available in that environment, so no status is claimed.",
   },
   {
     companySlug: "__jsearch__",
     providerName: "jsearch",
     providerId: "google-jobs-india",
     enabled: true,
-    note: "JSearch/Google Jobs — intern-focused India queries. Needs JSEARCH_API_KEY.",
+    note: "JSearch/Google Jobs — 8 fresher/intern India queries, 2 pages each, capped by JSEARCH_MAX_REQUESTS (default 20). Needs JSEARCH_API_KEY. NOT verifiable in the 2026-09-14 audit: no key was available in that environment, so no status is claimed.",
+  },
+
+  // ─── Phase 5.5(C): free public job APIs, no key required ───────────────────
+
+  {
+    // VERIFIED 2026-09-14: geo=anywhere&industry=dev returned 46 postings,
+    // 12 of them entry-level/junior. Jobicy has no India geography at all
+    // (?geo=india returns nothing), so "anywhere" — roles open to applicants
+    // worldwide — is the slice an India-based applicant can actually use.
+    companySlug: "__jobicy__",
+    providerName: "jobicy",
+    providerId: "anywhere",
+    enabled: true,
+    extra: { industry: "dev" },
+    note: "VERIFIED 2026-09-14 — 46 live postings on jobicy.com/api/v2/remote-jobs?geo=anywhere&industry=dev, 12 entry-level/junior. Free, no key. geo=india returns nothing, so 'anywhere' is the usable slice.",
+  },
+
+  {
+    // Endpoint VERIFIED HEALTHY 2026-09-14 — and deliberately left OFF.
+    // www.arbeitnow.com/api/job-board-api returned HTTP 200 with 250 postings
+    // on page one. Of those 250: ZERO matched any Indian city or "India", and
+    // all 9 flagged remote were German-language roles at German employers
+    // ("Homeoffice", "(m/w/d)"), i.e. remote within Germany.
+    //
+    // Enabling this would add hundreds of inapplicable postings and bury the
+    // relevant ones. The provider is implemented and registered so this is a
+    // one-line change if coverage ever widens — see providers/arbeitnow/.
+    companySlug: "__arbeitnow__",
+    providerName: "arbeitnow",
+    providerId: "all",
+    enabled: false,
+    extra: { remoteOnly: true },
+    note: "Endpoint HEALTHY 2026-09-14 — HTTP 200, 250 postings/page — but 0 India matches and all 9 remote roles were Germany-based and German-language. Disabled as noise, not as breakage. Re-measure before enabling.",
   },
 ];
 

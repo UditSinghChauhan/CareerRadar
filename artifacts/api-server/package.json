@@ -10,6 +10,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "seed": "tsx src/seed/seed.ts",
     "backfill:stale-jobs": "tsx src/scripts/backfill-close-stale-jobs.ts",
+    "verify:providers": "tsx src/scripts/verify-providers.ts",
+    "project:intake": "tsx src/scripts/project-intake.ts",
+    "aggregator:probe": "tsx src/scripts/aggregator-probe.ts",
     "test": "vitest run"
   },
   "dependencies": {
