@@ -466,6 +466,46 @@ describe("classifyJob — batch text that includes the user", () => {
     );
   });
 
+  it('"2026 Graduates Only" in the title beats "currently pursuing" in the description', () => {
+    // Real row: the title restricts, the description's "pursuing" is boilerplate.
+    const r = classifyJob({
+      title:
+        "Software Engineer Intern Data Engineering 2026 Graduates Only Chennai",
+      description:
+        "What We're Looking For: Currently pursuing a Bachelors in Computer Science Engineering.",
+      graduationYear: 2027,
+      now: NOW,
+    });
+    expect(r.batchVerdict).toBe("excluded");
+    expect(r.signals).toContain(
+      "batch says only — pursuing does not reopen it",
+    );
+    expect(r.signals).toContain("batch excludes 2027 −40");
+  });
+
+  it('"only" reads in either order and stays within the sentence', () => {
+    expect(
+      intern("Pursuing B.Tech. Only 2026 batch may apply.").batchVerdict,
+    ).toBe("excluded");
+    expect(intern("Pursuing B.Tech. 2026 batch only.").batchVerdict).toBe(
+      "excluded",
+    );
+    // "only" in a different sentence is not a restriction on the year.
+    expect(
+      intern("Pursuing B.Tech, 2026 batch preferred. Remote only.")
+        .batchVerdict,
+    ).toBe("pursuing");
+  });
+
+  it('"only" on the user\'s own year is still a match', () => {
+    expect(intern("2027 batch only").batchVerdict).toBe("match");
+  });
+
+  it("inferBatchContext reports the restriction", () => {
+    expect(inferBatchContext("2026 Graduates Only", NOW).restricted).toBe(true);
+    expect(inferBatchContext("2026 Graduates", NOW).restricted).toBe(false);
+  });
+
   it('"pursuing" with no year named adds nothing and says nothing', () => {
     const r = intern("Pursuing a degree in Computer Science.");
     expect(r.batchVerdict).toBe("none");
@@ -528,6 +568,7 @@ describe("classifyJob — batch text that includes the user", () => {
       openFrom: 2025,
       finalYear: true,
       pursuing: true,
+      restricted: false,
     });
   });
 });
