@@ -4,6 +4,7 @@ import {
   count,
   desc,
   eq,
+  gt,
   gte,
   ilike,
   inArray,
@@ -41,6 +42,17 @@ export interface JobFilters {
   eligibleBatch?: number;
   minCgpaLte?: number;
   deadlineBefore?: Date;
+  /**
+   * Phase 6.2. `created_at > <date>` — rows this database first saw after the
+   * given instant. `created_at`, not `posted_date`: a job board can list a
+   * posting weeks after it was written, and "new" here means new to us, which
+   * is what a new-job alert is actually announcing.
+   *
+   * Used only by the notification generator, to bound a per-saved-search scan
+   * to what has arrived since the last pass. Absent = no bound, which is every
+   * other caller.
+   */
+  createdAfter?: Date;
   // ── Phase 2.0 location filters. All server-side: the page fetches a bounded
   // window of rows, so anything filtered in the browser would silently miss
   // every match outside that window. ──
@@ -303,6 +315,9 @@ function buildConditions(filters: JobFilters) {
   }
   if (filters.deadlineBefore) {
     conditions.push(lte(jobsTable.deadline, filters.deadlineBefore));
+  }
+  if (filters.createdAfter) {
+    conditions.push(gt(jobsTable.createdAt, filters.createdAfter));
   }
   if (filters.isIndia !== undefined) {
     conditions.push(eq(jobsTable.isIndia, filters.isIndia));

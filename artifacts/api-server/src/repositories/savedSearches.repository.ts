@@ -15,6 +15,22 @@ export const savedSearchesRepository = {
       .orderBy(desc(savedSearchesTable.createdAt));
   },
 
+  /**
+   * Every saved search, across every user. Phase 6.2's notification generator
+   * runs on a schedule with no signed-in caller, so it has no clerkId to scope
+   * by — it iterates users rather than serving one.
+   *
+   * Deliberately NOT reachable from any route: nothing in openapi.yaml calls
+   * it, and every HTTP path into this repository goes through `findAll`, which
+   * is clerk-scoped. Keep it that way.
+   */
+  async findAllForGeneration(): Promise<SavedSearch[]> {
+    return db
+      .select()
+      .from(savedSearchesTable)
+      .orderBy(desc(savedSearchesTable.createdAt));
+  },
+
   async findById(id: string, clerkId: string): Promise<SavedSearch | null> {
     const [row] = await db
       .select()

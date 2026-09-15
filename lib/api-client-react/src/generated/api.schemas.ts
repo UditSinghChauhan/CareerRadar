@@ -758,6 +758,19 @@ export const ApplicationStatus = {
   withdrawn: 'withdrawn',
 } as const;
 
+/**
+ * Phase 6.1. Never null — every row defaults to "none", meaning the referral has not been asked for.
+ */
+export type ApplicationReferralStatus = typeof ApplicationReferralStatus[keyof typeof ApplicationReferralStatus];
+
+
+export const ApplicationReferralStatus = {
+  none: 'none',
+  requested: 'requested',
+  received: 'received',
+  declined: 'declined',
+} as const;
+
 export interface Application {
   id: string;
   clerkId: string;
@@ -771,6 +784,15 @@ export interface Application {
   resumeVersion?: string | null;
   /** @nullable */
   referralName?: string | null;
+  /**
+     * The contact's LinkedIn (or any) profile URL.
+     * @nullable
+     */
+  contactUrl?: string | null;
+  /** Phase 6.1. Never null — every row defaults to "none", meaning the referral has not been asked for. */
+  referralStatus: ApplicationReferralStatus;
+  /** @nullable */
+  outreachNotes?: string | null;
   /** @nullable */
   followUpDate?: string | null;
   /** @nullable */
@@ -796,6 +818,16 @@ export const ApplicationInputStatus = {
   withdrawn: 'withdrawn',
 } as const;
 
+export type ApplicationInputReferralStatus = typeof ApplicationInputReferralStatus[keyof typeof ApplicationInputReferralStatus];
+
+
+export const ApplicationInputReferralStatus = {
+  none: 'none',
+  requested: 'requested',
+  received: 'received',
+  declined: 'declined',
+} as const;
+
 export interface ApplicationInput {
   jobId: string;
   status?: ApplicationInputStatus;
@@ -803,6 +835,9 @@ export interface ApplicationInput {
   notes?: string;
   resumeVersion?: string;
   referralName?: string;
+  contactUrl?: string;
+  referralStatus?: ApplicationInputReferralStatus;
+  outreachNotes?: string;
 }
 
 export type ApplicationUpdateInputStatus = typeof ApplicationUpdateInputStatus[keyof typeof ApplicationUpdateInputStatus];
@@ -820,14 +855,38 @@ export const ApplicationUpdateInputStatus = {
   withdrawn: 'withdrawn',
 } as const;
 
+export type ApplicationUpdateInputReferralStatus = typeof ApplicationUpdateInputReferralStatus[keyof typeof ApplicationUpdateInputReferralStatus];
+
+
+export const ApplicationUpdateInputReferralStatus = {
+  none: 'none',
+  requested: 'requested',
+  received: 'received',
+  declined: 'declined',
+} as const;
+
+/**
+ * Every field is optional; only the ones present are written. The clearable text and date fields accept an explicit null, which is how the drawer erases a value it previously set. Without that, a follow-up date could be set but never unset, and Phase 6.1's "Awaiting follow-up" filter would surface the row forever.
+ */
 export interface ApplicationUpdateInput {
   status?: ApplicationUpdateInputStatus;
-  notes?: string;
-  resumeVersion?: string;
-  referralName?: string;
-  followUpDate?: string;
-  appliedDate?: string;
-  offerAmount?: number;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  resumeVersion?: string | null;
+  /** @nullable */
+  referralName?: string | null;
+  /** @nullable */
+  contactUrl?: string | null;
+  referralStatus?: ApplicationUpdateInputReferralStatus;
+  /** @nullable */
+  outreachNotes?: string | null;
+  /** @nullable */
+  followUpDate?: string | null;
+  /** @nullable */
+  appliedDate?: string | null;
+  /** @nullable */
+  offerAmount?: number | null;
 }
 
 /**
@@ -898,6 +957,23 @@ export interface Notification {
   /** @nullable */
   metadata?: NotificationMetadata;
   createdAt: string;
+}
+
+export interface NotificationListResponse {
+  data: Notification[];
+  meta: PaginationMeta;
+  /** Total unread notifications for the user, across all pages and regardless of the `unreadOnly` filter. This is the bell's badge. */
+  unreadCount: number;
+}
+
+export interface NotificationsReadResult {
+  /** How many rows changed from unread to read. */
+  updated: number;
+}
+
+export interface NotificationsDeletedResult {
+  /** How many notifications were removed. */
+  deleted: number;
 }
 
 export type GetDailyQueueParams = {
@@ -1058,6 +1134,10 @@ days?: number;
 export type ListApplicationsParams = {
 status?: ListApplicationsStatus;
 jobType?: ListApplicationsJobType;
+/**
+ * Phase 6.1. When true, returns only applications whose follow-up date has arrived (`followUpDate <= now()`) and whose status is not terminal. Only `rejected` and `withdrawn` are excluded, because only they mean the company can do nothing further. `offered` is NOT excluded: an unanswered offer has an accept-by date and a pipeline of other applications to update, so it needs chasing more than any other state. Rows with no follow-up date never match. Absent or false = no filtering, the pre-6.1 behaviour.
+ */
+awaitingFollowUp?: boolean;
 page?: number;
 limit?: number;
 };
@@ -1084,4 +1164,13 @@ export const ListApplicationsJobType = {
   internship: 'internship',
   full_time: 'full_time',
 } as const;
+
+export type ListNotificationsParams = {
+/**
+ * When true, returns only notifications that are not yet read.
+ */
+unreadOnly?: boolean;
+page?: number;
+limit?: number;
+};
 

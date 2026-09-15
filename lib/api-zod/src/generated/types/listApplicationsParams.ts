@@ -11,6 +11,10 @@ import type { ListApplicationsStatus } from './listApplicationsStatus';
 export type ListApplicationsParams = {
 status?: ListApplicationsStatus;
 jobType?: ListApplicationsJobType;
+/**
+ * Phase 6.1. When true, returns only applications whose follow-up date has arrived (`followUpDate <= now()`) and whose status is not terminal. Only `rejected` and `withdrawn` are excluded, because only they mean the company can do nothing further. `offered` is NOT excluded: an unanswered offer has an accept-by date and a pipeline of other applications to update, so it needs chasing more than any other state. Rows with no follow-up date never match. Absent or false = no filtering, the pre-6.1 behaviour.
+ */
+awaitingFollowUp?: boolean;
 page?: number;
 limit?: number;
 };

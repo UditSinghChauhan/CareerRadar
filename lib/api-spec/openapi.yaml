@@ -26,6 +26,8 @@ tags:
     description: Bookmarked jobs
   - name: saved-searches
     description: Saved search filters
+  - name: notifications
+    description: Deadline reminders and new-job alerts
   - name: ai
     description: AI-powered matching and recommendations
 
@@ -736,6 +738,19 @@ paths:
             type: string
             enum: [internship, full_time]
         - in: query
+          name: awaitingFollowUp
+          description: >
+            Phase 6.1. When true, returns only applications whose follow-up date
+            has arrived (`followUpDate <= now()`) and whose status is not
+            terminal. Only `rejected` and `withdrawn` are excluded, because only
+            they mean the company can do nothing further. `offered` is NOT
+            excluded: an unanswered offer has an accept-by date and a pipeline
+            of other applications to update, so it needs chasing more than any
+            other state. Rows with no follow-up date never match. Absent or
+            false = no filtering, the pre-6.1 behaviour.
+          schema:
+            type: boolean
+        - in: query
           name: page
           schema:
             type: integer
@@ -867,6 +882,124 @@ paths:
           description: Deleted
         "401":
           description: Unauthorized
+
+  # ─── Notifications ────────────────────────────────────────────────────────────
+  #
+  # Phase 6.2. Rows are written by the generator that runs after every
+  # POST /api/sync/cron pass (deadline reminders at 72h and 24h, new-job alerts
+  # against saved searches); nothing here creates one. These three routes are
+  # the read and acknowledge side, which is all the bell needs.
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List the current user's notifications, newest first
+      description: >
+        `unreadCount` is returned alongside the page rather than from a separate
+        endpoint, because the bell needs the badge and the list together and a
+        free-tier instance should not answer two round trips for one popover.
+        It counts every unread notification the user has, not just those on this
+        page, and is unaffected by `unreadOnly`.
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: query
+          name: unreadOnly
+          description: When true, returns only notifications that are not yet read.
+          schema:
+            type: boolean
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated notification list plus the total unread count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+        "401":
+          description: Unauthorized
+    delete:
+      operationId: clearNotifications
+      tags: [notifications]
+      summary: Delete all of the current user's notifications
+      description: >
+        The "Clear all" control in the bell. Not in UPGRADE.md §6.2, which
+        specifies only list / mark-read / mark-all-read — added because without
+        it the table only ever grows: rows are generated on a schedule and
+        there is no retention sweep, so "read" alone would leave the popover
+        accumulating every deadline of the season. Deletes only the caller's
+        own rows.
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: How many rows were deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsDeletedResult"
+        "401":
+          description: Unauthorized
+
+  # Declared before /notifications/{id}/read so the literal path wins over the
+  # path parameter when a router matches routes in declaration order. The two
+  # do not actually collide (different segment counts), but the ordering
+  # matches how /applications/status-map is handled and survives a later edit.
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark every unread notification as read
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: How many rows were marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsReadResult"
+        "401":
+          description: Unauthorized
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark one notification as read
+      description: >
+        Idempotent — marking an already-read notification returns it unchanged
+        with a 200, because the bell fires this on click and a double click is
+        not an error.
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
 
   # ─── Bookmarks ────────────────────────────────────────────────────────────────
 
@@ -1928,7 +2061,7 @@ components:
 
     Application:
       type: object
-      required: [id, clerkId, jobId, status, createdAt]
+      required: [id, clerkId, jobId, status, referralStatus, createdAt]
       properties:
         id:
           type: string
@@ -1957,8 +2090,23 @@ components:
           type: ["string", "null"]
         resumeVersion:
           type: ["string", "null"]
+        # Phase 6.1 calls this field `contactName`: the person being asked for
+        # the referral. The column predates the phase under this name and is
+        # reused rather than duplicated — see lib/db/src/schema/applications.ts.
         referralName:
           type: ["string", "null"]
+        contactUrl:
+          description: The contact's LinkedIn (or any) profile URL.
+          type: ["string", "null"]
+        referralStatus:
+          description: >
+            Phase 6.1. Never null — every row defaults to "none", meaning the
+            referral has not been asked for.
+          type: string
+          enum: [none, requested, received, declined]
+        outreachNotes:
+          type: ["string", "null"]
+        # Phase 6.1 calls this `followUpAt`. Reused under its existing name.
         followUpDate:
           type: ["string", "null"]
           format: date-time
@@ -2002,9 +2150,22 @@ components:
           type: string
         referralName:
           type: string
+        contactUrl:
+          type: string
+        referralStatus:
+          type: string
+          enum: [none, requested, received, declined]
+        outreachNotes:
+          type: string
 
     ApplicationUpdateInput:
       type: object
+      description: >
+        Every field is optional; only the ones present are written. The
+        clearable text and date fields accept an explicit null, which is how
+        the drawer erases a value it previously set. Without that, a follow-up
+        date could be set but never unset, and Phase 6.1's "Awaiting
+        follow-up" filter would surface the row forever.
       properties:
         status:
           type: string
@@ -2021,19 +2182,26 @@ components:
               withdrawn,
             ]
         notes:
-          type: string
+          type: ["string", "null"]
         resumeVersion:
-          type: string
+          type: ["string", "null"]
         referralName:
+          type: ["string", "null"]
+        contactUrl:
+          type: ["string", "null"]
+        referralStatus:
           type: string
+          enum: [none, requested, received, declined]
+        outreachNotes:
+          type: ["string", "null"]
         followUpDate:
-          type: string
+          type: ["string", "null"]
           format: date-time
         appliedDate:
-          type: string
+          type: ["string", "null"]
           format: date-time
         offerAmount:
-          type: integer
+          type: ["integer", "null"]
 
     ApplicationStatusMap:
       type: object
@@ -2148,3 +2316,35 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    NotificationListResponse:
+      type: object
+      required: [data, meta, unreadCount]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+        unreadCount:
+          description: >
+            Total unread notifications for the user, across all pages and
+            regardless of the `unreadOnly` filter. This is the bell's badge.
+          type: integer
+
+    NotificationsReadResult:
+      type: object
+      required: [updated]
+      properties:
+        updated:
+          description: How many rows changed from unread to read.
+          type: integer
+
+    NotificationsDeletedResult:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          description: How many notifications were removed.
+          type: integer

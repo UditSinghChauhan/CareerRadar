@@ -1045,6 +1045,7 @@ export const listApplicationsQueryLimitDefault = 20;
 export const ListApplicationsQueryParams = zod.object({
   "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']).optional(),
   "jobType": zod.enum(['internship', 'full_time']).optional(),
+  "awaitingFollowUp": zod.coerce.boolean().optional().describe('Phase 6.1. When true, returns only applications whose follow-up date has arrived (`followUpDate <= now()`) and whose status is not terminal. Only `rejected` and `withdrawn` are excluded, because only they mean the company can do nothing further. `offered` is NOT excluded: an unanswered offer has an accept-by date and a pipeline of other applications to update, so it needs chasing more than any other state. Rows with no follow-up date never match. Absent or false = no filtering, the pre-6.1 behaviour.\n'),
   "page": zod.coerce.number().default(listApplicationsQueryPageDefault),
   "limit": zod.coerce.number().default(listApplicationsQueryLimitDefault)
 })
@@ -1059,6 +1060,9 @@ export const ListApplicationsResponse = zod.object({
   "notes": zod.string().nullish(),
   "resumeVersion": zod.string().nullish(),
   "referralName": zod.string().nullish(),
+  "contactUrl": zod.string().nullish().describe('The contact\'s LinkedIn (or any) profile URL.'),
+  "referralStatus": zod.enum(['none', 'requested', 'received', 'declined']).describe('Phase 6.1. Never null — every row defaults to \"none\", meaning the referral has not been asked for.\n'),
+  "outreachNotes": zod.string().nullish(),
   "followUpDate": zod.coerce.date().nullish(),
   "offerAmount": zod.number().nullish(),
   "job": zod.object({
@@ -1143,7 +1147,10 @@ export const CreateApplicationBody = zod.object({
   "appliedDate": zod.coerce.date().optional(),
   "notes": zod.string().optional(),
   "resumeVersion": zod.string().optional(),
-  "referralName": zod.string().optional()
+  "referralName": zod.string().optional(),
+  "contactUrl": zod.string().optional(),
+  "referralStatus": zod.enum(['none', 'requested', 'received', 'declined']).optional(),
+  "outreachNotes": zod.string().optional()
 })
 
 export const CreateApplicationResponse = zod.object({
@@ -1155,6 +1162,9 @@ export const CreateApplicationResponse = zod.object({
   "notes": zod.string().nullish(),
   "resumeVersion": zod.string().nullish(),
   "referralName": zod.string().nullish(),
+  "contactUrl": zod.string().nullish().describe('The contact\'s LinkedIn (or any) profile URL.'),
+  "referralStatus": zod.enum(['none', 'requested', 'received', 'declined']).describe('Phase 6.1. Never null — every row defaults to \"none\", meaning the referral has not been asked for.\n'),
+  "outreachNotes": zod.string().nullish(),
   "followUpDate": zod.coerce.date().nullish(),
   "offerAmount": zod.number().nullish(),
   "job": zod.object({
@@ -1246,6 +1256,9 @@ export const GetApplicationResponse = zod.object({
   "notes": zod.string().nullish(),
   "resumeVersion": zod.string().nullish(),
   "referralName": zod.string().nullish(),
+  "contactUrl": zod.string().nullish().describe('The contact\'s LinkedIn (or any) profile URL.'),
+  "referralStatus": zod.enum(['none', 'requested', 'received', 'declined']).describe('Phase 6.1. Never null — every row defaults to \"none\", meaning the referral has not been asked for.\n'),
+  "outreachNotes": zod.string().nullish(),
   "followUpDate": zod.coerce.date().nullish(),
   "offerAmount": zod.number().nullish(),
   "job": zod.object({
@@ -1323,13 +1336,16 @@ export const UpdateApplicationParams = zod.object({
 
 export const UpdateApplicationBody = zod.object({
   "status": zod.enum(['saved', 'applied', 'oa_pending', 'oa_completed', 'interview_pending', 'interview_completed', 'offered', 'rejected', 'withdrawn']).optional(),
-  "notes": zod.string().optional(),
-  "resumeVersion": zod.string().optional(),
-  "referralName": zod.string().optional(),
-  "followUpDate": zod.coerce.date().optional(),
-  "appliedDate": zod.coerce.date().optional(),
-  "offerAmount": zod.number().optional()
-})
+  "notes": zod.string().nullish(),
+  "resumeVersion": zod.string().nullish(),
+  "referralName": zod.string().nullish(),
+  "contactUrl": zod.string().nullish(),
+  "referralStatus": zod.enum(['none', 'requested', 'received', 'declined']).optional(),
+  "outreachNotes": zod.string().nullish(),
+  "followUpDate": zod.coerce.date().nullish(),
+  "appliedDate": zod.coerce.date().nullish(),
+  "offerAmount": zod.number().nullish()
+}).describe('Every field is optional; only the ones present are written. The clearable text and date fields accept an explicit null, which is how the drawer erases a value it previously set. Without that, a follow-up date could be set but never unset, and Phase 6.1\'s \"Awaiting follow-up\" filter would surface the row forever.\n')
 
 export const UpdateApplicationResponse = zod.object({
   "id": zod.string(),
@@ -1340,6 +1356,9 @@ export const UpdateApplicationResponse = zod.object({
   "notes": zod.string().nullish(),
   "resumeVersion": zod.string().nullish(),
   "referralName": zod.string().nullish(),
+  "contactUrl": zod.string().nullish().describe('The contact\'s LinkedIn (or any) profile URL.'),
+  "referralStatus": zod.enum(['none', 'requested', 'received', 'declined']).describe('Phase 6.1. Never null — every row defaults to \"none\", meaning the referral has not been asked for.\n'),
+  "outreachNotes": zod.string().nullish(),
   "followUpDate": zod.coerce.date().nullish(),
   "offerAmount": zod.number().nullish(),
   "job": zod.object({
@@ -1416,6 +1435,79 @@ export const DeleteApplicationParams = zod.object({
 })
 
 export const DeleteApplicationResponse = zod.void()
+
+
+/**
+ * `unreadCount` is returned alongside the page rather than from a separate endpoint, because the bell needs the badge and the list together and a free-tier instance should not answer two round trips for one popover. It counts every unread notification the user has, not just those on this page, and is unaffected by `unreadOnly`.
+ * @summary List the current user's notifications, newest first
+ */
+export const listNotificationsQueryPageDefault = 1;
+export const listNotificationsQueryLimitDefault = 20;
+
+export const ListNotificationsQueryParams = zod.object({
+  "unreadOnly": zod.coerce.boolean().optional().describe('When true, returns only notifications that are not yet read.'),
+  "page": zod.coerce.number().default(listNotificationsQueryPageDefault),
+  "limit": zod.coerce.number().default(listNotificationsQueryLimitDefault)
+})
+
+export const ListNotificationsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "title": zod.string(),
+  "message": zod.string(),
+  "type": zod.enum(['deadline_reminder', 'new_job', 'status_update', 'system']),
+  "isRead": zod.boolean(),
+  "relatedJobId": zod.string().nullish(),
+  "metadata": zod.record(zod.string(), zod.unknown()).nullish(),
+  "createdAt": zod.coerce.date()
+})),
+  "meta": zod.object({
+  "page": zod.number(),
+  "limit": zod.number(),
+  "total": zod.number(),
+  "totalPages": zod.number()
+}),
+  "unreadCount": zod.number().describe('Total unread notifications for the user, across all pages and regardless of the `unreadOnly` filter. This is the bell\'s badge.\n')
+})
+
+
+/**
+ * The "Clear all" control in the bell. Not in UPGRADE.md §6.2, which specifies only list / mark-read / mark-all-read — added because without it the table only ever grows: rows are generated on a schedule and there is no retention sweep, so "read" alone would leave the popover accumulating every deadline of the season. Deletes only the caller's own rows.
+ * @summary Delete all of the current user's notifications
+ */
+export const ClearNotificationsResponse = zod.object({
+  "deleted": zod.number().describe('How many notifications were removed.')
+})
+
+
+/**
+ * @summary Mark every unread notification as read
+ */
+export const MarkAllNotificationsReadResponse = zod.object({
+  "updated": zod.number().describe('How many rows changed from unread to read.')
+})
+
+
+/**
+ * Idempotent — marking an already-read notification returns it unchanged with a 200, because the bell fires this on click and a double click is not an error.
+ * @summary Mark one notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const MarkNotificationReadResponse = zod.object({
+  "id": zod.string(),
+  "clerkId": zod.string(),
+  "title": zod.string(),
+  "message": zod.string(),
+  "type": zod.enum(['deadline_reminder', 'new_job', 'status_update', 'system']),
+  "isRead": zod.boolean(),
+  "relatedJobId": zod.string().nullish(),
+  "metadata": zod.record(zod.string(), zod.unknown()).nullish(),
+  "createdAt": zod.coerce.date()
+})
 
 
 /**

@@ -3,7 +3,12 @@ import type { Application } from "@workspace/api-client-react";
 import { readStoredView, writeStoredView } from "../applications";
 import { groupByStatus } from "@/components/applications/application-board";
 import { sortApplications } from "@/components/applications/application-table";
-import { deadlineUrgency, statusRank } from "@/components/applications/status";
+import {
+  deadlineUrgency,
+  fromDateInputValue,
+  statusRank,
+  toDateInputValue,
+} from "@/components/applications/status";
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -198,5 +203,34 @@ describe("statusRank", () => {
 
   it("sorts an unknown status to the end", () => {
     expect(statusRank("ghosted")).toBeGreaterThan(statusRank("withdrawn"));
+  });
+});
+
+// ─── Date inputs (Phase 6.1) ──────────────────────────────────────────────────
+
+describe("fromDateInputValue", () => {
+  it("converts a date input's YYYY-MM-DD to an ISO instant", () => {
+    expect(fromDateInputValue("2026-09-16")).toBe("2026-09-16T00:00:00.000Z");
+  });
+
+  it("returns null for an emptied input, so the field is CLEARED", () => {
+    // Not undefined. The API reads undefined as "the caller did not mention
+    // this field" and skips the column, which is why a follow-up date used to
+    // be impossible to unset — and why such a row sat in Phase 6.1's
+    // "Awaiting follow-up" view forever.
+    expect(fromDateInputValue("")).toBeNull();
+  });
+
+  it("returns null rather than an Invalid Date string for garbage", () => {
+    expect(fromDateInputValue("not-a-date")).toBeNull();
+  });
+
+  it("round-trips through toDateInputValue", () => {
+    const iso = "2026-12-01T00:00:00.000Z";
+    expect(fromDateInputValue(toDateInputValue(iso))).toBe(iso);
+  });
+
+  it("round-trips an absent value as a cleared one", () => {
+    expect(fromDateInputValue(toDateInputValue(null))).toBeNull();
   });
 });

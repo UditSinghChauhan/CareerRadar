@@ -5,6 +5,7 @@
  * CareerRadar API — personal placement OS for CS students
  * OpenAPI spec version: 0.2.0
  */
+import type { ApplicationReferralStatus } from './applicationReferralStatus';
 import type { ApplicationStatus } from './applicationStatus';
 import type { Job } from './job';
 
@@ -21,6 +22,15 @@ export interface Application {
   resumeVersion?: string | null;
   /** @nullable */
   referralName?: string | null;
+  /**
+     * The contact's LinkedIn (or any) profile URL.
+     * @nullable
+     */
+  contactUrl?: string | null;
+  /** Phase 6.1. Never null — every row defaults to "none", meaning the referral has not been asked for. */
+  referralStatus: ApplicationReferralStatus;
+  /** @nullable */
+  outreachNotes?: string | null;
   /** @nullable */
   followUpDate?: Date | null;
   /** @nullable */

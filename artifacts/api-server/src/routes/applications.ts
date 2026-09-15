@@ -11,6 +11,25 @@ import {
 
 const router = Router();
 
+/**
+ * The generated zod schemas coerce every date-time field to a `Date`, while the
+ * service takes an ISO string. This is the normalisation that bridges them.
+ *
+ * It is `Date | string | null | undefined` in and `string | null | undefined`
+ * out, and the null is load-bearing: `null` is how the drawer clears a field it
+ * previously set, and collapsing it to `undefined` — which the pre-6.1 code did
+ * — means the service skips the column and the old value survives. That made a
+ * follow-up date impossible to erase, which Phase 6.1's "Awaiting follow-up"
+ * filter would have turned into a row stuck in the view forever.
+ */
+function isoOrNull(
+  value: Date | string | null | undefined,
+): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  return typeof value === "string" ? value : value.toISOString();
+}
+
 router.get("/applications", requireAuth, async (req, res) => {
   const { clerkUserId } = req as AuthenticatedRequest;
   try {
@@ -36,15 +55,9 @@ router.post("/applications", requireAuth, async (req, res) => {
   }
 
   try {
-    // CreateApplicationBody coerces appliedDate to a Date; the service takes an
-    // ISO string. Same normalisation the PUT handler below already does.
     const application = await applicationsService.create(clerkUserId, {
       ...parsed.data,
-      appliedDate: parsed.data.appliedDate
-        ? typeof parsed.data.appliedDate === "string"
-          ? parsed.data.appliedDate
-          : (parsed.data.appliedDate as Date).toISOString()
-        : undefined,
+      appliedDate: isoOrNull(parsed.data.appliedDate) ?? undefined,
     });
     res.status(201).json(application);
   } catch (err: unknown) {
@@ -106,16 +119,8 @@ router.put("/applications/:id", requireAuth, async (req, res) => {
   try {
     const data = {
       ...parsed.data,
-      followUpDate: parsed.data.followUpDate
-        ? typeof parsed.data.followUpDate === "string"
-          ? parsed.data.followUpDate
-          : (parsed.data.followUpDate as Date).toISOString()
-        : undefined,
-      appliedDate: parsed.data.appliedDate
-        ? typeof parsed.data.appliedDate === "string"
-          ? parsed.data.appliedDate
-          : (parsed.data.appliedDate as Date).toISOString()
-        : undefined,
+      followUpDate: isoOrNull(parsed.data.followUpDate),
+      appliedDate: isoOrNull(parsed.data.appliedDate),
     };
     const application = await applicationsService.update(id, clerkUserId, data);
     if (!application) {

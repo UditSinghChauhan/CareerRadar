@@ -9,7 +9,8 @@
  * POST /api/sync/provider/:provider                    — trigger all configs for one provider — requires auth
  * POST /api/sync/provider/:provider/company/:company   — trigger a single config — requires auth
  * POST /api/sync/cron                                  — external scheduled trigger — x-cron-secret, NOT Clerk
- *                                                        (also reclassifies relevance once the sync finishes — see below)
+ *                                                        (also reclassifies relevance and generates notifications
+ *                                                         once the sync finishes — see below)
  * GET  /api/sync/verify                                — live HTTP checks against every ATS API — requires auth
  * GET  /api/sync/status                                — latest sync logs + scheduler state (public, read only)
  *
@@ -30,6 +31,7 @@ import { requireAuth } from "../middlewares/requireAuth";
 import { verifyCronSecret } from "../lib/cron-auth";
 import { currentSchemaStatus } from "../lib/schema-check";
 import { backfillRelevance } from "../relevance/backfill-relevance";
+import { generateNotifications } from "../notifications/generator";
 
 const router = Router();
 
@@ -175,6 +177,16 @@ router.post("/sync/cron", async (req, res) => {
   // is how the instance gets OOM-killed. A backfill failure is logged and
   // does not mark the sync failed — the jobs are in, only their scores are
   // stale, which the next pass fixes.
+  //
+  // NOTIFICATIONS ARE GENERATED LAST (Phase 6.2).
+  // Both inputs have to be settled first: the sync is what brings in the jobs
+  // a saved search could match, and the backfill is what gives them the
+  // relevance score the new-job threshold compares against. Generating before
+  // either would announce yesterday's feed and score today's arrivals as NULL.
+  //
+  // generateNotifications() never rejects — it catches its own failures and
+  // returns them on the report — so it cannot turn a completed sync into a
+  // logged failure. A bell with nothing in it is not an outage.
   void schedulerService
     .runAll()
     .then(async () => {
@@ -187,6 +199,12 @@ router.post("/sync/cron", async (req, res) => {
           activeFresherEligible: report.activeFresherEligible,
         },
         "POST /sync/cron — relevance reclassified after sync",
+      );
+
+      const notifications = await generateNotifications();
+      req.log.info(
+        notifications,
+        "POST /sync/cron — notifications generated after sync",
       );
     })
     .catch((err: unknown) => {

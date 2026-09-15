@@ -48,10 +48,15 @@ vi.mock("../lib/schema-check", () => ({
   currentSchemaStatus: () => schemaStatus(),
 }));
 
-vi.mock("@workspace/db", () => ({
-  db: { select: vi.fn() },
-  providerSyncLogsTable: {},
-}));
+// The real table definitions, with only `db` replaced. Phase 6.2 put the
+// notification generator on the cron path, so routes/sync.ts now transitively
+// imports most of the schema at module load; a hand-listed mock would need a
+// new entry every time that import graph grew, and the failure it produces
+// ("No X export is defined on the mock") says nothing about this suite.
+vi.mock("@workspace/db", async () => {
+  const schema = await import("@workspace/db/schema");
+  return { ...schema, db: { select: vi.fn() }, pool: {} };
+});
 
 import { getAuth } from "@clerk/express";
 import { schedulerService } from "../providers/scheduler";

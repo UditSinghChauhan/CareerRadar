@@ -69,6 +69,13 @@ function parseSort(value: unknown): JobSort {
     : "newest";
 }
 
+/** A parsable date, else "not given" — never an Invalid Date. */
+function parseDate(value: unknown): Date | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const d = value instanceof Date ? value : new Date(value as string);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
 /** An integer 0–100, else "not given". */
 function parseScore(value: unknown): number | undefined {
   if (value === undefined || value === null || value === "") return undefined;
@@ -110,6 +117,11 @@ export const jobsService = {
       deadlineBefore: rawQuery.deadlineBefore
         ? new Date(rawQuery.deadlineBefore as string)
         : undefined,
+      // Phase 6.2, used by the notification generator. Not reachable from
+      // /api/jobs (it is not in openapi.yaml), but parsed here so the
+      // generator can run a saved search through exactly this code path rather
+      // than a second, subtly different one.
+      createdAfter: parseDate(rawQuery.createdAfter),
       isIndia: parseBoolean(rawQuery.isIndia),
       isRemote: parseBoolean(rawQuery.isRemote),
       locations: parseList(rawQuery.locations),

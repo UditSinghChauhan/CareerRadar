@@ -22,6 +22,7 @@ import {
   bookmarksTable,
   companiesTable,
   jobsTable,
+  notificationsTable,
 } from "@workspace/db";
 
 export const companyColumns = {
@@ -96,6 +97,9 @@ export const applicationColumns = {
   notes: applicationsTable.notes,
   resumeVersion: applicationsTable.resumeVersion,
   referralName: applicationsTable.referralName,
+  contactUrl: applicationsTable.contactUrl,
+  referralStatus: applicationsTable.referralStatus,
+  outreachNotes: applicationsTable.outreachNotes,
   followUpDate: applicationsTable.followUpDate,
   offerAmount: applicationsTable.offerAmount,
   createdAt: applicationsTable.createdAt,
@@ -107,4 +111,21 @@ export const bookmarkColumns = {
   clerkId: bookmarksTable.clerkId,
   jobId: bookmarksTable.jobId,
   createdAt: bookmarksTable.createdAt,
+} as const;
+
+/**
+ * Phase 6.2. `dedupeKey` is deliberately absent: it is the generator's
+ * idempotency key, meaningless to the browser, and the exact kind of internal
+ * bookkeeping column this file exists to keep out of a payload.
+ */
+export const notificationColumns = {
+  id: notificationsTable.id,
+  clerkId: notificationsTable.clerkId,
+  title: notificationsTable.title,
+  message: notificationsTable.message,
+  type: notificationsTable.type,
+  isRead: notificationsTable.isRead,
+  relatedJobId: notificationsTable.relatedJobId,
+  metadata: notificationsTable.metadata,
+  createdAt: notificationsTable.createdAt,
 } as const;

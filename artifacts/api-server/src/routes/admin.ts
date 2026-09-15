@@ -8,6 +8,7 @@
  * POST /api/admin/verify-providers — live health audit of every provider config
  * POST /api/admin/backfill-location — recompute the normalised location columns
  * POST /api/admin/backfill-relevance — recompute the relevance track and score
+ * POST /api/admin/generate-notifications — run the Phase 6.2 generator now
  *
  * Not in `lib/api-spec/openapi.yaml`: no browser code calls these, matching the
  * convention already used for the sync routes.
@@ -24,6 +25,7 @@ import {
   backfillRelevance,
   relevanceTrackCountsFromDb,
 } from "../relevance/backfill-relevance";
+import { generateNotifications } from "../notifications/generator";
 
 const router = Router();
 
@@ -121,6 +123,34 @@ router.post("/admin/backfill-relevance", requireAuth, async (req, res) => {
     req.log.error({ err }, "POST /admin/backfill-relevance — backfill failed");
     res.status(500).json({ error: msg });
   }
+});
+
+// ─── POST /api/admin/generate-notifications ───────────────────────────────────
+// Runs the Phase 6.2 generator immediately, instead of waiting up to six hours
+// for the next POST /api/sync/cron. Same reason the backfills have a route:
+// there is no shell on the Render box.
+//
+// SAFE TO CALL REPEATEDLY. Every generated row carries a dedupe key and is
+// inserted with ON CONFLICT DO NOTHING, so a second call within the same
+// deadline window writes nothing. It reads jobs, applications, bookmarks and
+// saved searches and writes only to `notifications`.
+//
+// Unlike /admin/verify-providers this makes no outbound requests at all.
+
+router.post("/admin/generate-notifications", requireAuth, async (req, res) => {
+  const report = await generateNotifications();
+  if (report.error) {
+    // generateNotifications never throws — it returns the failure. Surfaced as
+    // a 500 here because, unlike the cron path, a caller who asked for this
+    // explicitly wants to know it did not happen.
+    req.log.error(
+      { error: report.error },
+      "POST /admin/generate-notifications — generation failed",
+    );
+    res.status(500).json(report);
+    return;
+  }
+  res.json(report);
 });
 
 export default router;

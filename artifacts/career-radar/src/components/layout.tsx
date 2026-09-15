@@ -18,6 +18,7 @@ import {
   SheetTitle,
   SheetHeader,
 } from "@/components/ui/sheet";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState } from "react";
 
 const NAV_ITEMS = [
@@ -116,6 +117,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center space-x-4">
+            <NotificationBell />
             <span className="text-sm font-medium hidden sm:inline-block">
               {user?.fullName || user?.primaryEmailAddress?.emailAddress}
             </span>

@@ -116,11 +116,25 @@ export function toDateInputValue(iso: string | null | undefined): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Inverse of toDateInputValue; empty input clears the field. */
-export function fromDateInputValue(value: string): string | undefined {
-  if (!value) return undefined;
+/**
+ * Inverse of toDateInputValue.
+ *
+ * An emptied input returns `null`, NOT `undefined`, and the difference is the
+ * whole point: the API reads `undefined` as "the caller did not mention this
+ * field" and skips the column, so the old value survives. Until Phase 6.1 this
+ * returned `undefined` and its docstring claimed it cleared the field — it
+ * never did, and a follow-up date could be set but never unset. Phase 6.1's
+ * "Awaiting follow-up" filter turned that from a curiosity into a row stuck in
+ * the view forever.
+ *
+ * An unparsable value is also `null`: `<input type="date">` only ever hands
+ * back `""` or a valid `YYYY-MM-DD`, so the only way to get here with garbage
+ * is a value the user cannot have meant.
+ */
+export function fromDateInputValue(value: string): string | null {
+  if (!value) return null;
   const d = new Date(`${value}T00:00:00.000Z`);
-  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
 export function timestamp(iso: string | null | undefined): number {

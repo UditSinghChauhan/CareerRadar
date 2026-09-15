@@ -5,14 +5,29 @@
  * CareerRadar API — personal placement OS for CS students
  * OpenAPI spec version: 0.2.0
  */
+import type { ApplicationUpdateInputReferralStatus } from './applicationUpdateInputReferralStatus';
 import type { ApplicationUpdateInputStatus } from './applicationUpdateInputStatus';
 
+/**
+ * Every field is optional; only the ones present are written. The clearable text and date fields accept an explicit null, which is how the drawer erases a value it previously set. Without that, a follow-up date could be set but never unset, and Phase 6.1's "Awaiting follow-up" filter would surface the row forever.
+ */
 export interface ApplicationUpdateInput {
   status?: ApplicationUpdateInputStatus;
-  notes?: string;
-  resumeVersion?: string;
-  referralName?: string;
-  followUpDate?: Date;
-  appliedDate?: Date;
-  offerAmount?: number;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  resumeVersion?: string | null;
+  /** @nullable */
+  referralName?: string | null;
+  /** @nullable */
+  contactUrl?: string | null;
+  referralStatus?: ApplicationUpdateInputReferralStatus;
+  /** @nullable */
+  outreachNotes?: string | null;
+  /** @nullable */
+  followUpDate?: Date | null;
+  /** @nullable */
+  appliedDate?: Date | null;
+  /** @nullable */
+  offerAmount?: number | null;
 }

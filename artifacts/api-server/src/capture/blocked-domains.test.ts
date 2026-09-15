@@ -118,6 +118,21 @@ const ALLOWED: Array<{ path: string; reason: string }> = [
     path: "e2e/capture.spec.ts",
     reason: "Fixtures: the URL the spec types into the capture dialog.",
   },
+  {
+    path: "artifacts/career-radar/src/components/applications/application-drawer.tsx",
+    reason:
+      "Placeholder text in Phase 6.1's 'Contact profile' input, and an href built from whatever the USER typed there. Same shape as profile.tsx above: the server never fetches it, and the browser only follows it when the user clicks.",
+  },
+  {
+    path: "artifacts/api-server/src/repositories/applications-follow-up.test.ts",
+    reason:
+      "Fixture: the value stored in and read back from applications.contact_url. No request is made.",
+  },
+  {
+    path: "e2e/phase-6-notifications.spec.ts",
+    reason:
+      "Fixture: the URL the spec types into the 'Contact profile' input. No request is made.",
+  },
 ];
 
 const ALLOWED_PATHS = new Set(ALLOWED.map((entry) => entry.path));

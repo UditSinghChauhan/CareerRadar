@@ -6,11 +6,50 @@ import { jobsRepository } from "../repositories/jobs.repository";
 import { paginate } from "../lib/pagination";
 import type { Application } from "@workspace/db";
 
+/**
+ * Phase 6.1. The column is plain text (see lib/db/src/schema/applications.ts
+ * for why it is not a pgEnum), so this is where the allowed set is enforced on
+ * the way in. It matches the enum in openapi.yaml exactly; anything else is
+ * rejected rather than written, so the drawer's select can never be handed a
+ * value it has no label for.
+ */
+export const REFERRAL_STATUSES = [
+  "none",
+  "requested",
+  "received",
+  "declined",
+] as const;
+
+export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
+
+export function isReferralStatus(value: unknown): value is ReferralStatus {
+  return (REFERRAL_STATUSES as readonly unknown[]).includes(value);
+}
+
+/**
+ * `undefined` means "the caller did not mention this field, leave it alone";
+ * `null` means "the caller cleared it". Drizzle drops undefined keys from a
+ * `.set()` and writes NULL for null, so the distinction survives all the way
+ * to the UPDATE — which is the whole reason the drawer can erase a follow-up
+ * date instead of being stuck with it forever.
+ */
+type Clearable<T> = T | null | undefined;
+
+function toDate(value: Clearable<string>): Clearable<Date> {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
 export const applicationsService = {
   async list(clerkId: string, rawQuery: Record<string, unknown>) {
     const filters: ApplicationFilters = {
       status: rawQuery.status as Application["status"] | undefined,
       jobType: rawQuery.jobType as "internship" | "full_time" | undefined,
+      // Query strings carry no booleans. "true" is the only affirmative, so a
+      // stray ?awaitingFollowUp=0 or =no reads as off rather than on.
+      awaitingFollowUp: rawQuery.awaitingFollowUp === "true",
     };
     const pagination = paginate(rawQuery);
     return applicationsRepository.findAll(clerkId, filters, pagination);
@@ -36,6 +75,9 @@ export const applicationsService = {
       notes?: string;
       resumeVersion?: string;
       referralName?: string;
+      contactUrl?: string;
+      referralStatus?: ReferralStatus;
+      outreachNotes?: string;
     },
   ) {
     const job = await jobsRepository.findById(data.jobId);
@@ -64,6 +106,11 @@ export const applicationsService = {
       notes: data.notes,
       resumeVersion: data.resumeVersion,
       referralName: data.referralName,
+      contactUrl: data.contactUrl,
+      // Omitted rather than defaulted to "none" in code: the column's own
+      // NOT NULL DEFAULT does that, in one place.
+      referralStatus: data.referralStatus,
+      outreachNotes: data.outreachNotes,
     });
   },
 
@@ -72,12 +119,15 @@ export const applicationsService = {
     clerkId: string,
     data: {
       status?: Application["status"];
-      notes?: string;
-      resumeVersion?: string;
-      referralName?: string;
-      followUpDate?: string;
-      appliedDate?: string;
-      offerAmount?: number;
+      notes?: Clearable<string>;
+      resumeVersion?: Clearable<string>;
+      referralName?: Clearable<string>;
+      contactUrl?: Clearable<string>;
+      referralStatus?: ReferralStatus;
+      outreachNotes?: Clearable<string>;
+      followUpDate?: Clearable<string>;
+      appliedDate?: Clearable<string>;
+      offerAmount?: Clearable<number>;
     },
   ) {
     const existing = await applicationsRepository.findById(id, clerkId);
@@ -85,8 +135,8 @@ export const applicationsService = {
 
     return applicationsRepository.update(id, clerkId, {
       ...data,
-      followUpDate: data.followUpDate ? new Date(data.followUpDate) : undefined,
-      appliedDate: data.appliedDate ? new Date(data.appliedDate) : undefined,
+      followUpDate: toDate(data.followUpDate),
+      appliedDate: toDate(data.appliedDate),
     });
   },
 

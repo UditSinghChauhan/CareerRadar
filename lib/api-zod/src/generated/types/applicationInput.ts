@@ -5,6 +5,7 @@
  * CareerRadar API — personal placement OS for CS students
  * OpenAPI spec version: 0.2.0
  */
+import type { ApplicationInputReferralStatus } from './applicationInputReferralStatus';
 import type { ApplicationInputStatus } from './applicationInputStatus';
 
 export interface ApplicationInput {
@@ -14,4 +15,7 @@ export interface ApplicationInput {
   notes?: string;
   resumeVersion?: string;
   referralName?: string;
+  contactUrl?: string;
+  referralStatus?: ApplicationInputReferralStatus;
+  outreachNotes?: string;
 }

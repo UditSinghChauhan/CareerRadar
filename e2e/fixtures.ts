@@ -41,16 +41,36 @@ async function resetApplications(page: Page): Promise<void> {
   });
 }
 
+/**
+ * Clears every notification belonging to the test user.
+ *
+ * Phase 6.2's generated rows are deduplicated by `(clerk_id, dedupe_key)`, so a
+ * run that leaves them behind makes the NEXT run's generation a no-op and the
+ * bell specs fail for a reason that has nothing to do with the code. Through
+ * the app's own DELETE /api/notifications, with the browser's session cookie,
+ * for the same reason resetApplications goes through the API.
+ */
+async function resetNotifications(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await fetch("/api/notifications", {
+      method: "DELETE",
+      credentials: "include",
+    });
+  });
+}
+
 export const test = base.extend<{ appPage: Page }>({
   appPage: async ({ page }, use) => {
     await signIn(page);
     await resetApplications(page);
+    await resetNotifications(page);
     await use(page);
     await resetApplications(page);
+    await resetNotifications(page);
   },
 });
 
-export { expect, resetApplications };
+export { expect, resetApplications, resetNotifications };
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
