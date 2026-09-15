@@ -38,6 +38,10 @@ import type {
   GetJobsClosingSoonParams,
   HealthStatus,
   Job,
+  JobCaptureConfirmInput,
+  JobCaptureInput,
+  JobCaptureResponse,
+  JobCaptureResult,
   JobDismissal,
   JobInput,
   JobListResponse,
@@ -1009,6 +1013,152 @@ export const useCreateJob = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateJobMutationOptions(options));
+    }
+
+export const getCaptureJobUrl = () => {
+
+
+
+
+  return `/api/jobs/capture`
+}
+
+/**
+ * Phase 4.1. The user pastes a URL and, optionally, the job description text they copied. The server parses WHAT IT WAS GIVEN — it never requests the posting's own site, which is the whole point of the feature: LinkedIn, Naukri, Internshala, Unstop and Wellfound prohibit automated extraction.
+ *
+ * When `GEMINI_API_KEY` is configured the text goes to Gemini for structured extraction; when it is not, deterministic heuristics read the text and the URL slug instead. Both paths return the same shape, and the response ALWAYS a draft — nothing is written until `POST /jobs/capture/confirm`.
+ * @summary Parse a pasted job posting into an editable draft
+ */
+export const captureJob = async (jobCaptureInput: JobCaptureInput, options?: RequestInit): Promise<JobCaptureResponse> => {
+
+  return customFetch<JobCaptureResponse>(getCaptureJobUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(jobCaptureInput)
+  }
+);}
+
+
+
+
+export const getCaptureJobMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof captureJob>>, TError,{data: BodyType<JobCaptureInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof captureJob>>, TError,{data: BodyType<JobCaptureInput>}, TContext> => {
+
+const mutationKey = ['captureJob'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof captureJob>>, {data: BodyType<JobCaptureInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  captureJob(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CaptureJobMutationResult = NonNullable<Awaited<ReturnType<typeof captureJob>>>
+    export type CaptureJobMutationBody = BodyType<JobCaptureInput>
+    export type CaptureJobMutationError = ErrorType<void>
+
+    /**
+ * @summary Parse a pasted job posting into an editable draft
+ */
+export const useCaptureJob = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof captureJob>>, TError,{data: BodyType<JobCaptureInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof captureJob>>,
+        TError,
+        {data: BodyType<JobCaptureInput>},
+        TContext
+      > => {
+      return useMutation(getCaptureJobMutationOptions(options));
+    }
+
+export const getConfirmCapturedJobUrl = () => {
+
+
+
+
+  return `/api/jobs/capture/confirm`
+}
+
+/**
+ * Phase 4.1. Creates the job from the draft the user edited. The company is resolved by name and created if new. The §2.0 location normaliser and the §2.1 relevance classifier both run, and `sourcePlatform` is set to `manual` server-side — it is never taken from the request.
+ *
+ * If a job with the same `sourceUrl` already exists the existing row is returned with `duplicate: true` rather than a second copy being made.
+ * @summary Save a confirmed capture draft as a job
+ */
+export const confirmCapturedJob = async (jobCaptureConfirmInput: JobCaptureConfirmInput, options?: RequestInit): Promise<JobCaptureResult> => {
+
+  return customFetch<JobCaptureResult>(getConfirmCapturedJobUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(jobCaptureConfirmInput)
+  }
+);}
+
+
+
+
+export const getConfirmCapturedJobMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmCapturedJob>>, TError,{data: BodyType<JobCaptureConfirmInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmCapturedJob>>, TError,{data: BodyType<JobCaptureConfirmInput>}, TContext> => {
+
+const mutationKey = ['confirmCapturedJob'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmCapturedJob>>, {data: BodyType<JobCaptureConfirmInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  confirmCapturedJob(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmCapturedJobMutationResult = NonNullable<Awaited<ReturnType<typeof confirmCapturedJob>>>
+    export type ConfirmCapturedJobMutationBody = BodyType<JobCaptureConfirmInput>
+    export type ConfirmCapturedJobMutationError = ErrorType<void>
+
+    /**
+ * @summary Save a confirmed capture draft as a job
+ */
+export const useConfirmCapturedJob = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmCapturedJob>>, TError,{data: BodyType<JobCaptureConfirmInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof confirmCapturedJob>>,
+        TError,
+        {data: BodyType<JobCaptureConfirmInput>},
+        TContext
+      > => {
+      return useMutation(getConfirmCapturedJobMutationOptions(options));
     }
 
 export const getGetJobsClosingSoonUrl = (params?: GetJobsClosingSoonParams,) => {

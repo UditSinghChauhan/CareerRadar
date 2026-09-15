@@ -6,6 +6,8 @@ import {
   UpdateJobBody,
   DismissJobBody,
   GetJobsClosingSoonQueryParams,
+  CaptureJobBody,
+  ConfirmCapturedJobBody,
 } from "@workspace/api-zod";
 import {
   requireAuth,
@@ -15,6 +17,7 @@ import {
   jobDismissalsRepository,
   resolveProfileId,
 } from "../repositories/jobDismissals.repository";
+import { captureService } from "../capture/capture.service";
 
 const router = Router();
 
@@ -102,6 +105,63 @@ router.delete("/jobs/:id/dismiss", requireAuth, async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Failed to restore dismissed job");
     res.status(500).json({ error: "Failed to restore dismissed job" });
+  }
+});
+
+// ─── Phase 4 quick capture ────────────────────────────────────────────────────
+// Paste-to-parse for the boards that cannot legally be scraped. Registered
+// before /jobs/:id so "capture" is not read as an id.
+//
+// NEITHER ROUTE REQUESTS THE POSTING'S SITE. `url` is a string to be parsed and
+// stored, never something to fetch — that is the legal boundary this whole
+// phase exists to respect. See capture/capture.service.ts.
+
+router.post("/jobs/capture", requireAuth, async (req, res) => {
+  const parsed = CaptureJobBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res
+      .status(400)
+      .json({ error: "Invalid input", details: parsed.error.issues });
+    return;
+  }
+
+  const { url, rawText } = parsed.data;
+  if (!url?.trim() && !rawText?.trim()) {
+    res.status(400).json({ error: "Provide a url, some pasted text, or both" });
+    return;
+  }
+
+  try {
+    const result = await captureService.parse({ url, rawText });
+    res.json(result);
+  } catch (err) {
+    // A parse failure must not look like a broken server: the dialog stays
+    // usable with an empty form, which is still faster than the old workflow.
+    req.log.error({ err }, "Failed to parse captured job");
+    res.status(500).json({ error: "Failed to parse that posting" });
+  }
+});
+
+router.post("/jobs/capture/confirm", requireAuth, async (req, res) => {
+  const parsed = ConfirmCapturedJobBody.safeParse(req.body);
+  if (!parsed.success) {
+    res
+      .status(400)
+      .json({ error: "Invalid input", details: parsed.error.issues });
+    return;
+  }
+
+  try {
+    const { deadline, ...rest } = parsed.data;
+    const result = await captureService.confirm({
+      ...rest,
+      // The generated schema coerces the body's date; the service takes ISO.
+      deadline: deadline ? deadline.toISOString() : null,
+    });
+    res.status(201).json(result);
+  } catch (err) {
+    req.log.error({ err }, "Failed to save captured job");
+    res.status(500).json({ error: "Failed to save that job" });
   }
 });
 

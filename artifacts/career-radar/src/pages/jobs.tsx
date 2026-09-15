@@ -8,6 +8,7 @@ import {
   AlertCircle,
   RefreshCw,
   X,
+  Plus,
 } from "lucide-react";
 import {
   useListJobs,
@@ -44,6 +45,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobCard } from "@/components/jobs/job-card";
+import { CaptureDialog } from "@/components/jobs/capture-dialog";
 import {
   JobFilters,
   DEFAULT_FILTERS,
@@ -269,8 +271,28 @@ function EmptyState({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+/**
+ * The bookmarklet (see /tools/capture) navigates to
+ * `/jobs?capture=1&url=...&text=...`. Read once, then scrub the query string so
+ * a refresh does not re-open the dialog with a stale selection.
+ */
+function readCaptureParams(): { open: boolean; url: string; text: string } {
+  if (typeof window === "undefined") return { open: false, url: "", text: "" };
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("capture") !== "1") return { open: false, url: "", text: "" };
+
+  const url = params.get("url") ?? "";
+  const text = params.get("text") ?? "";
+  window.history.replaceState({}, "", window.location.pathname);
+  return { open: true, url, text };
+}
+
 export function JobsPage() {
   const queryClient = useQueryClient();
+
+  // ── Quick capture (Phase 4) ───────────────────────────────────────────────
+  const [captureParams] = useState(readCaptureParams);
+  const [captureOpen, setCaptureOpen] = useState(captureParams.open);
 
   // ── Search ────────────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState("");
@@ -503,6 +525,17 @@ export function JobsPage() {
     [trackApplication],
   );
 
+  // A captured job is a new row, so the list has to be refetched before the
+  // card can be shown; "Save & mark applied" then logs the application through
+  // the same path the Apply button uses, retry toast included.
+  const handleCaptureSaved = useCallback(
+    (jobId: string, markApplied: boolean) => {
+      void queryClient.invalidateQueries({ queryKey: getListJobsQueryKey() });
+      if (markApplied) void trackApplication(jobId, "applied");
+    },
+    [queryClient, trackApplication],
+  );
+
   // ── Derived state ─────────────────────────────────────────────────────────
   const bookmarkedJobIds = useMemo(
     () => new Set((bookmarksData ?? []).map((b) => b.jobId)),
@@ -626,6 +659,17 @@ export function JobsPage() {
                     {activeFilterCount}
                   </Badge>
                 )}
+              </Button>
+
+              {/* Phase 4: quick capture for the boards with no API */}
+              <Button
+                size="sm"
+                className="h-9 gap-1.5"
+                data-testid="add-job"
+                onClick={() => setCaptureOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Add job
               </Button>
             </div>
 
@@ -798,6 +842,16 @@ export function JobsPage() {
           )}
         </div>
       </div>
+
+      {/* Quick capture dialog */}
+      <CaptureDialog
+        open={captureOpen}
+        onOpenChange={setCaptureOpen}
+        initialUrl={captureParams.url}
+        initialText={captureParams.text}
+        autoParse={captureParams.open}
+        onSaved={handleCaptureSaved}
+      />
 
       {/* Mobile filter sheet */}
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>

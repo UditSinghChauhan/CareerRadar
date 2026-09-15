@@ -147,13 +147,21 @@ Respond ONLY with valid JSON in this exact format (no markdown, no backticks):
 }`;
 }
 
+/**
+ * Strip the markdown code fences Gemini wraps JSON in, however firmly the
+ * prompt asked it not to. Exported because Phase 4's capture extractor faces
+ * exactly the same behaviour and must not grow a second copy of this.
+ */
+export function stripJsonFences(text: string): string {
+  return text
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+}
+
 function parseResponse(text: string): MatchScoreResult | null {
   try {
-    // Strip markdown code fences if present
-    const cleaned = text
-      .replace(/```json\s*/gi, "")
-      .replace(/```\s*/g, "")
-      .trim();
+    const cleaned = stripJsonFences(text);
     const parsed = JSON.parse(cleaned);
 
     return {

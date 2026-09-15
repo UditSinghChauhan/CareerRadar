@@ -420,6 +420,78 @@ paths:
               schema:
                 $ref: "#/components/schemas/Job"
 
+  /jobs/capture:
+    post:
+      operationId: captureJob
+      tags: [jobs]
+      summary: Parse a pasted job posting into an editable draft
+      description: >-
+        Phase 4.1. The user pastes a URL and, optionally, the job description
+        text they copied. The server parses WHAT IT WAS GIVEN — it never
+        requests the posting's own site, which is the whole point of the
+        feature: LinkedIn, Naukri, Internshala, Unstop and Wellfound prohibit
+        automated extraction.
+
+
+        When `GEMINI_API_KEY` is configured the text goes to Gemini for
+        structured extraction; when it is not, deterministic heuristics read
+        the text and the URL slug instead. Both paths return the same shape,
+        and the response ALWAYS a draft — nothing is written until
+        `POST /jobs/capture/confirm`.
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobCaptureInput"
+      responses:
+        "200":
+          description: A draft for the user to confirm
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobCaptureResponse"
+        "400":
+          description: Neither a url nor rawText was supplied
+        "401":
+          description: Unauthorized
+
+  /jobs/capture/confirm:
+    post:
+      operationId: confirmCapturedJob
+      tags: [jobs]
+      summary: Save a confirmed capture draft as a job
+      description: >-
+        Phase 4.1. Creates the job from the draft the user edited. The company
+        is resolved by name and created if new. The §2.0 location normaliser
+        and the §2.1 relevance classifier both run, and `sourcePlatform` is set
+        to `manual` server-side — it is never taken from the request.
+
+
+        If a job with the same `sourceUrl` already exists the existing row is
+        returned with `duplicate: true` rather than a second copy being made.
+      security:
+        - clerkAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobCaptureConfirmInput"
+      responses:
+        "201":
+          description: The created (or already-existing) job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobCaptureResult"
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+
   /jobs/deadlines/soon:
     get:
       operationId: getJobsClosingSoon
@@ -1249,6 +1321,158 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    JobCaptureInput:
+      type: object
+      properties:
+        url:
+          description: The posting's URL. Parsed as a string; never requested.
+          type: ["string", "null"]
+          maxLength: 2000
+        rawText:
+          description: >-
+            The job description the user copied. Optional — a URL alone still
+            yields a partial draft on the boards that encode the role in the
+            path.
+          type: ["string", "null"]
+          maxLength: 40000
+
+    JobCaptureDraft:
+      type: object
+      required:
+        [
+          title,
+          companyName,
+          location,
+          workMode,
+          jobType,
+          stipend,
+          salaryMin,
+          salaryMax,
+          currency,
+          deadline,
+          requiredSkills,
+          description,
+          applyUrl,
+          sourceUrl,
+        ]
+      properties:
+        title:
+          type: ["string", "null"]
+        companyName:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        workMode:
+          type: ["string", "null"]
+          enum: [remote, hybrid, onsite, null]
+        jobType:
+          type: ["string", "null"]
+          enum: [internship, full_time, null]
+        stipend:
+          description: Monthly, in `currency`.
+          type: ["integer", "null"]
+        salaryMin:
+          description: Annual, in `currency`.
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        currency:
+          type: string
+        deadline:
+          type: ["string", "null"]
+          format: date-time
+        requiredSkills:
+          type: array
+          items:
+            type: string
+        description:
+          type: ["string", "null"]
+        applyUrl:
+          type: ["string", "null"]
+        sourceUrl:
+          type: ["string", "null"]
+
+    JobCaptureResponse:
+      type: object
+      required: [draft, source, aiAvailable, platform, warnings]
+      properties:
+        draft:
+          $ref: "#/components/schemas/JobCaptureDraft"
+        source:
+          description: >-
+            `gemini` only when the model actually returned a usable object;
+            `heuristic` whenever the deterministic parsers produced the draft.
+          type: string
+          enum: [gemini, heuristic]
+        aiAvailable:
+          description: Whether GEMINI_API_KEY is configured on this server at all.
+          type: boolean
+        platform:
+          description: Display label derived from the URL's host, e.g. "LinkedIn".
+          type: ["string", "null"]
+        warnings:
+          description: Things to tell the user before they save.
+          type: array
+          items:
+            type: string
+
+    JobCaptureConfirmInput:
+      type: object
+      required: [title, companyName]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 300
+        companyName:
+          description: Resolved to a company by slug; created if it does not exist.
+          type: string
+          minLength: 1
+          maxLength: 200
+        location:
+          type: ["string", "null"]
+        workMode:
+          type: ["string", "null"]
+          enum: [remote, hybrid, onsite, null]
+        jobType:
+          type: ["string", "null"]
+          enum: [internship, full_time, null]
+        stipend:
+          type: ["integer", "null"]
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        currency:
+          type: ["string", "null"]
+        deadline:
+          type: ["string", "null"]
+          format: date-time
+        requiredSkills:
+          type: array
+          items:
+            type: string
+        description:
+          type: ["string", "null"]
+        requirements:
+          type: ["string", "null"]
+        applyUrl:
+          type: ["string", "null"]
+        sourceUrl:
+          type: ["string", "null"]
+
+    JobCaptureResult:
+      type: object
+      required: [job, duplicate]
+      properties:
+        job:
+          $ref: "#/components/schemas/Job"
+        duplicate:
+          description: >-
+            True when a job with this sourceUrl already existed and is being
+            returned instead of a new row.
+          type: boolean
 
     # ─── Company ────────────────────────────────────────────────────────────────
 

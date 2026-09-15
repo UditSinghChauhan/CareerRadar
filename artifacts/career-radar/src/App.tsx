@@ -24,6 +24,7 @@ import { JobsPage } from "@/pages/jobs";
 import { ApplicationsPage } from "@/pages/applications";
 import { ProfilePage } from "@/pages/profile";
 import { SettingsPage } from "@/pages/settings";
+import { ToolsCapturePage } from "@/pages/tools-capture";
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout";
 
@@ -311,6 +312,9 @@ function ClerkProviderWithRoutes() {
           </Route>
           <Route path="/settings">
             <ProtectedRoute component={SettingsPage} />
+          </Route>
+          <Route path="/tools/capture">
+            <ProtectedRoute component={ToolsCapturePage} />
           </Route>
           <Route component={NotFound} />
         </Switch>

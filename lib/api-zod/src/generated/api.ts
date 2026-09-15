@@ -549,6 +549,143 @@ export const CreateJobResponse = zod.object({
 
 
 /**
+ * Phase 4.1. The user pastes a URL and, optionally, the job description text they copied. The server parses WHAT IT WAS GIVEN — it never requests the posting's own site, which is the whole point of the feature: LinkedIn, Naukri, Internshala, Unstop and Wellfound prohibit automated extraction.
+ *
+ * When `GEMINI_API_KEY` is configured the text goes to Gemini for structured extraction; when it is not, deterministic heuristics read the text and the URL slug instead. Both paths return the same shape, and the response ALWAYS a draft — nothing is written until `POST /jobs/capture/confirm`.
+ * @summary Parse a pasted job posting into an editable draft
+ */
+export const captureJobBodyUrlMax = 2000;
+
+export const captureJobBodyRawTextMax = 40000;
+
+
+
+export const CaptureJobBody = zod.object({
+  "url": zod.string().max(captureJobBodyUrlMax).nullish().describe('The posting\'s URL. Parsed as a string; never requested.'),
+  "rawText": zod.string().max(captureJobBodyRawTextMax).nullish().describe('The job description the user copied. Optional — a URL alone still yields a partial draft on the boards that encode the role in the path.')
+})
+
+export const CaptureJobResponse = zod.object({
+  "draft": zod.object({
+  "title": zod.string().nullable(),
+  "companyName": zod.string().nullable(),
+  "location": zod.string().nullable(),
+  "workMode": zod.union([zod.literal('remote'),zod.literal('hybrid'),zod.literal('onsite'),zod.literal(null)]).nullable(),
+  "jobType": zod.union([zod.literal('internship'),zod.literal('full_time'),zod.literal(null)]).nullable(),
+  "stipend": zod.number().nullable().describe('Monthly, in `currency`.'),
+  "salaryMin": zod.number().nullable().describe('Annual, in `currency`.'),
+  "salaryMax": zod.number().nullable(),
+  "currency": zod.string(),
+  "deadline": zod.coerce.date().nullable(),
+  "requiredSkills": zod.array(zod.string()),
+  "description": zod.string().nullable(),
+  "applyUrl": zod.string().nullable(),
+  "sourceUrl": zod.string().nullable()
+}),
+  "source": zod.enum(['gemini', 'heuristic']).describe('`gemini` only when the model actually returned a usable object; `heuristic` whenever the deterministic parsers produced the draft.'),
+  "aiAvailable": zod.boolean().describe('Whether GEMINI_API_KEY is configured on this server at all.'),
+  "platform": zod.string().nullable().describe('Display label derived from the URL\'s host, e.g. \"LinkedIn\".'),
+  "warnings": zod.array(zod.string()).describe('Things to tell the user before they save.')
+})
+
+
+/**
+ * Phase 4.1. Creates the job from the draft the user edited. The company is resolved by name and created if new. The §2.0 location normaliser and the §2.1 relevance classifier both run, and `sourcePlatform` is set to `manual` server-side — it is never taken from the request.
+ *
+ * If a job with the same `sourceUrl` already exists the existing row is returned with `duplicate: true` rather than a second copy being made.
+ * @summary Save a confirmed capture draft as a job
+ */
+export const confirmCapturedJobBodyTitleMax = 300;
+
+export const confirmCapturedJobBodyCompanyNameMax = 200;
+
+
+
+export const ConfirmCapturedJobBody = zod.object({
+  "title": zod.string().min(1).max(confirmCapturedJobBodyTitleMax),
+  "companyName": zod.string().min(1).max(confirmCapturedJobBodyCompanyNameMax).describe('Resolved to a company by slug; created if it does not exist.'),
+  "location": zod.string().nullish(),
+  "workMode": zod.union([zod.literal('remote'),zod.literal('hybrid'),zod.literal('onsite'),zod.literal(null)]).nullish(),
+  "jobType": zod.union([zod.literal('internship'),zod.literal('full_time'),zod.literal(null)]).nullish(),
+  "stipend": zod.number().nullish(),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "currency": zod.string().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish()
+})
+
+export const ConfirmCapturedJobResponse = zod.object({
+  "job": zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish().describe('Unreliable — the schema default writes \'India\' whenever a provider omits it. Kept for compatibility; use isIndia \/ locationCountry.'),
+  "locationCity": zod.string().nullish().describe('Phase 2.0 normalised city, e.g. \'Bengaluru\'. Null when unknown.'),
+  "locationRegion": zod.string().nullish().describe('Phase 2.0 normalised state\/province, full name. Null when unknown.'),
+  "locationCountry": zod.string().nullish().describe('Phase 2.0 uppercase ISO-2. Null when unknown.'),
+  "locationMetro": zod.string().nullish().describe('Phase 2.0 metro bucket: \'NCR\', \'MMR\', or the city itself.'),
+  "isIndia": zod.boolean().nullish().describe('Phase 2.0 three-valued: true, false (names another country), or null (the location could not be placed — kept reviewable).'),
+  "isRemote": zod.boolean().optional().describe('Phase 2.0. The location carries a remote marker.'),
+  "relevanceTrack": zod.union([zod.literal('internship'),zod.literal('new_grad'),zod.literal('early_career'),zod.literal('not_relevant'),zod.literal(null)]).nullish().describe('Phase 2.1 classifier verdict. Null until the row has been classified (the relevance backfill has not run yet).'),
+  "relevanceScore": zod.number().nullish().describe('Phase 2.1. 0–100; 0 for not_relevant; null until classified.'),
+  "isFresherEligible": zod.boolean().optional().describe('Phase 2.1. True for every track except not_relevant. False until classified.'),
+  "seniorityExcluded": zod.boolean().optional().describe('Phase 2.1. A seniority\/level\/years marker ruled the row out.'),
+  "relevanceSignals": zod.array(zod.string()).optional().describe('Phase 2.1. Human-readable reasons behind the track and score, in the order they fired — shown on hover so a wrong verdict can be debugged without opening the database.'),
+  "classifiedAt": zod.coerce.date().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "lastSeenAt": zod.coerce.date().nullish().describe('Last time a provider run observed this posting in its upstream listing. Null for rows never covered by a sweep. Internal staleness bookkeeping — clients should not branch on it.'),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}),
+  "duplicate": zod.boolean().describe('True when a job with this sourceUrl already existed and is being returned instead of a new row.')
+})
+
+
+/**
  * @summary Get jobs closing within N days
  */
 export const getJobsClosingSoonQueryDaysDefault = 7;

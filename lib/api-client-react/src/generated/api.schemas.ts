@@ -416,6 +416,173 @@ export interface JobDismissal {
   createdAt: string;
 }
 
+export interface JobCaptureInput {
+  /**
+     * The posting's URL. Parsed as a string; never requested.
+     * @maxLength 2000
+     * @nullable
+     */
+  url?: string | null;
+  /**
+     * The job description the user copied. Optional — a URL alone still yields a partial draft on the boards that encode the role in the path.
+     * @maxLength 40000
+     * @nullable
+     */
+  rawText?: string | null;
+}
+
+/**
+ * @nullable
+ */
+export type JobCaptureDraftWorkMode = typeof JobCaptureDraftWorkMode[keyof typeof JobCaptureDraftWorkMode] | null;
+
+
+export const JobCaptureDraftWorkMode = {
+  remote: 'remote',
+  hybrid: 'hybrid',
+  onsite: 'onsite',
+} as const;
+
+/**
+ * @nullable
+ */
+export type JobCaptureDraftJobType = typeof JobCaptureDraftJobType[keyof typeof JobCaptureDraftJobType] | null;
+
+
+export const JobCaptureDraftJobType = {
+  internship: 'internship',
+  full_time: 'full_time',
+} as const;
+
+export interface JobCaptureDraft {
+  /** @nullable */
+  title: string | null;
+  /** @nullable */
+  companyName: string | null;
+  /** @nullable */
+  location: string | null;
+  /** @nullable */
+  workMode: JobCaptureDraftWorkMode;
+  /** @nullable */
+  jobType: JobCaptureDraftJobType;
+  /**
+     * Monthly, in `currency`.
+     * @nullable
+     */
+  stipend: number | null;
+  /**
+     * Annual, in `currency`.
+     * @nullable
+     */
+  salaryMin: number | null;
+  /** @nullable */
+  salaryMax: number | null;
+  currency: string;
+  /** @nullable */
+  deadline: string | null;
+  requiredSkills: string[];
+  /** @nullable */
+  description: string | null;
+  /** @nullable */
+  applyUrl: string | null;
+  /** @nullable */
+  sourceUrl: string | null;
+}
+
+/**
+ * `gemini` only when the model actually returned a usable object; `heuristic` whenever the deterministic parsers produced the draft.
+ */
+export type JobCaptureResponseSource = typeof JobCaptureResponseSource[keyof typeof JobCaptureResponseSource];
+
+
+export const JobCaptureResponseSource = {
+  gemini: 'gemini',
+  heuristic: 'heuristic',
+} as const;
+
+export interface JobCaptureResponse {
+  draft: JobCaptureDraft;
+  /** `gemini` only when the model actually returned a usable object; `heuristic` whenever the deterministic parsers produced the draft. */
+  source: JobCaptureResponseSource;
+  /** Whether GEMINI_API_KEY is configured on this server at all. */
+  aiAvailable: boolean;
+  /**
+     * Display label derived from the URL's host, e.g. "LinkedIn".
+     * @nullable
+     */
+  platform: string | null;
+  /** Things to tell the user before they save. */
+  warnings: string[];
+}
+
+/**
+ * @nullable
+ */
+export type JobCaptureConfirmInputWorkMode = typeof JobCaptureConfirmInputWorkMode[keyof typeof JobCaptureConfirmInputWorkMode] | null;
+
+
+export const JobCaptureConfirmInputWorkMode = {
+  remote: 'remote',
+  hybrid: 'hybrid',
+  onsite: 'onsite',
+} as const;
+
+/**
+ * @nullable
+ */
+export type JobCaptureConfirmInputJobType = typeof JobCaptureConfirmInputJobType[keyof typeof JobCaptureConfirmInputJobType] | null;
+
+
+export const JobCaptureConfirmInputJobType = {
+  internship: 'internship',
+  full_time: 'full_time',
+} as const;
+
+export interface JobCaptureConfirmInput {
+  /**
+     * @minLength 1
+     * @maxLength 300
+     */
+  title: string;
+  /**
+     * Resolved to a company by slug; created if it does not exist.
+     * @minLength 1
+     * @maxLength 200
+     */
+  companyName: string;
+  /** @nullable */
+  location?: string | null;
+  /** @nullable */
+  workMode?: JobCaptureConfirmInputWorkMode;
+  /** @nullable */
+  jobType?: JobCaptureConfirmInputJobType;
+  /** @nullable */
+  stipend?: number | null;
+  /** @nullable */
+  salaryMin?: number | null;
+  /** @nullable */
+  salaryMax?: number | null;
+  /** @nullable */
+  currency?: string | null;
+  /** @nullable */
+  deadline?: string | null;
+  requiredSkills?: string[];
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  requirements?: string | null;
+  /** @nullable */
+  applyUrl?: string | null;
+  /** @nullable */
+  sourceUrl?: string | null;
+}
+
+export interface JobCaptureResult {
+  job: Job;
+  /** True when a job with this sourceUrl already existed and is being returned instead of a new row. */
+  duplicate: boolean;
+}
+
 export type CompanyInputSize = typeof CompanyInputSize[keyof typeof CompanyInputSize];
 
 
