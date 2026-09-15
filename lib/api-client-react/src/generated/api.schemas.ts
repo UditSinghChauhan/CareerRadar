@@ -956,10 +956,42 @@ minRelevanceScore?: number;
  */
 showDismissed?: boolean;
 /**
- * `newest` (default, the pre-2.1 order — posted date desc) or `relevance` (Phase 2.1 — relevanceScore desc, unclassified last, newest first among equal scores).
+ * Phase 7. Work modes OR-ed together; omit for no work-mode filtering. Distinct from the single-valued `workMode` above, which is unchanged. Previously applied in the browser over the fetched window, which is why it could disagree with the result count.
+ */
+workModes?: ListJobsWorkModesItem[];
+/**
+ * Phase 7. Graduation years OR-ed together. A posting that names NO eligible batch matches any of them — most postings name none, and hiding those would empty the list.
+ */
+batches?: number[];
+/**
+ * Phase 7. Branches OR-ed together. Same "names none matches anything" rule as `batches`.
+ */
+branches?: string[];
+/**
+ * Phase 7. Required skills OR-ed together. Unlike `batches` and `branches` there is NO empty-allowance: a posting that lists no skills matches nothing here.
+ */
+skills?: string[];
+/**
+ * Phase 7. Exact match on the provider a posting came from.
+ */
+sourcePlatform?: string;
+/**
+ * Phase 7. Hide rows the signed-in caller already has an application for, in any pipeline stage. Ignored for an anonymous caller, who has no applications.
+ */
+hideApplied?: boolean;
+/**
+ * `newest` (default, the pre-2.1 order — posted date desc), `relevance` (Phase 2.1 — relevanceScore desc, unclassified last, newest first among equal scores), or the Phase 7 additions: `deadline` (soonest first, no deadline last), `salary` (the best of salaryMax / salaryMin / stipend, highest first) and `company` (company name, A–Z). The last three were browser-side sorts over the fetched window before Phase 7 and so only ever ordered part of the result set.
  */
 sort?: ListJobsSort;
+/**
+ * @minimum 1
+ */
 page?: number;
+/**
+ * Rows per page. Phase 7 raised the server-side cap from 100 to 200; a larger value is clamped rather than rejected.
+ * @minimum 1
+ * @maximum 200
+ */
 limit?: number;
 };
 
@@ -999,12 +1031,24 @@ export const ListJobsRelevanceTrackItem = {
   not_relevant: 'not_relevant',
 } as const;
 
+export type ListJobsWorkModesItem = typeof ListJobsWorkModesItem[keyof typeof ListJobsWorkModesItem];
+
+
+export const ListJobsWorkModesItem = {
+  remote: 'remote',
+  hybrid: 'hybrid',
+  onsite: 'onsite',
+} as const;
+
 export type ListJobsSort = typeof ListJobsSort[keyof typeof ListJobsSort];
 
 
 export const ListJobsSort = {
   newest: 'newest',
   relevance: 'relevance',
+  deadline: 'deadline',
+  salary: 'salary',
+  company: 'company',
 } as const;
 
 export type GetJobsClosingSoonParams = {

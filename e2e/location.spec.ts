@@ -144,18 +144,19 @@ async function setLocation(
 
 async function gotoJobs(page: Page): Promise<void> {
   await page.goto("/jobs");
+  // Phase 7: the header now renders the server's total for the whole filtered
+  // set under its own test id, instead of the fetched window's length with the
+  // total tacked on as "N of M".
   await page
-    .getByText(/^\d+( of [\d,]+)? jobs?( matching filters)?$/)
+    .getByTestId("job-total")
     .first()
     .waitFor({ state: "visible", timeout: 20_000 });
 }
 
 async function headerCount(page: Page): Promise<number> {
-  const text = await page
-    .getByText(/^\d+( of [\d,]+)? jobs?( matching filters)?$/)
-    .first()
-    .textContent();
-  return Number.parseInt(text?.trim() ?? "0", 10);
+  const text = await page.getByTestId("job-total").first().textContent();
+  // Thousands-separated once the table is large, so strip anything non-numeric.
+  return Number.parseInt((text ?? "0").replace(/[^\d]/g, ""), 10);
 }
 
 function bucket(page: Page, key: string) {

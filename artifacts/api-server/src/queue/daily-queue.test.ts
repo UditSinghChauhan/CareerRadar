@@ -52,6 +52,12 @@ interface JobSpec {
   relevanceScore?: number | null;
   isFresherEligible?: boolean;
   status?: "active" | "closed" | "draft";
+  /**
+   * Fixes the row's primary key. Only the tie-rotation tests need it, and they
+   * need it badly — see `insertTiedBlock`. Everything else takes
+   * `gen_random_uuid()`, because for those tests the id is genuinely arbitrary.
+   */
+  id?: string;
 }
 
 async function insertCompany(name: string): Promise<string> {
@@ -73,6 +79,7 @@ async function insertJob(spec: JobSpec): Promise<string> {
   const [row] = await db
     .insert(jobsTable)
     .values({
+      ...(spec.id ? { id: spec.id } : {}),
       companyId,
       title: spec.title,
       jobType: "internship",
@@ -693,10 +700,33 @@ describe("the tie rotation — why the queue is not the same ten forever", () =>
    * relevance 100 are unreachable.
    */
 
-  /** 30 rows that all score exactly the same priority. */
+  /**
+   * The nth row's id. FIXED, not `gen_random_uuid()`, and that is the whole
+   * point of this helper.
+   *
+   * The rotation orders tied rows by `md5(id::text || queue_day)`, so which ten
+   * of thirty surface on a given day is decided entirely by their ids. With
+   * random ids, "all thirty appear within fourteen days" is a random draw
+   * rather than an assertion: each row independently misses every day's top ten
+   * with probability (2/3)^14, and measured over fifteen runs the coverage test
+   * below failed once. That is a fixture that reports a broken rotation roughly
+   * one run in ten while nothing is broken at all — and worse, it trains the
+   * reader to re-run a red suite instead of reading it.
+   *
+   * Pinning the ids makes the outcome deterministic without weakening what is
+   * checked: the assertions are unchanged, and the rotation is still exercised
+   * end to end through real `md5()` in Postgres. A failure now means the
+   * rotation genuinely changed.
+   */
+  function tiedJobId(index: number): string {
+    return `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
+  }
+
+  /** 30 rows that all score exactly the same priority, with fixed ids. */
   async function insertTiedBlock(n: number): Promise<void> {
     for (let i = 0; i < n; i += 1) {
       await insertJob({
+        id: tiedJobId(i),
         title: `Tied Intern ${i}`,
         company: `Tieco ${i}`,
         // Same age, same relevance, no deadline → byte-identical priority.
@@ -744,6 +774,11 @@ describe("the tie rotation — why the queue is not the same ten forever", () =>
   it("makes the whole tied block reachable within a couple of weeks", async () => {
     // The defect being fixed: before the rotation, 20 of these 30 rows could
     // never appear, however long the user waited.
+    //
+    // With the fixed ids from `tiedJobId`, the thirtieth row first appears on
+    // day 12 of the 14 below — so this passes every time, but with only two
+    // days of slack. If it ever goes red, the rotation's distribution has
+    // changed; re-running will not help and is not the answer.
     await insertTiedBlock(30);
     const seen = new Set<string>();
     for (let d = 15; d <= 28; d += 1) {

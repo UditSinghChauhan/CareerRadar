@@ -59,13 +59,42 @@ export function jobCards(page: Page) {
   return page.locator("article");
 }
 
-/** Waits for the jobs grid to finish loading and returns the visible count. */
+/**
+ * Waits for the jobs grid to finish loading and returns the visible count.
+ *
+ * Waits on the header's total (Phase 7 gave it a test id; before that it was
+ * matched by the shape of its text) rather than on a card, so an empty result
+ * is a returned 0 and not a timeout.
+ */
 export async function visibleJobCount(page: Page): Promise<number> {
   await page
-    .getByText(/\d+( of [\d,]+)? jobs?( matching filters)?$/)
+    .getByTestId("job-total")
     .first()
     .waitFor({ state: "visible", timeout: 20_000 });
   return jobCards(page).count();
+}
+
+/** The Jobs page's "Hide jobs I've applied to" checkbox label. */
+export const HIDE_APPLIED_LABEL = "Hide jobs I've applied to";
+
+/**
+ * Unchecks the hide-applied filter and waits for the list it refetches.
+ *
+ * The wait is the point, and it is new in Phase 7. Hide-applied used to be a
+ * browser-side pass over rows already fetched, so unchecking it re-rendered
+ * synchronously. It is a WHERE clause now, so unchecking issues a request, and
+ * the previous page deliberately stays on screen while that is in flight
+ * (`placeholderData: keepPreviousData`). Anything read straight after the
+ * click — an index into the card list, the total in the header — is therefore
+ * read from the OLD, narrower list unless the request is awaited first.
+ */
+export async function uncheckHideApplied(page: Page): Promise<void> {
+  const refetched = page.waitForResponse(
+    (r) => /\/api\/jobs\?/.test(r.url()) && !r.url().includes("hideApplied"),
+  );
+  await page.getByLabel(HIDE_APPLIED_LABEL).uncheck();
+  await refetched;
+  await expect(page.getByTestId("job-card").first()).toBeVisible();
 }
 
 /** Board column locator, addressed by its heading text. */

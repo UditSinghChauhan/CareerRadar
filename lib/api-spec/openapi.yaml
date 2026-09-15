@@ -376,25 +376,99 @@ paths:
             type: boolean
             default: false
         - in: query
-          name: sort
+          name: workModes
           description: >-
-            `newest` (default, the pre-2.1 order — posted date desc) or
-            `relevance` (Phase 2.1 — relevanceScore desc, unclassified last,
-            newest first among equal scores).
+            Phase 7. Work modes OR-ed together; omit for no work-mode
+            filtering. Distinct from the single-valued `workMode` above, which
+            is unchanged. Previously applied in the browser over the fetched
+            window, which is why it could disagree with the result count.
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [remote, hybrid, onsite]
+          style: form
+          explode: true
+        - in: query
+          name: batches
+          description: >-
+            Phase 7. Graduation years OR-ed together. A posting that names NO
+            eligible batch matches any of them — most postings name none, and
+            hiding those would empty the list.
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+        - in: query
+          name: branches
+          description: >-
+            Phase 7. Branches OR-ed together. Same "names none matches
+            anything" rule as `batches`.
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - in: query
+          name: skills
+          description: >-
+            Phase 7. Required skills OR-ed together. Unlike `batches` and
+            `branches` there is NO empty-allowance: a posting that lists no
+            skills matches nothing here.
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - in: query
+          name: sourcePlatform
+          description: Phase 7. Exact match on the provider a posting came from.
           schema:
             type: string
-            enum: [newest, relevance]
+        - in: query
+          name: hideApplied
+          description: >-
+            Phase 7. Hide rows the signed-in caller already has an application
+            for, in any pipeline stage. Ignored for an anonymous caller, who
+            has no applications.
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: sort
+          description: >-
+            `newest` (default, the pre-2.1 order — posted date desc),
+            `relevance` (Phase 2.1 — relevanceScore desc, unclassified last,
+            newest first among equal scores), or the Phase 7 additions:
+            `deadline` (soonest first, no deadline last), `salary` (the best of
+            salaryMax / salaryMin / stipend, highest first) and `company`
+            (company name, A–Z). The last three were browser-side sorts over
+            the fetched window before Phase 7 and so only ever ordered part of
+            the result set.
+          schema:
+            type: string
+            enum: [newest, relevance, deadline, salary, company]
             default: newest
         - in: query
           name: page
           schema:
             type: integer
             default: 1
+            minimum: 1
         - in: query
           name: limit
+          description: >-
+            Rows per page. Phase 7 raised the server-side cap from 100 to 200;
+            a larger value is clamped rather than rejected.
           schema:
             type: integer
             default: 20
+            minimum: 1
+            maximum: 200
       responses:
         "200":
           description: Paginated job list

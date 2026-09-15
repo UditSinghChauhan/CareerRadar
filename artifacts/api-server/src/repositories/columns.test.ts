@@ -20,6 +20,7 @@ import {
 import { getTestDb, truncateAll, type TestDb } from "../test/pglite";
 import { applicationsRepository } from "./applications.repository";
 import { bookmarksRepository } from "./bookmarks.repository";
+import { jobsRepository } from "./jobs.repository";
 
 /**
  * The exact `jobs` column set the API returned before Phase 1.5, in the order a
@@ -64,8 +65,32 @@ const JOB_KEYS_BEFORE_PHASE_1_5 = [
 const CLERK_ID = "user_columns_spec";
 
 /**
+ * Columns that exist on `jobs` but are deliberately NOT part of any API
+ * response, and so must be subtracted from the bare-select baseline below.
+ *
+ * `searchVector` (Phase 7) is the first of these: a generated tsvector, tens of
+ * kilobytes on a long posting, meaningless to the browser. It is the case these
+ * explicit column lists were written for — before them, a bare select would have
+ * put it into `/api/applications` and `/api/bookmarks` the moment the column
+ * landed, with nobody having decided that.
+ *
+ * Adding a name here is a deliberate act. The "a column added to the schema does
+ * not reach the API until it is listed" test below still has to pass, so a column
+ * cannot be quietly excluded from both the payload and this baseline without the
+ * exclusion being visible.
+ */
+const JOB_COLUMNS_NEVER_EXPOSED = ["searchVector"] as const;
+
+function withoutInternalColumns<T extends Record<string, unknown>>(job: T) {
+  const copy = { ...job };
+  for (const key of JOB_COLUMNS_NEVER_EXPOSED) delete copy[key];
+  return copy;
+}
+
+/**
  * The pre-Phase-1.5 read, reproduced verbatim: a bare select over the same join,
- * reassembled the same way. This is the baseline the explicit lists must match.
+ * reassembled the same way, minus the columns that are not API surface. This is
+ * the baseline the explicit lists must match.
  */
 async function legacyApplicationRead(testDb: TestDb) {
   const rows = await testDb
@@ -78,7 +103,7 @@ async function legacyApplicationRead(testDb: TestDb) {
 
   return rows.map((r) => ({
     ...r.applications,
-    job: { ...r.jobs, company: r.companies },
+    job: { ...withoutInternalColumns(r.jobs), company: r.companies },
   }));
 }
 
@@ -93,7 +118,7 @@ async function legacyBookmarkRead(testDb: TestDb) {
 
   return rows.map((r) => ({
     ...r.bookmarks,
-    job: { ...r.jobs, company: r.companies },
+    job: { ...withoutInternalColumns(r.jobs), company: r.companies },
   }));
 }
 
@@ -208,6 +233,31 @@ describe("repository column lists — response shape is unchanged", () => {
         ...JOB_KEYS_BEFORE_PHASE_1_5.slice(afterStatus),
       ],
     );
+  });
+
+  it("search_vector never reaches an API payload", async () => {
+    // The Phase 7 column, checked by name rather than only through the shape
+    // comparison above: a tsvector is large, internal, and useless to the
+    // browser, and it would have arrived on three endpoints unannounced.
+    const [application] = await applicationsRepository
+      .findAll(CLERK_ID, {}, { page: 1, limit: 20 })
+      .then((r) => r.data);
+    const [bookmark] = await bookmarksRepository.findAll(CLERK_ID);
+    const [job] = await jobsRepository
+      .findAll({ status: "active" }, { page: 1, limit: 20 })
+      .then((r) => r.data);
+
+    // It really is on the table — otherwise this test passes for the wrong reason.
+    const [raw] = await testDb
+      .select()
+      .from(jobsTable)
+      .where(eq(jobsTable.id, jobId));
+    expect(raw).toHaveProperty("searchVector");
+    expect(typeof raw.searchVector).toBe("string");
+
+    expect(application.job).not.toHaveProperty("searchVector");
+    expect(bookmark.job).not.toHaveProperty("searchVector");
+    expect(job).not.toHaveProperty("searchVector");
   });
 
   it("a column added to the schema does not reach the API until it is listed", async () => {

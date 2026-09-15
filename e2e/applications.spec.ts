@@ -1,19 +1,25 @@
-import { test, expect } from "./fixtures";
+import { test, expect, uncheckHideApplied } from "./fixtures";
 import type { Page } from "@playwright/test";
 
-const HIDE_APPLIED = "Hide jobs I\'ve applied to";
-
 /**
- * Applies to the nth job on /jobs and returns once its card has flipped.
+ * Opens /jobs with the hide-applied filter switched OFF and the list settled.
  *
- * The hide-applied filter is switched off first: it defaults to ON, which
- * removes the card from the list the moment the status map updates, so the
- * flip would never be observable on the card we just clicked.
+ * The filter defaults to ON, which removes a card from the list the moment its
+ * status flips, so the flip would never be observable on the card we just
+ * clicked. `uncheckHideApplied` also waits for the refetch the uncheck now
+ * triggers — see its own note; without that wait, `.nth(index)` below can index
+ * into the old, narrower list and act on a different job than the assertion
+ * afterwards looks at.
  */
-async function applyToJob(page: Page, index = 0): Promise<void> {
+async function openJobsWithAppliedShown(page: Page): Promise<void> {
   await page.goto("/jobs");
   await expect(page.getByTestId("job-card").first()).toBeVisible();
-  await page.getByLabel(HIDE_APPLIED).uncheck();
+  await uncheckHideApplied(page);
+}
+
+/** Applies to the nth job on /jobs and returns once its card has flipped. */
+async function applyToJob(page: Page, index = 0): Promise<void> {
+  await openJobsWithAppliedShown(page);
 
   const card = page.getByTestId("job-card").nth(index);
   await card.getByTestId("apply-button").click();
@@ -25,9 +31,7 @@ async function applyToJob(page: Page, index = 0): Promise<void> {
 
 /** Saves (not applies) the nth job, producing a row with no applied date. */
 async function saveJob(page: Page, index: number): Promise<void> {
-  await page.goto("/jobs");
-  await expect(page.getByTestId("job-card").first()).toBeVisible();
-  await page.getByLabel(HIDE_APPLIED).uncheck();
+  await openJobsWithAppliedShown(page);
 
   const card = page.getByTestId("job-card").nth(index);
   await card.getByRole("button", { name: "Save", exact: true }).click();

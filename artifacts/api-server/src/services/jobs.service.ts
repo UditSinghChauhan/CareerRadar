@@ -1,5 +1,6 @@
 import {
   jobsRepository,
+  JOB_SORTS,
   type JobFilters,
   type JobSort,
 } from "../repositories/jobs.repository";
@@ -42,6 +43,30 @@ function parseTracks(value: unknown): RelevanceTrack[] | undefined {
     (RELEVANCE_TRACKS as readonly string[]).includes(v),
   );
   return items && items.length > 0 ? items : undefined;
+}
+
+/** Only the known work modes survive; anything else in the list is dropped. */
+function parseWorkModes(value: unknown): JobFilters["workModes"] {
+  const items = parseList(value)?.filter(
+    (v): v is "remote" | "hybrid" | "onsite" =>
+      v === "remote" || v === "hybrid" || v === "onsite",
+  );
+  return items && items.length > 0 ? items : undefined;
+}
+
+/** Graduation years. Non-integers are dropped rather than becoming NaN. */
+function parseYears(value: unknown): number[] | undefined {
+  const items = parseList(value)
+    ?.map((v) => Number(v))
+    .filter((n) => Number.isInteger(n));
+  return items && items.length > 0 ? items : undefined;
+}
+
+/** One of the five known sorts, else the pre-2.1 default. */
+function parseSort(value: unknown): JobSort {
+  return (JOB_SORTS as readonly string[]).includes(value as string)
+    ? (value as JobSort)
+    : "newest";
 }
 
 /** An integer 0–100, else "not given". */
@@ -92,11 +117,25 @@ export const jobsService = {
       relevanceTrack: parseTracks(rawQuery.relevanceTrack),
       minRelevanceScore: parseScore(rawQuery.minRelevanceScore),
       excludeDismissedForProfileId,
+      // Phase 7: the filters the Jobs page used to apply in the browser.
+      workModes: parseWorkModes(rawQuery.workModes),
+      batches: parseYears(rawQuery.batches),
+      branches: parseList(rawQuery.branches),
+      skills: parseList(rawQuery.skills),
+      sourcePlatform: (rawQuery.sourcePlatform as string) || undefined,
+      // Like dismissals, only meaningful for a signed-in caller: an anonymous
+      // one has no applications, so there is nothing to hide.
+      excludeAppliedForClerkId:
+        parseBoolean(rawQuery.hideApplied) === true
+          ? (options.clerkId ?? null)
+          : null,
     };
     const pagination = paginate(rawQuery);
-    const sort: JobSort =
-      rawQuery.sort === "relevance" ? "relevance" : "newest";
-    return jobsRepository.findAll(filters, pagination, sort);
+    return jobsRepository.findAll(
+      filters,
+      pagination,
+      parseSort(rawQuery.sort),
+    );
   },
 
   async get(id: string) {

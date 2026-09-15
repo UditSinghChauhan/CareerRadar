@@ -70,6 +70,7 @@ export * from './listJobsRelevanceTrackItem';
 export * from './listJobsSort';
 export * from './listJobsStatus';
 export * from './listJobsWorkMode';
+export * from './listJobsWorkModesItem';
 export * from './notification';
 export * from './notificationMetadata';
 export * from './notificationType';

@@ -1,7 +1,10 @@
-import { test, expect } from "./fixtures";
+import {
+  test,
+  expect,
+  uncheckHideApplied,
+  HIDE_APPLIED_LABEL as HIDE_APPLIED,
+} from "./fixtures";
 import type { Page } from "@playwright/test";
-
-const HIDE_APPLIED = "Hide jobs I've applied to";
 
 /** Job ids in the order the explorer is currently rendering them. */
 async function renderedJobIds(page: Page): Promise<string[]> {
@@ -23,15 +26,16 @@ async function renderedJobIds(page: Page): Promise<string[]> {
  * Picked from the rendered cards rather than from `/api/jobs?limit=200`, which
  * is what this helper used to do. That older version replicated the page's
  * "Newest" sort and took index 0, and it held only while the local database had
- * the 13 seeded rows: the explorer paginates client-side at PAGE_SIZE = 20, so
- * once sync fills the table the API's first row is usually several pages deep
- * and every `[data-job-id="..."]` assertion fails against a perfectly healthy
- * job. Phase 5 made the table grow on a schedule, so that is now the common
- * case.
+ * the 13 seeded rows: the explorer paginates at 20 a page, so once sync fills
+ * the table the API's first row is usually several pages deep and every
+ * `[data-job-id="..."]` assertion fails against a perfectly healthy job.
+ * Phase 5 made the table grow on a schedule, so that is now the common case.
  *
  * Details come from `GET /api/jobs/:id` per candidate rather than from the list
- * endpoint, because the list caps at 100 rows server-side and reintroduces the
- * same "is it in the window?" problem this helper exists to remove.
+ * endpoint, because the list endpoint returns one page and reintroduces the
+ * same "is it in the window?" problem this helper exists to remove. (Phase 7
+ * raised the cap to 200 and made the paging server-side, which changes the size
+ * of the window but not the argument.)
  */
 async function firstRenderedJobWithApplyUrl(
   page: Page,
@@ -56,18 +60,21 @@ async function firstRenderedJobWithApplyUrl(
 /**
  * The explorer's own count of the filtered set, read off the header line.
  *
- * Counting rendered cards instead would cap at PAGE_SIZE = 20: with a full
+ * Counting rendered cards instead would cap at the page size: with a full
  * table, hiding one applied job simply pulls the next one up from page 2 and
- * the rendered count never changes. The header renders `sortedJobs.length`,
+ * the rendered count never changes. The header renders the server's `total`,
  * i.e. the whole filtered set, which is the number these assertions are
  * actually about.
+ *
+ * Phase 7 changed what that header says. It used to be the size of the fetched
+ * WINDOW, with the real total appearing only as "N of M" when the two differed;
+ * now the server counts the set and the page is one window into it, so it is a
+ * single thousands-separated number with its own test id. The assertions below
+ * are unchanged — only where the number is read from.
  */
 async function filteredJobCount(page: Page): Promise<number> {
-  const text = await page
-    .getByText(/^\d+( of [\d,]+)? jobs?( matching filters)?$/)
-    .first()
-    .textContent();
-  return Number.parseInt(text?.trim() ?? "0", 10);
+  const text = await page.getByTestId("job-total").first().textContent();
+  return Number.parseInt((text ?? "0").replace(/[^\d]/g, ""), 10);
 }
 
 test.describe("Jobs explorer", () => {
@@ -105,7 +112,7 @@ test.describe("Jobs explorer", () => {
     // The hide-applied filter is ON by default, which would whisk the card out
     // of the list the instant it flips. Turn it off so the flip is observable —
     // that the card vanishes when the filter is on is covered by its own spec.
-    await page.getByLabel(HIDE_APPLIED).uncheck();
+    await uncheckHideApplied(page);
 
     const card = page.locator(`[data-job-id="${id}"]`);
     await expect(card).toBeVisible();
@@ -133,7 +140,7 @@ test.describe("Jobs explorer", () => {
     await page.goto("/jobs");
     // Uncheck first, then pick: unchecking adds the already-applied jobs back
     // into the list, which can push a job picked beforehand onto a later page.
-    await page.getByLabel(HIDE_APPLIED).uncheck();
+    await uncheckHideApplied(page);
     const { id } = await firstRenderedJobWithApplyUrl(page);
 
     const card = page.locator(`[data-job-id="${id}"]`);
@@ -144,7 +151,7 @@ test.describe("Jobs explorer", () => {
 
     await page.reload();
     // The filter is component state, so a reload restores its ON default.
-    await page.getByLabel(HIDE_APPLIED).uncheck();
+    await uncheckHideApplied(page);
 
     await expect(
       page
@@ -174,8 +181,10 @@ test.describe("Jobs explorer", () => {
     const toggle = page.getByLabel(HIDE_APPLIED);
 
     await expect(cards.first()).toBeVisible();
-    await toggle.uncheck();
-    await expect(cards.first()).toBeVisible();
+    // Waits for the refetch as well as the click: `baseline` below is read off
+    // the header, which still shows the FILTERED total until the wider list
+    // lands.
+    await uncheckHideApplied(page);
 
     // Pick the job AFTER unchecking the filter, so the card is guaranteed to be
     // on screen in the state the assertions below run against.
@@ -199,8 +208,7 @@ test.describe("Jobs explorer", () => {
     await expect(toggle).toBeChecked();
     const withFilterOn = await filteredJobCount(page);
 
-    await toggle.uncheck();
-    await expect(cards.first()).toBeVisible();
+    await uncheckHideApplied(page);
     const withFilterOff = await filteredJobCount(page);
 
     expect(withFilterOff).toBe(baseline);

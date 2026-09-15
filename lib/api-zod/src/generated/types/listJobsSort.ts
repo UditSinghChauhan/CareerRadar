@@ -12,4 +12,7 @@ export type ListJobsSort = typeof ListJobsSort[keyof typeof ListJobsSort];
 export const ListJobsSort = {
   newest: 'newest',
   relevance: 'relevance',
+  deadline: 'deadline',
+  salary: 'salary',
+  company: 'company',
 } as const;

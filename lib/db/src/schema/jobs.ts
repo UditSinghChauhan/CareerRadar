@@ -7,10 +7,25 @@ import {
   timestamp,
   uuid,
   index,
+  customType,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { companiesTable } from "./companies";
 import { jobSourcesTable } from "./jobSources";
 import { workModeEnum, jobTypeEnum, jobStatusEnum } from "./enums";
+
+/**
+ * `tsvector` has no first-class Drizzle type. It is only ever written by the
+ * database (the column below is GENERATED ALWAYS) and never selected into an
+ * API response, so a minimal custom type that round-trips the text form is all
+ * the ORM needs to know about it — enough for drizzle-kit to emit the DDL and
+ * for `schema-check.ts` to expect the column.
+ */
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return "tsvector";
+  },
+});
 
 export const jobsTable = pgTable(
   "jobs",
@@ -109,6 +124,45 @@ export const jobsTable = pgTable(
     benefits: text("benefits").array().notNull().default([]),
     selectionProcess: text("selection_process"),
 
+    /**
+     * Phase 7 full-text search. GENERATED ALWAYS AS ... STORED: Postgres
+     * recomputes it on every insert and update, so there is no trigger to
+     * forget and no backfill to run — the column is correct for all 4,554
+     * existing rows the moment the DDL lands.
+     *
+     * Weights mirror how much a hit in each field should count: the title (A)
+     * is what the user is really searching for, required skills (B) next, then
+     * requirements (C) and the description (D). `websearch_to_tsquery` in
+     * `jobs.repository.ts` queries it through `jobs_search_vector_idx`.
+     *
+     * The company name is NOT here and cannot be: a generated expression may
+     * only reference columns of its own row. Company-name search stays a
+     * separate `ILIKE` arm in the search predicate, unchanged from Phase 0.
+     *
+     * Every arm is slash-normalised first. Postgres's default parser reads
+     * "Developer/intern" as a single `file` token, so it never produces an
+     * `intern` lexeme and a search for "intern" misses the row — measured
+     * against production, eight active postings titled `…/Intern` were lost
+     * that way, which for an internship tracker is exactly the wrong eight.
+     * `replace(x, \'/\', \' \')` is immutable and splits them; `node.js` and
+     * `co-op` tokenise the same either way.
+     *
+     * `array_to_tsvector(required_skills)::text` rather than the obvious
+     * `array_to_string(required_skills, \' \')`: a generated expression must be
+     * IMMUTABLE and `array_to_string` is only STABLE, so Postgres rejects the
+     * column outright ("generation expression is not immutable"). Going via
+     * `array_to_tsvector`, which is immutable, yields a quoted list that
+     * `to_tsvector` then tokenises and stems normally — so \'TypeScript\' still
+     * matches a search for "typescript".
+     *
+     * Deliberately absent from `repositories/columns.ts`, so it never enters an
+     * API payload — a tsvector is meaningless to the browser and would be the
+     * single largest field in the response.
+     */
+    searchVector: tsvector("search_vector").generatedAlwaysAs(
+      sql`setweight(to_tsvector('english', replace(coalesce(title, ''), '/', ' ')), 'A') || setweight(to_tsvector('english', replace(coalesce(array_to_tsvector(required_skills)::text, ''), '/', ' ')), 'B') || setweight(to_tsvector('english', replace(coalesce(requirements, ''), '/', ' ')), 'C') || setweight(to_tsvector('english', replace(coalesce(description, ''), '/', ' ')), 'D')`,
+    ),
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -132,6 +186,26 @@ export const jobsTable = pgTable(
       table.isFresherEligible,
       table.status,
       table.relevanceScore.desc(),
+    ),
+    // ── Phase 7 ──
+    /** Backs `search_vector @@ websearch_to_tsquery(...)`. */
+    index("jobs_search_vector_idx").using("gin", table.searchVector),
+    /**
+     * The Jobs page's default order, key for key — including the null
+     * placement, which is the part that is easy to get wrong. Postgres only
+     * uses an index to satisfy an ORDER BY when the NULLS FIRST/LAST of every
+     * key matches, and `ORDER BY x DESC` means NULLS FIRST while Drizzle's
+     * `.desc()` on an INDEX column emits NULLS LAST. So the placements here
+     * are spelled out to match `orderBy()` in jobs.repository.ts exactly:
+     * relevance_score is explicitly NULLS LAST there, the other two are plain
+     * DESC and therefore NULLS FIRST. Changing either side to "tidy" the
+     * nulls would reorder the live feed and silently cost the index.
+     */
+    index("jobs_status_relevance_posted_idx").on(
+      table.status,
+      table.relevanceScore.desc().nullsLast(),
+      table.postedDate.desc().nullsFirst(),
+      table.createdAt.desc().nullsFirst(),
     ),
   ],
 );

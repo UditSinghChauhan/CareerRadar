@@ -355,9 +355,14 @@ export const listJobsQueryMinRelevanceScoreMin = 0;
 export const listJobsQueryMinRelevanceScoreMax = 100;
 
 export const listJobsQueryShowDismissedDefault = false;
+export const listJobsQueryHideAppliedDefault = false;
 export const listJobsQuerySortDefault = `newest`;
 export const listJobsQueryPageDefault = 1;
+
 export const listJobsQueryLimitDefault = 20;
+export const listJobsQueryLimitMax = 200;
+
+
 
 export const ListJobsQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
@@ -375,9 +380,15 @@ export const ListJobsQueryParams = zod.object({
   "relevanceTrack": zod.array(zod.enum(['internship', 'new_grad', 'early_career', 'not_relevant'])).optional().describe('Phase 2.1 tracks, OR-ed together. Unclassified rows never match.'),
   "minRelevanceScore": zod.coerce.number().min(listJobsQueryMinRelevanceScoreMin).max(listJobsQueryMinRelevanceScoreMax).optional().describe('Phase 2.1. Only rows scoring at least this (0–100).'),
   "showDismissed": zod.coerce.boolean().default(listJobsQueryShowDismissedDefault).describe('Phase 3.2. By default a signed-in caller\'s dismissed jobs are hidden; set true to see them again. Ignored for an anonymous caller, who has no dismissals — the list is then exactly the pre-3.2 one.'),
-  "sort": zod.enum(['newest', 'relevance']).default(listJobsQuerySortDefault).describe('`newest` (default, the pre-2.1 order — posted date desc) or `relevance` (Phase 2.1 — relevanceScore desc, unclassified last, newest first among equal scores).'),
-  "page": zod.coerce.number().default(listJobsQueryPageDefault),
-  "limit": zod.coerce.number().default(listJobsQueryLimitDefault)
+  "workModes": zod.array(zod.enum(['remote', 'hybrid', 'onsite'])).optional().describe('Phase 7. Work modes OR-ed together; omit for no work-mode filtering. Distinct from the single-valued `workMode` above, which is unchanged. Previously applied in the browser over the fetched window, which is why it could disagree with the result count.'),
+  "batches": zod.array(zod.coerce.number()).optional().describe('Phase 7. Graduation years OR-ed together. A posting that names NO eligible batch matches any of them — most postings name none, and hiding those would empty the list.'),
+  "branches": zod.array(zod.coerce.string()).optional().describe('Phase 7. Branches OR-ed together. Same \"names none matches anything\" rule as `batches`.'),
+  "skills": zod.array(zod.coerce.string()).optional().describe('Phase 7. Required skills OR-ed together. Unlike `batches` and `branches` there is NO empty-allowance: a posting that lists no skills matches nothing here.'),
+  "sourcePlatform": zod.coerce.string().optional().describe('Phase 7. Exact match on the provider a posting came from.'),
+  "hideApplied": zod.coerce.boolean().default(listJobsQueryHideAppliedDefault).describe('Phase 7. Hide rows the signed-in caller already has an application for, in any pipeline stage. Ignored for an anonymous caller, who has no applications.'),
+  "sort": zod.enum(['newest', 'relevance', 'deadline', 'salary', 'company']).default(listJobsQuerySortDefault).describe('`newest` (default, the pre-2.1 order — posted date desc), `relevance` (Phase 2.1 — relevanceScore desc, unclassified last, newest first among equal scores), or the Phase 7 additions: `deadline` (soonest first, no deadline last), `salary` (the best of salaryMax \/ salaryMin \/ stipend, highest first) and `company` (company name, A–Z). The last three were browser-side sorts over the fetched window before Phase 7 and so only ever ordered part of the result set.'),
+  "page": zod.coerce.number().min(1).default(listJobsQueryPageDefault),
+  "limit": zod.coerce.number().min(1).max(listJobsQueryLimitMax).default(listJobsQueryLimitDefault).describe('Rows per page. Phase 7 raised the server-side cap from 100 to 200; a larger value is clamped rather than rejected.')
 })
 
 export const ListJobsResponse = zod.object({

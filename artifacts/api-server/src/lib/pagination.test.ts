@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { paginate, buildPaginatedResult } from "./pagination";
+import { MAX_PAGE_SIZE, paginate, buildPaginatedResult } from "./pagination";
 
 describe("paginate", () => {
   it("defaults to page 1, limit 20 when no params given", () => {
@@ -13,8 +13,19 @@ describe("paginate", () => {
     });
   });
 
-  it("clamps limit above 100 down to 100", () => {
-    expect(paginate({ limit: "500" })).toEqual({ page: 1, limit: 100 });
+  it("passes everything up to the cap through untouched", () => {
+    // 200 is what the Jobs page's largest page size and the Applications page
+    // both ask for. Both were silently getting 100 before Phase 7.
+    expect(paginate({ limit: "100" })).toEqual({ page: 1, limit: 100 });
+    expect(paginate({ limit: "200" })).toEqual({ page: 1, limit: 200 });
+  });
+
+  it("clamps limit above the cap down to the cap", () => {
+    // Phase 7 raised the cap from 100 to 200. The clamp itself is the point:
+    // `?limit=100000` must not ask a 512 MB instance for the whole table.
+    expect(MAX_PAGE_SIZE).toBe(200);
+    expect(paginate({ limit: "500" })).toEqual({ page: 1, limit: 200 });
+    expect(paginate({ limit: "100000" })).toEqual({ page: 1, limit: 200 });
   });
 
   it("clamps a zero or negative page up to 1", () => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import {
   ExternalLink,
   Bookmark,
@@ -160,7 +160,7 @@ const sourcePlatformLabels: Record<string, string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function JobCard({
+function JobCardImpl({
   job,
   isBookmarked,
   onBookmarkToggle,
@@ -560,3 +560,18 @@ export function JobCard({
     </article>
   );
 }
+
+/**
+ * Phase 7. A page is up to 200 cards, and the Jobs explorer re-renders the
+ * whole list on every keystroke in the search box, every filter tick and every
+ * optimistic apply. Without this, each of those re-runs 200 card bodies —
+ * `formatDistanceToNow`, the deadline arithmetic and the badge logic included —
+ * to produce identical output.
+ *
+ * The default shallow comparison is enough because every prop is either a
+ * primitive or a stable reference: `job` is an object out of the React Query
+ * cache, which only changes identity when the query refetches, and the four
+ * callbacks are `useCallback`-wrapped in jobs.tsx. If a new prop is ever added
+ * here, it has to hold to that or the memo silently stops helping.
+ */
+export const JobCard = memo(JobCardImpl);

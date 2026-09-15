@@ -21,7 +21,7 @@ import {
   useCreateApplication,
   useListApplications,
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import {
   getListBookmarksQueryKey,
   getListJobsQueryKey,
@@ -45,6 +45,10 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobCard } from "@/components/jobs/job-card";
+import {
+  VirtualJobGrid,
+  VIRTUALIZE_ABOVE,
+} from "@/components/jobs/virtual-job-grid";
 import { CaptureDialog } from "@/components/jobs/capture-dialog";
 import {
   JobFilters,
@@ -53,13 +57,35 @@ import {
   showEverything,
 } from "@/components/jobs/job-filters";
 import type { JobFiltersState } from "@/components/jobs/job-filters";
-import type { ApplicationStatusMap, Job } from "@workspace/api-client-react";
+import type {
+  ApplicationStatusMap,
+  Job,
+  ListJobsParams,
+} from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PAGE_SIZE = 20;
+/**
+ * Phase 7 moved paging to the server.
+ * ───────────────────────────────────
+ * Before this, the page asked for `limit: 200`, `paginate()` silently clamped
+ * that to 100, and the explorer then sliced those 100 rows into pages of 20 in
+ * the browser. With 4,074 active postings that produced "Page 1 of 5" and made
+ * the remaining 3,974 unreachable — no filter, no sort and no amount of
+ * clicking Next would show them.
+ *
+ * Now the server does the filtering, the sorting AND the paging, and the page
+ * renders exactly the window it was given. Everything the toolbar and the
+ * sidebar offer is a query parameter; nothing is narrowed in the browser. That
+ * is not a tidiness preference — a browser-side filter over one page of twenty
+ * rows would be filtering the page rather than the result set, which is the
+ * bug this phase exists to remove.
+ */
+const PAGE_SIZE_OPTIONS = [20, 50, 100, 200] as const;
+
+const DEFAULT_PAGE_SIZE = 20;
 
 type SortKey = "relevance" | "newest" | "deadline" | "salary" | "company";
 
@@ -70,113 +96,6 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
   { value: "salary", label: "Salary" },
   { value: "company", label: "Company" },
 ];
-
-// ─── Sort helper ──────────────────────────────────────────────────────────────
-
-function sortJobs(jobs: Job[], key: SortKey): Job[] {
-  const sorted = [...jobs];
-  switch (key) {
-    case "relevance":
-      // Same order the server used for the window: score desc (unclassified
-      // last), newest first among equals.
-      return sorted.sort(
-        (a, b) =>
-          (b.relevanceScore ?? -1) - (a.relevanceScore ?? -1) ||
-          new Date(b.postedDate ?? b.createdAt).getTime() -
-            new Date(a.postedDate ?? a.createdAt).getTime(),
-      );
-    case "newest":
-      return sorted.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-    case "deadline":
-      return sorted.sort((a, b) => {
-        const da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-        const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-        return da - db;
-      });
-    case "salary":
-      return sorted.sort((a, b) => {
-        const sa = a.salaryMax ?? a.salaryMin ?? a.stipend ?? 0;
-        const sb = b.salaryMax ?? b.salaryMin ?? b.stipend ?? 0;
-        return sb - sa;
-      });
-    case "company":
-      return sorted.sort((a, b) =>
-        (a.company?.name ?? "").localeCompare(b.company?.name ?? ""),
-      );
-    default:
-      return sorted;
-  }
-}
-
-// ─── Filter helper ────────────────────────────────────────────────────────────
-
-function applyClientFilters(
-  jobs: Job[],
-  filters: JobFiltersState,
-  statusMap: ApplicationStatusMap = {},
-): Job[] {
-  return jobs.filter((job) => {
-    // Hide anything already in the tracker, in any pipeline stage.
-    if (filters.hideApplied && statusMap[job.id]) {
-      return false;
-    }
-    // Work mode (multi-select)
-    if (
-      filters.workModes.length > 0 &&
-      !filters.workModes.includes(
-        job.workMode as "remote" | "hybrid" | "onsite",
-      )
-    ) {
-      return false;
-    }
-    // Batch year (multi-select)
-    if (filters.batches.length > 0) {
-      const jobBatches = job.eligibleBatch ?? [];
-      if (
-        jobBatches.length > 0 &&
-        !filters.batches.some((b) => jobBatches.includes(b))
-      ) {
-        return false;
-      }
-    }
-    // Branch (multi-select)
-    if (filters.branches.length > 0) {
-      const jobBranches = job.eligibleBranches ?? [];
-      if (
-        jobBranches.length > 0 &&
-        !filters.branches.some((b) => jobBranches.includes(b))
-      ) {
-        return false;
-      }
-    }
-    // Skills (multi-select)
-    if (filters.skills.length > 0) {
-      const jobSkills = job.requiredSkills ?? [];
-      if (!filters.skills.some((s) => jobSkills.includes(s))) {
-        return false;
-      }
-    }
-    // Source platform
-    if (
-      filters.sourcePlatform &&
-      job.sourcePlatform !== filters.sourcePlatform
-    ) {
-      return false;
-    }
-    // Deadline before
-    if (filters.deadlineBefore && job.deadline) {
-      if (new Date(job.deadline) > new Date(filters.deadlineBefore)) {
-        return false;
-      }
-    } else if (filters.deadlineBefore && !job.deadline) {
-      return false;
-    }
-    return true;
-  });
-}
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -329,11 +248,14 @@ export function JobsPage() {
   const [sort, setSort] = useState<SortKey>("relevance");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
 
-  // Reset page when filters/search change
+  // Reset page whenever the result set or its ordering changes — page 7 of the
+  // old query is meaningless against the new one, and with server-side paging
+  // it would fetch a window that may not exist.
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, filters, sort]);
+  }, [debouncedSearch, filters, sort, pageSize]);
 
   // ── Data fetching ─────────────────────────────────────────────────────────
   const { data: bookmarksData } = useListBookmarks();
@@ -341,39 +263,72 @@ export function JobsPage() {
   const { data: profileData } = useGetProfile();
   const profileBatch = profileData?.graduationYear ?? null;
 
+  // Hoisted so the query key below is built from exactly the parameters the
+  // request carries — two hand-kept copies would drift, and a stale key is
+  // how a page silently serves another page's rows from cache.
+  const jobsParams = useMemo(
+    (): ListJobsParams => ({
+      status: "active",
+      search: debouncedSearch || undefined,
+      companyId: filters.companyId || undefined,
+      jobType:
+        filters.jobType !== "all"
+          ? (filters.jobType as "internship" | "full_time")
+          : undefined,
+      // Every narrowing below is a WHERE clause. Phase 7 paginates server-side,
+      // so a browser-side pass would filter one page of twenty rows instead of
+      // the result set — see the PAGE_SIZE_OPTIONS note at the top of the file.
+      locations: filters.locations.length > 0 ? filters.locations : undefined,
+      isIndia: filters.indiaOnly ? true : undefined,
+      // Relevance (Phase 2.1) — same rule. Absent params = the pre-2.1 list.
+      isFresherEligible: filters.fresherOnly ? true : undefined,
+      relevanceTrack: filters.tracks.length > 0 ? filters.tracks : undefined,
+      minRelevanceScore: filters.minScore > 0 ? filters.minScore : undefined,
+      // Phase 3.2 — dismissed rows are hidden server-side unless asked for.
+      // Absent means "hide them", so this is only ever sent to widen the list.
+      showDismissed: filters.showDismissed ? true : undefined,
+      // §2.3: for a profile with a graduation year, the default feed is also
+      // scoped to that batch (rows naming no batch still match). Only while
+      // the fresher view is on, so "Show everything" really is everything.
+      eligibleBatch:
+        filters.fresherOnly && profileBatch ? profileBatch : undefined,
+      // ── Phase 7: the seven that used to run in the browser ──
+      workModes: filters.workModes.length > 0 ? filters.workModes : undefined,
+      batches: filters.batches.length > 0 ? filters.batches : undefined,
+      branches: filters.branches.length > 0 ? filters.branches : undefined,
+      skills: filters.skills.length > 0 ? filters.skills : undefined,
+      sourcePlatform: filters.sourcePlatform || undefined,
+      deadlineBefore: filters.deadlineBefore || undefined,
+      hideApplied: filters.hideApplied ? true : undefined,
+      // Every sort key is a server sort now, including deadline, salary and
+      // company — which previously ordered only the fetched window.
+      sort,
+      page,
+      limit: pageSize,
+    }),
+    [debouncedSearch, filters, profileBatch, sort, page, pageSize],
+  );
+
   const {
     data: jobsData,
     isLoading: jobsLoading,
     isError: jobsError,
     refetch: refetchJobs,
-  } = useListJobs({
-    status: "active",
-    search: debouncedSearch || undefined,
-    companyId: filters.companyId || undefined,
-    jobType:
-      filters.jobType !== "all"
-        ? (filters.jobType as "internship" | "full_time")
-        : undefined,
-    // Location is a WHERE clause, never a client-side pass: this request is
-    // capped at 200 rows and the table is well past that.
-    locations: filters.locations.length > 0 ? filters.locations : undefined,
-    isIndia: filters.indiaOnly ? true : undefined,
-    // Relevance (Phase 2.1) — same rule. Absent params = the pre-2.1 list.
-    isFresherEligible: filters.fresherOnly ? true : undefined,
-    relevanceTrack: filters.tracks.length > 0 ? filters.tracks : undefined,
-    minRelevanceScore: filters.minScore > 0 ? filters.minScore : undefined,
-    // Phase 3.2 — dismissed rows are hidden server-side unless asked for.
-    // Absent means "hide them", so this is only ever sent to widen the list.
-    showDismissed: filters.showDismissed ? true : undefined,
-    // §2.3: for a profile with a graduation year, the default feed is also
-    // scoped to that batch (rows naming no batch still match). Only while
-    // the fresher view is on, so "Show everything" really is everything.
-    eligibleBatch:
-      filters.fresherOnly && profileBatch ? profileBatch : undefined,
-    // The server orders the 200-row window; the other sort keys are
-    // client-side over a newest-first window, as before.
-    sort: sort === "relevance" ? "relevance" : undefined,
-    limit: 200,
+  } = useListJobs(jobsParams, {
+    query: {
+      queryKey: getListJobsQueryKey(jobsParams),
+      /**
+       * Keep the current page on screen while the next one loads.
+       *
+       * Without this, `jobsData` is undefined for the duration of every
+       * page change, which does more than flash skeletons: `totalPages`
+       * falls back to 1 and the clamp below then drags `page` back to 1 —
+       * clicking Next fetched page 2 and immediately bounced to page 1.
+       * That was invisible in the unit tests and obvious the moment a
+       * browser was pointed at 4,100 rows.
+       */
+      placeholderData: keepPreviousData,
+    },
   });
 
   // Long staleTime: this only changes when the user applies or saves, and both
@@ -462,6 +417,10 @@ export function JobsPage() {
     });
   }, []);
 
+  // Read off `filters` so `trackApplication` depends on the one boolean rather
+  // than on the whole filter object, which changes on every sidebar tick.
+  const hideApplied = filters.hideApplied;
+
   // Optimistically flip the card, then reconcile with the server. Note the tab
   // has already been opened by the click handler in job-card.tsx — a failure
   // here must not try to undo that.
@@ -511,8 +470,21 @@ export function JobsPage() {
       void queryClient.invalidateQueries({
         queryKey: getListApplicationsQueryKey(),
       });
+      // "Hide jobs I've applied to" is a WHERE clause as of Phase 7, so the
+      // card only leaves the list when the list itself is refetched. While the
+      // filter is off there is nothing to remove and the refetch is skipped —
+      // it would reorder the page under the user for no reason.
+      if (hideApplied) {
+        void queryClient.invalidateQueries({ queryKey: getListJobsQueryKey() });
+      }
     },
-    [queryClient, statusMapQueryKey, createApplication, clearPending],
+    [
+      queryClient,
+      statusMapQueryKey,
+      createApplication,
+      clearPending,
+      hideApplied,
+    ],
   );
 
   const handleApply = useCallback(
@@ -542,31 +514,60 @@ export function JobsPage() {
     [bookmarksData],
   );
 
-  const allJobs = jobsData?.data ?? [];
-  const serverTotal = jobsData?.meta?.total ?? allJobs.length;
-
-  const filteredJobs = useMemo(
-    () => applyClientFilters(allJobs, filters, statusMap),
-    [allJobs, filters, statusMap],
-  );
-
-  const sortedJobs = useMemo(
-    () => sortJobs(filteredJobs, sort),
-    [filteredJobs, sort],
-  );
-
-  const totalPages = Math.max(1, Math.ceil(sortedJobs.length / PAGE_SIZE));
+  // The server returns exactly the page asked for, already filtered and
+  // sorted. `pagedJobs` is that window verbatim — there is deliberately no
+  // browser-side pass between here and the render.
+  const pagedJobs = jobsData?.data ?? [];
+  /** Size of the WHOLE filtered result set, not of this page. */
+  const serverTotal = jobsData?.meta?.total ?? pagedJobs.length;
+  const totalPages = Math.max(1, jobsData?.meta?.totalPages ?? 1);
   const safePage = Math.min(page, totalPages);
-  const pagedJobs = sortedJobs.slice(
-    (safePage - 1) * PAGE_SIZE,
-    safePage * PAGE_SIZE,
-  );
+
+  // If something narrowed the set while the user was on a late page, walk back
+  // rather than leaving them staring at an empty grid with a Previous button.
+  // Only ever acts on a real response: `totalPages` falls back to 1 when there
+  // is no data, and clamping against that fallback would reset the page on
+  // every load rather than only when the set actually shrank.
+  useEffect(() => {
+    const serverTotalPages = jobsData?.meta?.totalPages;
+    if (serverTotalPages && page > serverTotalPages) setPage(serverTotalPages);
+  }, [page, jobsData]);
 
   const activeFilterCount =
     countActiveFilters(filters) + (debouncedSearch ? 1 : 0);
   const companies = companiesData?.data ?? [];
   const relevanceFiltered =
     filters.fresherOnly || filters.tracks.length > 0 || filters.minScore > 0;
+
+  // One card, rendered identically by the plain grid and the virtualised one,
+  // so switching between them at 100 rows cannot change what a card looks like.
+  const renderCard = useCallback(
+    (job: Job) => (
+      <JobCard
+        key={job.id}
+        job={job}
+        isBookmarked={bookmarkedJobIds.has(job.id)}
+        onBookmarkToggle={handleBookmarkToggle}
+        isBookmarkPending={creatingBookmark || deletingBookmark}
+        applicationStatus={statusMap[job.id] ?? null}
+        appliedDate={appliedDates[job.id] ?? null}
+        onApply={handleApply}
+        onSave={handleSave}
+        isApplyPending={pendingJobIds.has(job.id)}
+      />
+    ),
+    [
+      bookmarkedJobIds,
+      handleBookmarkToggle,
+      creatingBookmark,
+      deletingBookmark,
+      statusMap,
+      appliedDates,
+      handleApply,
+      handleSave,
+      pendingJobIds,
+    ],
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -704,23 +705,17 @@ export function JobsPage() {
                 "Loading..."
               ) : (
                 <>
-                  <span className="font-medium text-foreground">
-                    {sortedJobs.length}
+                  {/* The whole filtered result set. Before Phase 7 this said
+                      how big the fetched WINDOW was, with the real total only
+                      appearing as "N of M" — now the server counts the set and
+                      the page is just a window into it. */}
+                  <span
+                    className="font-medium text-foreground"
+                    data-testid="job-total"
+                  >
+                    {serverTotal.toLocaleString("en-IN")}
                   </span>{" "}
-                  {/* The list request is capped server-side; when the filter
-                      matches more than one window, say so rather than
-                      presenting the window as the whole result. */}
-                  {serverTotal > allJobs.length ? (
-                    <>
-                      of{" "}
-                      <span className="font-medium text-foreground">
-                        {serverTotal.toLocaleString("en-IN")}
-                      </span>{" "}
-                    </>
-                  ) : null}
-                  {sortedJobs.length === 1 && serverTotal <= allJobs.length
-                    ? "job"
-                    : "jobs"}
+                  {serverTotal === 1 ? "job" : "jobs"}
                   {activeFilterCount > 0 ? " matching filters" : ""}
                 </>
               )}
@@ -788,46 +783,89 @@ export function JobsPage() {
               }
               onShowEverything={() => setFilters((f) => showEverything(f))}
             />
+          ) : pagedJobs.length > VIRTUALIZE_ABOVE ? (
+            // Only past 100 rows, i.e. the 200-per-page setting. See
+            // virtual-job-grid.tsx for what windowing costs.
+            <VirtualJobGrid
+              items={pagedJobs}
+              columns={2}
+              getKey={(job) => job.id}
+            >
+              {(job) => renderCard(job)}
+            </VirtualJobGrid>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
-              {pagedJobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  isBookmarked={bookmarkedJobIds.has(job.id)}
-                  onBookmarkToggle={handleBookmarkToggle}
-                  isBookmarkPending={creatingBookmark || deletingBookmark}
-                  applicationStatus={statusMap[job.id] ?? null}
-                  appliedDate={appliedDates[job.id] ?? null}
-                  onApply={handleApply}
-                  onSave={handleSave}
-                  isApplyPending={pendingJobIds.has(job.id)}
-                />
-              ))}
+              {pagedJobs.map((job) => renderCard(job))}
             </div>
           )}
 
-          {/* Pagination */}
-          {!jobsLoading && totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2 pb-4">
+          {/* Pagination. `totalPages` is the server's count over the whole
+              filtered set, so "Page 3 of 204" means there really are 204. */}
+          {!jobsLoading && !jobsError && pagedJobs.length > 0 && (
+            <div
+              className="flex items-center justify-between gap-2 pt-2 pb-4"
+              data-testid="pagination"
+            >
               <Button
                 variant="outline"
                 size="sm"
                 className="gap-1"
                 disabled={safePage <= 1}
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
-              <span className="text-xs text-muted-foreground">
-                Page{" "}
-                <span className="font-medium text-foreground">{safePage}</span>{" "}
-                of{" "}
-                <span className="font-medium text-foreground">
-                  {totalPages}
+
+              <div className="flex items-center gap-3">
+                <span
+                  className="text-xs text-muted-foreground"
+                  data-testid="page-indicator"
+                >
+                  Page{" "}
+                  <span className="font-medium text-foreground">
+                    {safePage}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium text-foreground">
+                    {totalPages.toLocaleString("en-IN")}
+                  </span>
                 </span>
-              </span>
+                {/* Paging 4,000 rows twenty at a time is 200 clicks. The
+                    larger sizes are what make the full set navigable; past
+                    100 the grid virtualises. */}
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={(v) => {
+                    // Both in one handler so React batches them into a single
+                    // render: setting the size alone would fetch the current
+                    // page at the new size, and the reset effect would then
+                    // immediately fetch page 1 as well.
+                    setPageSize(Number(v));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger
+                    className="h-8 w-[104px] text-xs"
+                    data-testid="page-size"
+                    aria-label="Jobs per page"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <SelectItem
+                        key={size}
+                        value={String(size)}
+                        className="text-xs"
+                      >
+                        {size} / page
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Button
                 variant="outline"
                 size="sm"

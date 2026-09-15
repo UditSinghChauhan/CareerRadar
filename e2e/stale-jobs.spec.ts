@@ -78,17 +78,16 @@ async function setStatus(
 /**
  * The explorer's own count, read off the header line.
  *
- * This is the size of the whole filtered set, not the current page — the header
- * renders `sortedJobs.length` before pagination slices it. That is deliberately
- * what these specs assert on: counting rendered cards would cap at PAGE_SIZE
- * and stop being able to see a single job appear or disappear.
+ * This is the size of the whole filtered set, not the current page — as of
+ * Phase 7 the header renders the server's `meta.total` for the filtered set,
+ * and the page is one window into it. That is deliberately what these specs
+ * assert on: counting rendered cards would cap at the page size and stop being
+ * able to see a single job appear or disappear.
  */
 async function renderedJobCount(page: Page): Promise<number> {
-  const text = await page
-    .getByText(/^\d+( of [\d,]+)? jobs?( matching filters)?$/)
-    .first()
-    .textContent();
-  return Number.parseInt(text?.trim() ?? "0", 10);
+  const text = await page.getByTestId("job-total").first().textContent();
+  // Thousands-separated once the table is large, so strip anything non-numeric.
+  return Number.parseInt((text ?? "0").replace(/[^\d]/g, ""), 10);
 }
 
 async function gotoJobs(page: Page): Promise<void> {
