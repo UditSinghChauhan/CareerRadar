@@ -60,6 +60,8 @@
  *   · "2025-2028" → a range covers every year in it, not just the ends.
  *   · "pursuing" → current students are welcome; a named year no longer
  *     penalises, but nothing is added either — the word is boilerplate.
+ *     Unless the year says "only" ("2026 Graduates Only"): an explicit
+ *     restriction beats boilerplate, and the −40 stands.
  * Three modifiers the spec does not list, added so the ranking survives the
  * live data: a title with no engineering role noun −15, an explicitly
  * non-technical title (voice process, BPO, sales, HR, …) −20, and an on-site
@@ -227,6 +229,15 @@ const FINAL_YEAR_RE =
 const PURSUING_RE = /\bpursuing\b/i;
 
 /**
+ * "2026 Graduates Only", "2026 batch only", "only 2025 pass-outs" — an
+ * explicit restriction on the year. Boilerplate "currently pursuing a
+ * Bachelor's" further down the description does not reopen it. Checked
+ * within 40 characters of a batch year on either side.
+ */
+const BATCH_ONLY_RE =
+  /\b20(2[5-9])\b[^.\n]{0,40}?\bonly\b|\bonly\b[^.\n]{0,40}?\b20(2[5-9])\b/i;
+
+/**
  * A year that is part of a calendar date is not a batch. "Walk in interview
  * on 24th Aug 2026" names a day, not a graduating class — and read as a
  * batch it would demote every 2027 candidate by 40. Checked on the text
@@ -321,6 +332,8 @@ export interface BatchContext {
   finalYear: boolean;
   /** Text says "pursuing" — current students welcome. */
   pursuing: boolean;
+  /** A named year carries "only" — an explicit restriction "pursuing" cannot reopen. */
+  restricted: boolean;
 }
 
 /**
@@ -388,6 +401,7 @@ export function inferBatchContext(
     openFrom,
     finalYear: FINAL_YEAR_RE.test(text),
     pursuing: PURSUING_RE.test(text),
+    restricted: BATCH_ONLY_RE.test(text),
   };
 }
 
@@ -528,12 +542,19 @@ export function classifyJob(input: ClassifyJobInput): RelevanceResult {
       score += 10;
       batchVerdict = "open_ended";
       signals.push(`batch ${batch.openFrom} or later includes ${y} +10`);
-    } else if (inferredBatches.length > 0 && batch.pursuing) {
+    } else if (
+      inferredBatches.length > 0 &&
+      batch.pursuing &&
+      !batch.restricted
+    ) {
       batchVerdict = "pursuing";
       signals.push(
         `batch names another year but pursuing students welcome — no penalty`,
       );
     } else if (inferredBatches.length > 0 || batch.openFrom !== null) {
+      if (batch.pursuing && batch.restricted) {
+        signals.push("batch says only — pursuing does not reopen it");
+      }
       // Sloppy job text names one year and means "or thereabouts" often
       // enough that this is a demotion, not an exclusion (§2.1).
       score -= 40;
