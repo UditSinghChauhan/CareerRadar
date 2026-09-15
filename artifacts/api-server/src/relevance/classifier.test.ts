@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   classifyJob,
+  finalYearBatch,
+  inferBatchContext,
   inferBatches,
   minYearsInText,
   toRelevanceColumns,
@@ -314,6 +316,219 @@ describe("inferBatches", () => {
       now: NOW,
     });
     expect(r.inferredBatches).toEqual([2027]);
+  });
+});
+
+// ─── Inclusive batch phrasings — every one a real description from the 71
+// live rows the −40 hit on 2026-09-15 (graduation year 2027) ────────────────
+
+describe("classifyJob — batch text that includes the user", () => {
+  const intern = (description: string, extra = {}) =>
+    classifyJob({
+      title: "Backend Developer Intern",
+      description,
+      graduationYear: 2027,
+      now: NOW,
+      ...extra,
+    });
+
+  it("finalYearBatch is the academic year in progress (June–May)", () => {
+    expect(finalYearBatch(new Date("2026-09-15"))).toBe(2027);
+    expect(finalYearBatch(new Date("2027-03-01"))).toBe(2027);
+    expect(finalYearBatch(new Date("2027-06-01"))).toBe(2028);
+    expect(finalYearBatch(new Date("2026-05-31"))).toBe(2026);
+  });
+
+  it('"2026 freshers & final-year student" → addressed to the user, +15, not −40', () => {
+    const r = intern(
+      "B.E./B.Tech (CSE/IT), BCA, MCA or M.Sc (Computer Science) — 2026 freshers & final-year student",
+    );
+    expect(r.batchVerdict).toBe("final_year");
+    expect(r.score).toBe(100); // 90 + 15, capped
+    expect(r.signals).toContain("addressed to final-year students +15");
+    expect(r.signals).not.toContain("batch excludes 2027 −40");
+    expect(r.inferredBatches).toEqual([2026]);
+  });
+
+  it('"Pursuing or recently completed B.E./B.Tech … — 2026 freshers & final-year student" → +15', () => {
+    const r = intern(
+      "Requirements: Pursuing or recently completed B.E./B.Tech/BCA/MCA — 2026 freshers & final-year student",
+    );
+    expect(r.batchVerdict).toBe("final_year");
+  });
+
+  it("final-year beats the generic match and does not stack with it", () => {
+    const r = intern("Open to 2027 batch and final-year students.");
+    expect(r.batchVerdict).toBe("final_year");
+    expect(r.signals).not.toContain("batch matches 2027 +10");
+  });
+
+  it('"final year" without the hyphen, and "final-year candidates"', () => {
+    expect(
+      intern("Final year students of 2026 batch may apply").batchVerdict,
+    ).toBe("final_year");
+    expect(intern("Final-year candidates (2026)").batchVerdict).toBe(
+      "final_year",
+    );
+  });
+
+  it('"pre-final year students" is the batch after — not addressed to a 2027 graduate', () => {
+    const r = intern("Open to pre-final year students (2026 batch only).");
+    expect(r.batchVerdict).toBe("excluded");
+  });
+
+  it('"final year project" is not a student marker', () => {
+    const r = intern("You built a final year project in React. 2026 batch.");
+    expect(r.batchVerdict).toBe("excluded");
+  });
+
+  it("final-year is anchored to the calendar: a 2028 profile in Sept 2026 is not final year", () => {
+    const r = classifyJob({
+      title: "Backend Developer Intern",
+      description: "2026 freshers & final-year student",
+      graduationYear: 2028,
+      now: NOW,
+    });
+    expect(r.batchVerdict).toBe("excluded");
+  });
+
+  it('"Graduated in 2025 or later" → open-ended floor includes 2027, +10', () => {
+    const r = classifyJob({
+      title: "Python (Django) Developer - Fresher",
+      description: "Graduated in 2025 or later, and not currently a student.",
+      graduationYear: 2027,
+      now: NOW,
+    });
+    expect(r.batchVerdict).toBe("open_ended");
+    expect(r.signals).toContain("batch 2025 or later includes 2027 +10");
+  });
+
+  it('"2025 onwards", "2025+", "2025 and above" are the same floor', () => {
+    for (const text of [
+      "Batch 2025 onwards",
+      "2025+ passouts",
+      "2025 and above",
+    ]) {
+      expect(intern(text).batchVerdict, text).toBe("open_ended");
+    }
+  });
+
+  it("an open-ended floor above the user's year still excludes", () => {
+    const r = intern("2028 or later graduates only");
+    expect(r.batchVerdict).toBe("excluded");
+    expect(r.inferredBatches).toEqual([2028]);
+  });
+
+  it('"2025-2028 batch" — a range covers the years between its ends', () => {
+    expect(inferBatches("2025-2028 batch", NOW)).toEqual([
+      2025, 2026, 2027, 2028,
+    ]);
+    expect(inferBatches("2025 to 2027 graduates", NOW)).toEqual([
+      2025, 2026, 2027,
+    ]);
+    expect(inferBatches("2025–27", NOW)).toEqual([2025, 2026, 2027]);
+    expect(intern("Eligible: 2025-2028 batch").batchVerdict).toBe("match");
+  });
+
+  it('"Students graduating in the years of 2024-2025 and 2025-2026" is a closed range — still excluded', () => {
+    const r = classifyJob({
+      title: "Full - Stack Developer Intern",
+      description:
+        "Criteria to apply: • Students graduating in the years of 2024-2025 and 2025-2026 in Stream of Computer Science",
+      graduationYear: 2027,
+      now: NOW,
+    });
+    expect(r.batchVerdict).toBe("excluded");
+    expect(r.inferredBatches).toEqual([2024, 2025, 2026]);
+  });
+
+  it('"Experience: 0 Years (Freshers) - 2026 Passout" is explicit — still excluded', () => {
+    expect(
+      intern("Experience: 0 Years (Freshers) - 2026 Passout. Role Overview…")
+        .batchVerdict,
+    ).toBe("excluded");
+  });
+
+  it('"(2025 or 2026 graduate)" — a closed list — still excluded', () => {
+    expect(
+      intern(
+        "Computer Science, Information Systems, or a related technical field (2025 or 2026 graduate).",
+      ).batchVerdict,
+    ).toBe("excluded");
+  });
+
+  it('"pursuing" neutralises a named year without adding', () => {
+    const r = intern("Pursuing B.Tech in CSE. 2026 batch preferred.");
+    expect(r.batchVerdict).toBe("pursuing");
+    expect(r.score).toBe(90);
+    expect(r.signals).toContain(
+      "batch names another year but pursuing students welcome — no penalty",
+    );
+  });
+
+  it('"pursuing" with no year named adds nothing and says nothing', () => {
+    const r = intern("Pursuing a degree in Computer Science.");
+    expect(r.batchVerdict).toBe("none");
+    expect(r.score).toBe(90);
+  });
+
+  it("without a graduation year no batch verdict is reached", () => {
+    const r = classifyJob({
+      title: "Backend Developer Intern",
+      description: "2026 freshers & final-year student",
+      now: NOW,
+    });
+    expect(r.batchVerdict).toBe("none");
+    expect(r.score).toBe(90);
+  });
+
+  it("a year with no batch-shaped word near it is not a batch", () => {
+    for (const text of [
+      "© 2026 Dlytica Inc. All Rights Reserved",
+      "We are proud to be recognized as a Top Employer 2026 in Brazil",
+      "Named a 2025 Gartner® Magic Quadrant™ Leader",
+      "CJN- 344/2025 - Vacancy For Medical Coding",
+      "Walk-in For an interview on 7 -Sept -2026 (Monday)",
+    ]) {
+      expect(inferBatches(text, NOW), text).toEqual([]);
+    }
+  });
+
+  it("…but a year next to batch language is", () => {
+    for (const [text, years] of [
+      ["2026 Software Engineer Intern", [2026]],
+      ["Red Hat Internship 2026", [2026]],
+      ["Summer 2026", [2026]],
+      ["Software Engineer Intern (2026 Batch)", [2026]],
+      ["Recent graduates from the Class of 2024 or 2025", [2025]],
+      ["2023–2025 pass-outs may apply", [2024, 2025]], // 2023 is outside ±2
+      ["Year of Passing: 2024 or 2025", [2025]],
+      ["Intern Software Engineer 2028 Graduates", [2028]],
+      // A slash between two years is a list, not a reference number.
+      ["degree or equivalent (or graduating in 2026/2027)", [2026, 2027]],
+      ["(2025/2026 graduates preferred)", [2025, 2026]],
+      // A start date is the batch in all but name.
+      [
+        "Able to start working full-time on or before September of 2027.",
+        [2027],
+      ],
+    ] as Array<[string, number[]]>) {
+      expect(inferBatches(text, NOW), text).toEqual(years);
+    }
+  });
+
+  it("inferBatchContext exposes all four readings", () => {
+    expect(
+      inferBatchContext(
+        "Pursuing B.Tech, final-year students, 2025 or later, 2026-2027 batch",
+        NOW,
+      ),
+    ).toEqual({
+      batches: [2025, 2026, 2027],
+      openFrom: 2025,
+      finalYear: true,
+      pursuing: true,
+    });
   });
 });
 
