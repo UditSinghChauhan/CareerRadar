@@ -46,6 +46,20 @@
  * modifiers from §2.1: isIndia +10, isRemote +5, batch match +10, deadline
  * present +5, posted ≤ 7 days +10, posted > 45 days −20, batch names a year
  * that excludes the user −40 (job text is sloppy — demote, don't exclude).
+ *
+ * BATCH TEXT IS OFTEN INCLUSIVE OF THE USER (measured on the 71 live rows the
+ * −40 hit on 2026-09-15). "2026 freshers & final-year student" names 2026 but
+ * is addressed to whoever is in their final year right now — which in
+ * September 2026 is the 2027 batch. So, before the −40:
+ *   · "final-year student(s)" (not "pre-final") → explicitly addressed,
+ *     +15 — above the generic match, because the posting is talking to the
+ *     user. Anchored to the calendar: final year = the academic year in
+ *     progress, June to May.
+ *   · "2025 or later" / "2025 onwards" / "2025+" / "2025 and above" → an
+ *     open-ended lower bound; a year at or above it is a match, +10.
+ *   · "2025-2028" → a range covers every year in it, not just the ends.
+ *   · "pursuing" → current students are welcome; a named year no longer
+ *     penalises, but nothing is added either — the word is boilerplate.
  * Three modifiers the spec does not list, added so the ranking survives the
  * live data: a title with no engineering role noun −15, an explicitly
  * non-technical title (voice process, BPO, sales, HR, …) −20, and an on-site
@@ -80,8 +94,20 @@ export interface RelevanceResult {
   isFresherEligible: boolean;
   /** A seniority/level/years marker (or experienceMin ≥ 2) ruled the row out. */
   seniorityExcluded: boolean;
-  /** Batch years named in the text (or by the provider), e.g. [2027]. */
+  /** Batch years named in the text (or by the provider), e.g. [2027]. Ranges expanded. */
   inferredBatches: number[];
+  /**
+   * How the batch text reads for the user's year: matched, explicitly
+   * addressed ("final-year students"), open-ended from a floor, neutralised
+   * by "pursuing", excluded, or not named / no year to compare against.
+   */
+  batchVerdict:
+    | "match"
+    | "final_year"
+    | "open_ended"
+    | "pursuing"
+    | "excluded"
+    | "none";
   /** Human-readable reasons, in the order they fired. Shown on hover in the UI. */
   signals: string[];
 }
@@ -179,6 +205,27 @@ const NON_TECH_RE =
 /** Batch inference — §2.1: `\b20(2[5-9])\b`, kept within ±2 of the current year. */
 const BATCH_YEAR_RE = /\b20(2[5-9])\b/g;
 
+/** "2025-2028", "2025 to 2027", "2025–27" — a range of batches, every year inclusive. */
+const BATCH_RANGE_RE = /\b20(2\d)\s*(?:-|–|to|through)\s*(?:20)?(2\d)\b/gi;
+
+/**
+ * An open-ended lower bound: "2025 or later", "2025 onwards", "2025+",
+ * "2025 and above", "batch of 2025 or after". The year captured is the floor.
+ */
+const BATCH_OPEN_RE =
+  /\b20(2[5-9])\s*(?:\+|(?:or|and|&)\s+(?:later|above|after|beyond)|onwards?)/gi;
+
+/**
+ * Explicitly addressed to students in their final year. "pre-final year"
+ * is the batch after, so it is excluded by the lookbehind. Requires a
+ * student-ish noun within two words so "final year project" does not fire.
+ */
+const FINAL_YEAR_RE =
+  /(?<!pre[- ])\bfinal[- ]year\s+(?:\w+\s+){0,2}?(?:students?|candidates?|undergrads?|undergraduates?|graduates?|engineering|b\.?\s?tech|be\b|bca|mca|passouts?)/i;
+
+/** "Pursuing B.Tech" — current students welcome. Boilerplate, so it only neutralises. */
+const PURSUING_RE = /\bpursuing\b/i;
+
 /**
  * A year that is part of a calendar date is not a batch. "Walk in interview
  * on 24th Aug 2026" names a day, not a graduating class — and read as a
@@ -187,8 +234,17 @@ const BATCH_YEAR_RE = /\b20(2[5-9])\b/g;
  * ("Aug 2026", "24/08/2026"), or an ISO date after it ("2026-08-24").
  */
 const DATE_BEFORE_RE =
-  /(?:\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?,?\s*|\d{1,2}[/.-]\d{1,2}[/.-]|\b\d{1,2}(?:st|nd|rd|th)?[\s,]+(?:of\s+)?)$/i;
+  /(?:\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?,?\s*[-–]?\s*|\d{1,2}[/.-]\d{1,2}[/.-]|\b\d{1,2}(?:st|nd|rd|th)?[\s,]+(?:of\s+)?|\b(?!20[2-3]\d\b)\d+\s*\/\s*)$/i;
 const DATE_AFTER_RE = /^[/.-]\d{1,2}[/.-]\d{1,2}\b/;
+
+/**
+ * A year is only a batch when something batch-shaped is said near it.
+ * "© 2026 Dlytica", "Top Employer 2026", "Named a 2025 Gartner Magic
+ * Quadrant" all sat in the −40 bucket on the live table (2026-09-15).
+ * Checked within 60 characters either side.
+ */
+const BATCH_CONTEXT_RE =
+  /\b(batch(es)?|grads?|graduat\w*|pass[- ]?outs?|passing|passed out|freshers?|class of|interns?|internships?|summer|winter|students?|hiring|eligib\w*|campus|placements?|joining|start\w*|available|cohort|apprentice\w*|trainees?|onwards?|later|above|20(2[5-9])\s*(?:-|–|to|\/|or|and|&)\s*(?:20)?2[5-9])\b/i;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -256,26 +312,83 @@ export function minYearsInText(
   return min;
 }
 
+export interface BatchContext {
+  /** Every batch year named, ranges expanded, within ±2 of now. */
+  batches: number[];
+  /** The lowest year named as an open-ended floor ("2025 or later"), or null. */
+  openFrom: number | null;
+  /** Text addresses current final-year students. */
+  finalYear: boolean;
+  /** Text says "pursuing" — current students welcome. */
+  pursuing: boolean;
+}
+
+/**
+ * The batch that "final-year student" refers to right now: the academic
+ * year in progress ends the following calendar year from June onwards. In
+ * September 2026 a final-year student graduates in 2027; in March 2027 they
+ * still do.
+ */
+export function finalYearBatch(now: Date): number {
+  return now.getMonth() >= 5 ? now.getFullYear() + 1 : now.getFullYear();
+}
+
 /** Years named in the text, restricted to the window the spec allows. */
 export function inferBatches(
   text: string,
   now: Date,
   extra: number[] | null | undefined = [],
 ): number[] {
+  return inferBatchContext(text, now, extra).batches;
+}
+
+/** Everything the batch modifiers need to read from the text. */
+export function inferBatchContext(
+  text: string,
+  now: Date,
+  extra: number[] | null | undefined = [],
+): BatchContext {
   const year = now.getFullYear();
+  const inWindow = (y: number) => Math.abs(y - year) <= 2;
   const found = new Set<number>();
+
   for (const m of text.matchAll(BATCH_YEAR_RE)) {
     const y = Number(`20${m[1]}`);
-    if (Math.abs(y - year) > 2) continue;
+    if (!inWindow(y)) continue;
     const before = text.slice(Math.max(0, m.index - 16), m.index);
     const after = text.slice(m.index + m[0].length, m.index + m[0].length + 8);
     if (DATE_BEFORE_RE.test(before) || DATE_AFTER_RE.test(after)) continue;
+    const around = text.slice(
+      Math.max(0, m.index - 60),
+      m.index + m[0].length + 60,
+    );
+    if (!BATCH_CONTEXT_RE.test(around)) continue;
     found.add(y);
+  }
+  // "2025-2028" is 2025, 2026, 2027 and 2028 — the single-year pass above
+  // only saw the ends.
+  for (const m of text.matchAll(BATCH_RANGE_RE)) {
+    const from = Number(`20${m[1]}`);
+    const to = Number(`20${m[2]}`);
+    if (to < from || to - from > 6) continue;
+    for (let y = from; y <= to; y += 1) if (inWindow(y)) found.add(y);
   }
   for (const y of extra ?? []) {
     if (Number.isInteger(y)) found.add(y);
   }
-  return [...found].sort((a, b) => a - b);
+
+  let openFrom: number | null = null;
+  for (const m of text.matchAll(BATCH_OPEN_RE)) {
+    const y = Number(`20${m[1]}`);
+    if (openFrom === null || y < openFrom) openFrom = y;
+  }
+
+  return {
+    batches: [...found].sort((a, b) => a - b),
+    openFrom,
+    finalYear: FINAL_YEAR_RE.test(text),
+    pursuing: PURSUING_RE.test(text),
+  };
 }
 
 // ─── The classifier ───────────────────────────────────────────────────────────
@@ -288,11 +401,12 @@ export function classifyJob(input: ClassifyJobInput): RelevanceResult {
     .join("\n");
   const signals: string[] = [];
 
-  const inferredBatches = inferBatches(
+  const batch = inferBatchContext(
     `${title}\n${body}`,
     now,
     input.eligibleBatch,
   );
+  const inferredBatches = batch.batches;
 
   const internTitle = INTERN_TITLE_RE.test(title);
   const seniorityWord = SENIORITY_RE.test(title);
@@ -368,6 +482,7 @@ export function classifyJob(input: ClassifyJobInput): RelevanceResult {
       isFresherEligible: false,
       seniorityExcluded,
       inferredBatches,
+      batchVerdict: "none",
       signals,
     };
   }
@@ -392,18 +507,38 @@ export function classifyJob(input: ClassifyJobInput): RelevanceResult {
     signals.push("on-site outside India −25");
   }
 
+  let batchVerdict: RelevanceResult["batchVerdict"] = "none";
   if (inferredBatches.length > 0) {
     signals.push(`batch ${inferredBatches.join("/")} named`);
-    if (input.graduationYear != null) {
-      if (inferredBatches.includes(input.graduationYear)) {
-        score += 10;
-        signals.push(`batch matches ${input.graduationYear} +10`);
-      } else {
-        // Sloppy job text names one year and means "or thereabouts" often
-        // enough that this is a demotion, not an exclusion (§2.1).
-        score -= 40;
-        signals.push(`batch excludes ${input.graduationYear} −40`);
-      }
+  }
+  if (input.graduationYear != null) {
+    const y = input.graduationYear;
+    if (batch.finalYear && y === finalYearBatch(now)) {
+      // The posting is talking to the user directly. Beats a generic match
+      // and beats any year it also names ("2026 freshers & final-year
+      // student" names 2026 and means 2027 too).
+      score += 15;
+      batchVerdict = "final_year";
+      signals.push("addressed to final-year students +15");
+    } else if (inferredBatches.includes(y)) {
+      score += 10;
+      batchVerdict = "match";
+      signals.push(`batch matches ${y} +10`);
+    } else if (batch.openFrom !== null && y >= batch.openFrom) {
+      score += 10;
+      batchVerdict = "open_ended";
+      signals.push(`batch ${batch.openFrom} or later includes ${y} +10`);
+    } else if (inferredBatches.length > 0 && batch.pursuing) {
+      batchVerdict = "pursuing";
+      signals.push(
+        `batch names another year but pursuing students welcome — no penalty`,
+      );
+    } else if (inferredBatches.length > 0 || batch.openFrom !== null) {
+      // Sloppy job text names one year and means "or thereabouts" often
+      // enough that this is a demotion, not an exclusion (§2.1).
+      score -= 40;
+      batchVerdict = "excluded";
+      signals.push(`batch excludes ${y} −40`);
     }
   }
 
@@ -441,6 +576,7 @@ export function classifyJob(input: ClassifyJobInput): RelevanceResult {
     isFresherEligible: true,
     seniorityExcluded: false,
     inferredBatches,
+    batchVerdict,
     signals,
   };
 }
