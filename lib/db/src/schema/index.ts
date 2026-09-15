@@ -6,6 +6,7 @@ export * from "./jobSources";
 export * from "./jobs";
 export * from "./applications";
 export * from "./bookmarks";
+export * from "./jobDismissals";
 export * from "./savedSearches";
 export * from "./notifications";
 export * from "./providerSyncLogs";

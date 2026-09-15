@@ -48,6 +48,13 @@ export interface JobFiltersState {
   tracks: RelevanceTrackFilter[];
   /** Phase 2.1. `?minRelevanceScore=`. 0 = no floor. */
   minScore: number;
+  /**
+   * Phase 3.2. `?showDismissed=true` — bring back rows the user dismissed
+   * from Today's Queue. OFF by default, which is what §3.2 asks for: a
+   * dismissal means "not this one" and should stick. Server-side, like every
+   * other narrowing here.
+   */
+  showDismissed: boolean;
 }
 
 export const TRACK_OPTIONS: Array<{
@@ -113,6 +120,7 @@ export const DEFAULT_FILTERS: JobFiltersState = {
   fresherOnly: true,
   tracks: [],
   minScore: 0,
+  showDismissed: false,
 };
 
 /**
@@ -133,6 +141,11 @@ export function showEverything(filters: JobFiltersState): JobFiltersState {
     fresherOnly: false,
     tracks: [],
     minScore: 0,
+    // A dismissal is the user's own explicit decision about a specific job,
+    // not a guess the classifier made, so "Show everything" reveals it too —
+    // "everything" has to mean everything for the escape hatch to be worth
+    // trusting.
+    showDismissed: true,
   };
 }
 
@@ -145,7 +158,8 @@ export function isShowingEverything(filters: JobFiltersState): boolean {
     !filters.indiaOnly &&
     !filters.fresherOnly &&
     filters.tracks.length === 0 &&
-    filters.minScore === 0
+    filters.minScore === 0 &&
+    filters.showDismissed
   );
 }
 
@@ -210,6 +224,10 @@ export function countActiveFilters(filters: JobFiltersState): number {
   if (filters.indiaOnly) n++;
   if (filters.tracks.length > 0) n++;
   if (filters.minScore > 0) n++;
+  // Counted when ON, unlike fresherOnly: showing dismissed rows is a
+  // deliberate widening away from the default, so the badge is the reminder
+  // that the list includes things already rejected.
+  if (filters.showDismissed) n++;
   // hideApplied and fresherOnly are deliberately not counted. Both are on by
   // default, so counting them would show a permanent "1 active filter" badge
   // on an untouched page; and turning fresherOnly OFF is widening, not
@@ -381,6 +399,26 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
             Fresher-eligible only
             <span className="block text-[10px] text-muted-foreground/70">
               Hides senior, level II+, and 2+ years roles
+            </span>
+          </Label>
+        </div>
+        {/* Phase 3.2 — the way back from a dismissal. */}
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="filter-show-dismissed"
+            data-testid="show-dismissed-checkbox"
+            checked={filters.showDismissed}
+            onCheckedChange={(checked) =>
+              set("showDismissed", checked === true)
+            }
+          />
+          <Label
+            htmlFor="filter-show-dismissed"
+            className="text-xs font-normal cursor-pointer"
+          >
+            Show dismissed
+            <span className="block text-[10px] text-muted-foreground/70">
+              Jobs you dismissed from Today&apos;s Queue
             </span>
           </Label>
         </div>

@@ -8,6 +8,7 @@ import { AlertCircle, RefreshCw, UserCircle } from "lucide-react";
 import { Link } from "wouter";
 
 import { Greeting } from "@/components/dashboard/greeting";
+import { TodaysQueue } from "@/components/dashboard/todays-queue";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { NewOpportunities } from "@/components/dashboard/new-opportunities";
 import { RecommendedJobs } from "@/components/dashboard/recommended-jobs";
@@ -84,6 +85,12 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* ── Today's Queue ─────────────────────────────────────────────
+          Phase 3.3 puts this first, above the stat cards and the charts: the
+          dashboard's job is to assign work, and everything below it reports
+          history. ──────────────────────────────────────────────────── */}
+      <TodaysQueue />
 
       {/* ── New Opportunities + Stats ─────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-4 xl:grid-cols-5 gap-3">

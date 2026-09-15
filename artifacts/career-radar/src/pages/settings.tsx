@@ -42,6 +42,7 @@ import { AlertCircle, RefreshCw, Save } from "lucide-react";
 const settingsSchema = z.object({
   emailNotifications: z.boolean(),
   deadlineAlertDays: z.coerce.number().min(1).max(30),
+  dailyApplicationTarget: z.coerce.number().min(1).max(100),
   theme: z.enum(["light", "dark", "system"]),
   timezone: z.string().min(1),
 });
@@ -59,6 +60,7 @@ export function SettingsPage() {
     defaultValues: {
       emailNotifications: true,
       deadlineAlertDays: 3,
+      dailyApplicationTarget: 10,
       theme: "system",
       timezone: "Asia/Kolkata",
     },
@@ -69,6 +71,7 @@ export function SettingsPage() {
       form.reset({
         emailNotifications: settings.emailNotifications,
         deadlineAlertDays: settings.deadlineAlertDays || 3,
+        dailyApplicationTarget: settings.dailyApplicationTarget || 10,
         theme: (settings.theme as "light" | "dark" | "system") || "system",
         timezone: settings.timezone || "Asia/Kolkata",
       });
@@ -83,6 +86,7 @@ export function SettingsPage() {
         data: {
           emailNotifications: data.emailNotifications,
           deadlineAlertDays: data.deadlineAlertDays,
+          dailyApplicationTarget: data.dailyApplicationTarget,
           theme: data.theme,
           timezone: data.timezone,
         },
@@ -232,6 +236,34 @@ export function SettingsPage() {
                       </div>
                       <FormControl className="mt-2 sm:mt-0 w-[180px]">
                         <Input type="number" min={1} max={30} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dailyApplicationTarget"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col justify-between rounded-lg border p-4 sm:flex-row sm:items-center">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Daily application target
+                        </FormLabel>
+                        <FormDescription>
+                          How many applications Today&apos;s Queue asks of you
+                          each day.
+                        </FormDescription>
+                      </div>
+                      <FormControl className="mt-2 sm:mt-0 w-[180px]">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={100}
+                          data-testid="daily-target-input"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -13,6 +13,7 @@ import {
   type RelevanceTrack,
 } from "../relevance/classifier";
 import { resolveGraduationYear } from "../relevance/graduation-year";
+import { resolveProfileId } from "../repositories/jobDismissals.repository";
 
 /** 'true' / 'false' from the query string; anything else is "not given". */
 function parseBoolean(value: unknown): boolean | undefined {
@@ -52,7 +53,25 @@ function parseScore(value: unknown): number | undefined {
 }
 
 export const jobsService = {
-  async list(rawQuery: Record<string, unknown>) {
+  /**
+   * `options.clerkId` is the SIGNED-IN caller, when there is one. `/api/jobs`
+   * is a public route, so it may legitimately be absent; dismissals are
+   * per-profile, so an anonymous caller sees the unfiltered list exactly as
+   * before Phase 3.
+   */
+  async list(
+    rawQuery: Record<string, unknown>,
+    options: { clerkId?: string | null } = {},
+  ) {
+    // Phase 3.2: dismissed rows are hidden unless `showDismissed=true`.
+    // Resolved to a profile id here rather than in the repository so the
+    // repository stays a pure query builder.
+    const showDismissed = parseBoolean(rawQuery.showDismissed) === true;
+    const excludeDismissedForProfileId =
+      options.clerkId && !showDismissed
+        ? await resolveProfileId(options.clerkId)
+        : null;
+
     const filters: JobFilters = {
       search: rawQuery.search as string | undefined,
       companyId: rawQuery.companyId as string | undefined,
@@ -72,6 +91,7 @@ export const jobsService = {
       isFresherEligible: parseBoolean(rawQuery.isFresherEligible),
       relevanceTrack: parseTracks(rawQuery.relevanceTrack),
       minRelevanceScore: parseScore(rawQuery.minRelevanceScore),
+      excludeDismissedForProfileId,
     };
     const pagination = paginate(rawQuery);
     const sort: JobSort =

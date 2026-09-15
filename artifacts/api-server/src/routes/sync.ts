@@ -9,6 +9,7 @@
  * POST /api/sync/provider/:provider                    — trigger all configs for one provider — requires auth
  * POST /api/sync/provider/:provider/company/:company   — trigger a single config — requires auth
  * POST /api/sync/cron                                  — external scheduled trigger — x-cron-secret, NOT Clerk
+ *                                                        (also reclassifies relevance once the sync finishes — see below)
  * GET  /api/sync/verify                                — live HTTP checks against every ATS API — requires auth
  * GET  /api/sync/status                                — latest sync logs + scheduler state (public, read only)
  *
@@ -28,6 +29,7 @@ import { runVerification } from "../providers/verify";
 import { requireAuth } from "../middlewares/requireAuth";
 import { verifyCronSecret } from "../lib/cron-auth";
 import { currentSchemaStatus } from "../lib/schema-check";
+import { backfillRelevance } from "../relevance/backfill-relevance";
 
 const router = Router();
 
@@ -155,9 +157,44 @@ router.post("/sync/cron", async (req, res) => {
 
   // Kicked off *after* the response so a slow first DB connection on a
   // cold-started instance cannot delay the 202.
-  void schedulerService.runAll().catch((err: unknown) => {
-    req.log.error({ err }, "POST /sync/cron — background sync failed");
-  });
+  //
+  // RELEVANCE IS RECLASSIFIED WHEN THE SYNC FINISHES (Phase 3).
+  // Two of the classifier's modifiers are functions of the calendar — "posted
+  // within 7 days +10" and "posted over 45 days ago −20" — and the daily
+  // queue's freshness term reads `posted_date` directly. The sync only
+  // rewrites rows a provider actually returned, so a row that stops being
+  // returned keeps a +10 it earned weeks ago forever, and its stored
+  // `relevance_score` drifts further from the truth every day. The queue then
+  // ranks by a stale number. Recomputing after every cron pass is what keeps
+  // the scores moving with the calendar; the backfill is deterministic and
+  // recompute-all, so this is safe to run on every pass and writes only the
+  // rows whose values actually changed.
+  //
+  // It runs AFTER the sync rather than beside it: the sync inserts rows that
+  // need classifying, and two full table passes at once on 512 MB / 0.1 CPU
+  // is how the instance gets OOM-killed. A backfill failure is logged and
+  // does not mark the sync failed — the jobs are in, only their scores are
+  // stale, which the next pass fixes.
+  void schedulerService
+    .runAll()
+    .then(async () => {
+      const report = await backfillRelevance();
+      req.log.info(
+        {
+          scanned: report.scanned,
+          updated: report.updated,
+          durationMs: report.durationMs,
+          activeFresherEligible: report.activeFresherEligible,
+        },
+        "POST /sync/cron — relevance reclassified after sync",
+      );
+    })
+    .catch((err: unknown) => {
+      req.log.error(
+        { err },
+        "POST /sync/cron — background sync or relevance backfill failed",
+      );
+    });
 });
 
 // ─── POST /api/sync/provider/:provider ───────────────────────────────────────

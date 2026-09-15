@@ -12,6 +12,12 @@ export interface Settings {
   clerkId: string;
   emailNotifications: boolean;
   deadlineAlertDays?: number;
+  /**
+     * Phase 3.3. How many applications Today's Queue asks for per day. Default 10.
+     * @minimum 1
+     * @maximum 100
+     */
+  dailyApplicationTarget?: number;
   theme: SettingsTheme;
   timezone?: string;
   createdAt?: Date;

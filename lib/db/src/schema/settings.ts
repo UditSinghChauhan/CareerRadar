@@ -14,6 +14,14 @@ export const settingsTable = pgTable("settings", {
   clerkId: text("clerk_id").notNull().unique(),
   emailNotifications: boolean("email_notifications").notNull().default(true),
   deadlineAlertDays: integer("deadline_alert_days").notNull().default(3),
+  /**
+   * How many applications Today's Queue asks for in a day (Phase 3.3).
+   * Default 10, which is also the queue's default `limit` — the counter and
+   * the list are meant to agree out of the box.
+   */
+  dailyApplicationTarget: integer("daily_application_target")
+    .notNull()
+    .default(10),
   theme: text("theme", { enum: ["light", "dark", "system"] })
     .notNull()
     .default("system"),
@@ -34,6 +42,7 @@ export const updateSettingsSchema = createSelectSchema(settingsTable)
   .pick({
     emailNotifications: true,
     deadlineAlertDays: true,
+    dailyApplicationTarget: true,
     theme: true,
     timezone: true,
   })

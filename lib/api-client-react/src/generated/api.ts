@@ -31,10 +31,14 @@ import type {
   Company,
   CompanyInput,
   CompanyListResponse,
+  DailyQueue,
   DashboardSummary,
+  DismissJobInput,
+  GetDailyQueueParams,
   GetJobsClosingSoonParams,
   HealthStatus,
   Job,
+  JobDismissal,
   JobInput,
   JobListResponse,
   JobMatchScore,
@@ -513,6 +517,95 @@ export function useGetDashboardSummary<TData = Awaited<ReturnType<typeof getDash
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetDashboardSummaryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetDailyQueueUrl = (params?: GetDailyQueueParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/dashboard/today?${stringifiedParams}` : `/api/dashboard/today`
+}
+
+/**
+ * Phase 3.1. Active, fresher-eligible jobs the user has neither applied to nor dismissed, ranked by `relevanceScore*0.40 + deadlineUrgency*0.30 + freshness*0.20 + dreamCompanyBoost*0.10`, with duplicate listings collapsed by (company, normalised title) keeping the highest-priority instance.
+ *
+ * Each item carries its components and a plain-language reason per component, computed server-side — the frontend must not recompute the ranking.
+ *
+ * Rows whose priority is identical are ordered by a deterministic per-day shuffle (see `queueDay`): stable within a day, rotating between days. Measured on the live table, the top ten all score exactly 63.00, so without this the same ten win every day and the other ~610 equally-relevant rows are never shown.
+ * @summary Today's apply queue — ranked jobs to act on now
+ */
+export const getDailyQueue = async (params?: GetDailyQueueParams, options?: RequestInit): Promise<DailyQueue> => {
+
+  return customFetch<DailyQueue>(getGetDailyQueueUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDailyQueueQueryKey = (params?: GetDailyQueueParams,) => {
+    return [
+    `/api/dashboard/today`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetDailyQueueQueryOptions = <TData = Awaited<ReturnType<typeof getDailyQueue>>, TError = ErrorType<void>>(params?: GetDailyQueueParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDailyQueue>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDailyQueueQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDailyQueue>>> = ({ signal }) => getDailyQueue(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDailyQueue>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDailyQueueQueryResult = NonNullable<Awaited<ReturnType<typeof getDailyQueue>>>
+export type GetDailyQueueQueryError = ErrorType<void>
+
+
+/**
+ * @summary Today's apply queue — ranked jobs to act on now
+ */
+
+export function useGetDailyQueue<TData = Awaited<ReturnType<typeof getDailyQueue>>, TError = ErrorType<void>>(
+ params?: GetDailyQueueParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDailyQueue>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDailyQueueQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -1218,6 +1311,148 @@ export const useDeleteJob = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteJobMutationOptions(options));
+    }
+
+export const getDismissJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/jobs/${id}/dismiss`
+}
+
+/**
+ * Phase 3.2. A hide, never a delete — the job row is untouched and DELETE restores it. Idempotent: dismissing twice returns the first dismissal rather than creating a second.
+ * @summary Hide a job from the queue and the jobs list
+ */
+export const dismissJob = async (id: string,
+    dismissJobInput?: DismissJobInput, options?: RequestInit): Promise<JobDismissal> => {
+
+  return customFetch<JobDismissal>(getDismissJobUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(dismissJobInput)
+  }
+);}
+
+
+
+
+export const getDismissJobMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissJob>>, TError,{id: string;data?: BodyType<DismissJobInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof dismissJob>>, TError,{id: string;data?: BodyType<DismissJobInput>}, TContext> => {
+
+const mutationKey = ['dismissJob'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof dismissJob>>, {id: string;data?: BodyType<DismissJobInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  dismissJob(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DismissJobMutationResult = NonNullable<Awaited<ReturnType<typeof dismissJob>>>
+    export type DismissJobMutationBody = BodyType<DismissJobInput> | undefined
+    export type DismissJobMutationError = ErrorType<void>
+
+    /**
+ * @summary Hide a job from the queue and the jobs list
+ */
+export const useDismissJob = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissJob>>, TError,{id: string;data?: BodyType<DismissJobInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof dismissJob>>,
+        TError,
+        {id: string;data?: BodyType<DismissJobInput>},
+        TContext
+      > => {
+      return useMutation(getDismissJobMutationOptions(options));
+    }
+
+export const getRestoreDismissedJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/jobs/${id}/dismiss`
+}
+
+/**
+ * @summary Undo a dismissal
+ */
+export const restoreDismissedJob = async (id: string, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getRestoreDismissedJobUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getRestoreDismissedJobMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreDismissedJob>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreDismissedJob>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['restoreDismissedJob'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreDismissedJob>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  restoreDismissedJob(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreDismissedJobMutationResult = NonNullable<Awaited<ReturnType<typeof restoreDismissedJob>>>
+
+    export type RestoreDismissedJobMutationError = ErrorType<void>
+
+    /**
+ * @summary Undo a dismissal
+ */
+export const useRestoreDismissedJob = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreDismissedJob>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof restoreDismissedJob>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getRestoreDismissedJobMutationOptions(options));
     }
 
 export const getListApplicationsUrl = (params?: ListApplicationsParams,) => {

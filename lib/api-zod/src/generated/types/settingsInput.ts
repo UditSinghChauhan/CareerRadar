@@ -10,6 +10,11 @@ import type { SettingsInputTheme } from './settingsInputTheme';
 export interface SettingsInput {
   emailNotifications?: boolean;
   deadlineAlertDays?: number;
+  /**
+     * @minimum 1
+     * @maximum 100
+     */
+  dailyApplicationTarget?: number;
   theme?: SettingsInputTheme;
   timezone?: string;
 }

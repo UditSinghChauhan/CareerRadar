@@ -18,6 +18,7 @@ import {
   db,
   jobsTable,
   companiesTable,
+  jobDismissalsTable,
   type InsertJob,
   type Job,
   type Company,
@@ -65,6 +66,14 @@ export interface JobFilters {
   relevanceTrack?: RelevanceTrack[];
   /** AND `relevance_score >= n`. Unclassified rows (NULL) never match. */
   minRelevanceScore?: number;
+  // ── Phase 3.2 dismissals. ──
+  /**
+   * Hide rows this profile has dismissed. Absent (or null) = no dismissal
+   * filtering at all, which is the pre-3.2 behaviour and what an anonymous
+   * caller always gets — dismissals are per-profile, so there is nothing to
+   * hide from someone who is not signed in.
+   */
+  excludeDismissedForProfileId?: string | null;
 }
 
 /**
@@ -188,6 +197,17 @@ function buildConditions(filters: JobFilters) {
   }
   if (filters.minRelevanceScore !== undefined) {
     conditions.push(gte(jobsTable.relevanceScore, filters.minRelevanceScore));
+  }
+  if (filters.excludeDismissedForProfileId) {
+    // NOT EXISTS rather than NOT IN: a NULL in the subquery would make NOT IN
+    // return NULL for every row and empty the list.
+    conditions.push(
+      sql`not exists (
+        select 1 from ${jobDismissalsTable}
+        where ${jobDismissalsTable.jobId} = ${jobsTable.id}
+          and ${jobDismissalsTable.profileId} = ${filters.excludeDismissedForProfileId}
+      )`,
+    );
   }
 
   return conditions.length > 0 ? and(...conditions) : undefined;

@@ -27,6 +27,13 @@ vi.mock("../providers/verify", () => ({
   runVerification: vi.fn(),
 }));
 
+// Phase 3: the cron trigger reclassifies relevance once the sync finishes, so
+// the recency modifiers move with the calendar. Mocked because the real one is
+// a full-table pass.
+vi.mock("../relevance/backfill-relevance", () => ({
+  backfillRelevance: vi.fn(),
+}));
+
 // The status route is the only one that touches the database, and it stays
 // public. Mocking the db module keeps the suite free of a live connection.
 // The cron route refuses to start a sync on a drifted schema (lib/schema-check).
@@ -49,6 +56,7 @@ vi.mock("@workspace/db", () => ({
 import { getAuth } from "@clerk/express";
 import { schedulerService } from "../providers/scheduler";
 import { runVerification } from "../providers/verify";
+import { backfillRelevance } from "../relevance/backfill-relevance";
 import syncRouter from "./sync";
 
 describe("sync routes — CR-NEW-001 auth gate on work-triggering endpoints", () => {
@@ -212,6 +220,7 @@ describe("POST /api/sync/cron — Phase 5.1 machine-to-machine trigger", () => {
 
   const mockGetAuth = vi.mocked(getAuth);
   const mockRunAll = vi.mocked(schedulerService.runAll);
+  const mockBackfill = vi.mocked(backfillRelevance);
 
   const SECRET = "test-cron-secret-value";
   let previousSecret: string | undefined;
@@ -250,6 +259,13 @@ describe("POST /api/sync/cron — Phase 5.1 machine-to-machine trigger", () => {
     mockRunAll.mockResolvedValue(
       {} as unknown as Awaited<ReturnType<typeof schedulerService.runAll>>,
     );
+    mockBackfill.mockReset();
+    mockBackfill.mockResolvedValue({
+      scanned: 0,
+      updated: 0,
+      durationMs: 0,
+      activeFresherEligible: 0,
+    } as unknown as Awaited<ReturnType<typeof backfillRelevance>>);
     // No Clerk session on any of these calls — a CI runner has none. If the
     // route ever started consulting Clerk, these tests would fail.
     mockGetAuth.mockReturnValue({ userId: undefined } as unknown as ReturnType<
@@ -369,5 +385,76 @@ describe("POST /api/sync/cron — Phase 5.1 machine-to-machine trigger", () => {
 
     expect(res.status).toBe(202);
     await new Promise((resolve) => setTimeout(resolve, 20));
+  });
+
+  // ── Phase 3: relevance is reclassified after every cron sync ──────────────
+  // The classifier's "posted within 7 days +10" and "posted over 45 days −20"
+  // modifiers are functions of the calendar. The sync only rewrites rows a
+  // provider returned, so without this the stored score of every row that
+  // stops being listed freezes and the daily queue ranks by a stale number.
+
+  it("runs the relevance backfill once the sync finishes", async () => {
+    process.env["SYNC_CRON_SECRET"] = SECRET;
+
+    const res = await post({ "x-cron-secret": SECRET });
+    expect(res.status).toBe(202);
+    await res.json();
+
+    await vi.waitFor(() => {
+      expect(mockBackfill).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("does not start the backfill until the sync has resolved", async () => {
+    // Two full-table passes at once is how a 512 MB instance gets OOM-killed.
+    process.env["SYNC_CRON_SECRET"] = SECRET;
+
+    let releaseSync: () => void = () => {};
+    const blocked = new Promise<void>((resolve) => {
+      releaseSync = resolve;
+    });
+    mockRunAll.mockReturnValue(
+      blocked as unknown as ReturnType<typeof schedulerService.runAll>,
+    );
+
+    await (await post({ "x-cron-secret": SECRET })).json();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockRunAll).toHaveBeenCalledTimes(1);
+    expect(mockBackfill).not.toHaveBeenCalled();
+
+    releaseSync();
+    await vi.waitFor(() => {
+      expect(mockBackfill).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("never runs the backfill when the trigger was rejected", async () => {
+    process.env["SYNC_CRON_SECRET"] = SECRET;
+    const res = await post({ "x-cron-secret": "wrong" });
+    expect(res.status).toBe(401);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockBackfill).not.toHaveBeenCalled();
+  });
+
+  it("skips the backfill when the sync failed — stale scores beat wrong ones", async () => {
+    process.env["SYNC_CRON_SECRET"] = SECRET;
+    mockRunAll.mockRejectedValue(new Error("provider exploded"));
+
+    await (await post({ "x-cron-secret": SECRET })).json();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(mockBackfill).not.toHaveBeenCalled();
+  });
+
+  it("survives a rejected backfill without crashing the process", async () => {
+    // The jobs are already in; only their scores are stale, which the next
+    // pass fixes. An unhandled rejection here would kill the instance.
+    process.env["SYNC_CRON_SECRET"] = SECRET;
+    mockBackfill.mockRejectedValue(new Error("backfill exploded"));
+
+    const res = await post({ "x-cron-secret": SECRET });
+    expect(res.status).toBe(202);
+    await res.json();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(mockBackfill).toHaveBeenCalledTimes(1);
   });
 });

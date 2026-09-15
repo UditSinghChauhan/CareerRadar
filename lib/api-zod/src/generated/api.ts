@@ -77,11 +77,16 @@ export const UpdateProfileResponse = zod.object({
 /**
  * @summary Get current user's settings
  */
+export const getSettingsResponseDailyApplicationTargetMax = 100;
+
+
+
 export const GetSettingsResponse = zod.object({
   "id": zod.string(),
   "clerkId": zod.string(),
   "emailNotifications": zod.boolean(),
   "deadlineAlertDays": zod.number().optional(),
+  "dailyApplicationTarget": zod.number().min(1).max(getSettingsResponseDailyApplicationTargetMax).optional().describe('Phase 3.3. How many applications Today\'s Queue asks for per day. Default 10.'),
   "theme": zod.enum(['light', 'dark', 'system']),
   "timezone": zod.string().optional(),
   "createdAt": zod.coerce.date().optional(),
@@ -92,18 +97,28 @@ export const GetSettingsResponse = zod.object({
 /**
  * @summary Update current user's settings
  */
+export const updateSettingsBodyDailyApplicationTargetMax = 100;
+
+
+
 export const UpdateSettingsBody = zod.object({
   "emailNotifications": zod.boolean().optional(),
   "deadlineAlertDays": zod.number().optional(),
+  "dailyApplicationTarget": zod.number().min(1).max(updateSettingsBodyDailyApplicationTargetMax).optional(),
   "theme": zod.enum(['light', 'dark', 'system']).optional(),
   "timezone": zod.string().optional()
 })
+
+export const updateSettingsResponseDailyApplicationTargetMax = 100;
+
+
 
 export const UpdateSettingsResponse = zod.object({
   "id": zod.string(),
   "clerkId": zod.string(),
   "emailNotifications": zod.boolean(),
   "deadlineAlertDays": zod.number().optional(),
+  "dailyApplicationTarget": zod.number().min(1).max(updateSettingsResponseDailyApplicationTargetMax).optional().describe('Phase 3.3. How many applications Today\'s Queue asks for per day. Default 10.'),
   "theme": zod.enum(['light', 'dark', 'system']),
   "timezone": zod.string().optional(),
   "createdAt": zod.coerce.date().optional(),
@@ -123,6 +138,118 @@ export const GetDashboardSummaryResponse = zod.object({
   "bookmarksCount": zod.number().optional(),
   "activeJobsCount": zod.number().optional(),
   "byStatus": zod.record(zod.string(), zod.number()).optional()
+})
+
+
+/**
+ * Phase 3.1. Active, fresher-eligible jobs the user has neither applied to nor dismissed, ranked by `relevanceScore*0.40 + deadlineUrgency*0.30 + freshness*0.20 + dreamCompanyBoost*0.10`, with duplicate listings collapsed by (company, normalised title) keeping the highest-priority instance.
+ *
+ * Each item carries its components and a plain-language reason per component, computed server-side — the frontend must not recompute the ranking.
+ *
+ * Rows whose priority is identical are ordered by a deterministic per-day shuffle (see `queueDay`): stable within a day, rotating between days. Measured on the live table, the top ten all score exactly 63.00, so without this the same ten win every day and the other ~610 equally-relevant rows are never shown.
+ * @summary Today's apply queue — ranked jobs to act on now
+ */
+export const getDailyQueueQueryLimitDefault = 10;
+export const getDailyQueueQueryLimitMax = 50;
+
+
+
+export const GetDailyQueueQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(getDailyQueueQueryLimitMax).default(getDailyQueueQueryLimitDefault).describe('How many rows to return, 1–50. Defaults to 10, which is also the default daily target.')
+})
+
+export const GetDailyQueueResponse = zod.object({
+  "generatedAt": zod.coerce.date().describe('The single instant every row was scored against.'),
+  "queueDay": zod.string().describe('The local date (YYYY-MM-DD, in `progress.timezone`) whose rotation produced this order. Rows that tie on priority are ordered by a deterministic per-day shuffle, so the queue is stable within a day and rotates between days — without it the same ten rows win forever and the rest of the tied block is unreachable.'),
+  "limit": zod.number(),
+  "eligibleCount": zod.number().describe('Rows that passed every exclusion, before duplicate collapse.'),
+  "distinctCount": zod.number().describe('Distinct (company, normalised title) groups among those rows.'),
+  "queryMs": zod.number().optional(),
+  "progress": zod.object({
+  "appliedToday": zod.number(),
+  "target": zod.number(),
+  "streakDays": zod.number().describe('Consecutive days with at least one application. A day still in progress with none logged does not break it.'),
+  "timezone": zod.string().describe('The IANA zone every day boundary was evaluated in.')
+}),
+  "weights": zod.record(zod.string(), zod.number()).optional().describe('The §3.1 weights the server applied, echoed for the UI.'),
+  "items": zod.array(zod.object({
+  "job": zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "sourceId": zod.string().nullish(),
+  "title": zod.string(),
+  "department": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "country": zod.string().nullish().describe('Unreliable — the schema default writes \'India\' whenever a provider omits it. Kept for compatibility; use isIndia \/ locationCountry.'),
+  "locationCity": zod.string().nullish().describe('Phase 2.0 normalised city, e.g. \'Bengaluru\'. Null when unknown.'),
+  "locationRegion": zod.string().nullish().describe('Phase 2.0 normalised state\/province, full name. Null when unknown.'),
+  "locationCountry": zod.string().nullish().describe('Phase 2.0 uppercase ISO-2. Null when unknown.'),
+  "locationMetro": zod.string().nullish().describe('Phase 2.0 metro bucket: \'NCR\', \'MMR\', or the city itself.'),
+  "isIndia": zod.boolean().nullish().describe('Phase 2.0 three-valued: true, false (names another country), or null (the location could not be placed — kept reviewable).'),
+  "isRemote": zod.boolean().optional().describe('Phase 2.0. The location carries a remote marker.'),
+  "relevanceTrack": zod.union([zod.literal('internship'),zod.literal('new_grad'),zod.literal('early_career'),zod.literal('not_relevant'),zod.literal(null)]).nullish().describe('Phase 2.1 classifier verdict. Null until the row has been classified (the relevance backfill has not run yet).'),
+  "relevanceScore": zod.number().nullish().describe('Phase 2.1. 0–100; 0 for not_relevant; null until classified.'),
+  "isFresherEligible": zod.boolean().optional().describe('Phase 2.1. True for every track except not_relevant. False until classified.'),
+  "seniorityExcluded": zod.boolean().optional().describe('Phase 2.1. A seniority\/level\/years marker ruled the row out.'),
+  "relevanceSignals": zod.array(zod.string()).optional().describe('Phase 2.1. Human-readable reasons behind the track and score, in the order they fired — shown on hover so a wrong verdict can be debugged without opening the database.'),
+  "classifiedAt": zod.coerce.date().nullish(),
+  "workMode": zod.enum(['remote', 'hybrid', 'onsite']),
+  "jobType": zod.enum(['internship', 'full_time']),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "stipend": zod.number().nullish(),
+  "currency": zod.string().optional(),
+  "eligibleBatch": zod.array(zod.number()).optional(),
+  "eligibleBranches": zod.array(zod.string()).optional(),
+  "minCgpa": zod.number().nullish(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experienceMin": zod.number().nullish(),
+  "experienceMax": zod.number().nullish(),
+  "deadline": zod.coerce.date().nullish(),
+  "applyUrl": zod.string().nullish(),
+  "sourcePlatform": zod.string().nullish(),
+  "sourceUrl": zod.string().nullish(),
+  "postedDate": zod.coerce.date().nullish(),
+  "status": zod.enum(['active', 'closed', 'draft']),
+  "lastSeenAt": zod.coerce.date().nullish().describe('Last time a provider run observed this posting in its upstream listing. Null for rows never covered by a sweep. Internal staleness bookkeeping — clients should not branch on it.'),
+  "description": zod.string().nullish(),
+  "requirements": zod.string().nullish(),
+  "benefits": zod.array(zod.string()).optional(),
+  "selectionProcess": zod.string().nullish(),
+  "company": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "slug": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "headquarters": zod.string().nullish(),
+  "size": zod.union([zod.literal('startup'),zod.literal('small'),zod.literal('medium'),zod.literal('large'),zod.literal('enterprise'),zod.literal(null)]).nullish(),
+  "type": zod.union([zod.literal('product'),zod.literal('service'),zod.literal('consulting'),zod.literal('startup'),zod.literal(null)]).nullish(),
+  "linkedinUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}).optional(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().nullish()
+}),
+  "priority": zod.number().describe('The weighted total, 0–100.'),
+  "components": zod.object({
+  "relevanceScore": zod.number().describe('The stored relevance score. Saturated in practice — hundreds of active rows sit at exactly 100, which is why the other three components decide the order.'),
+  "deadlineUrgency": zod.number().describe('100 within 72h, 80 within 7d, 40 within 30d, 10 with no deadline (or one over 30 days out, or already past). Currently 10 for every row, because the providers in use publish no deadlines — the reason strings say so explicitly rather than implying the term is separating anything.'),
+  "freshness": zod.number().describe('100 for the first 48 hours, then straight down to 0 at 30 days.'),
+  "dreamCompanyBoost": zod.number().describe('100 when the user has bookmarked a role at this company, else 0.')
+}).describe('The four §3.1 components on their own 0–100 scales, before their weights. `contributions` on a QueueItem is the same object after weighting.'),
+  "contributions": zod.object({
+  "relevanceScore": zod.number().describe('The stored relevance score. Saturated in practice — hundreds of active rows sit at exactly 100, which is why the other three components decide the order.'),
+  "deadlineUrgency": zod.number().describe('100 within 72h, 80 within 7d, 40 within 30d, 10 with no deadline (or one over 30 days out, or already past). Currently 10 for every row, because the providers in use publish no deadlines — the reason strings say so explicitly rather than implying the term is separating anything.'),
+  "freshness": zod.number().describe('100 for the first 48 hours, then straight down to 0 at 30 days.'),
+  "dreamCompanyBoost": zod.number().describe('100 when the user has bookmarked a role at this company, else 0.')
+}).describe('The four §3.1 components on their own 0–100 scales, before their weights. `contributions` on a QueueItem is the same object after weighting.'),
+  "duplicateCount": zod.number().describe('How many rows collapsed into this one by (company, normalised title). 1 means the listing was unique.'),
+  "reasons": zod.array(zod.string()).describe('One plain-language line per component, in weight order.')
+}))
 })
 
 
@@ -227,6 +354,7 @@ export const GetCompanyResponse = zod.object({
 export const listJobsQueryMinRelevanceScoreMin = 0;
 export const listJobsQueryMinRelevanceScoreMax = 100;
 
+export const listJobsQueryShowDismissedDefault = false;
 export const listJobsQuerySortDefault = `newest`;
 export const listJobsQueryPageDefault = 1;
 export const listJobsQueryLimitDefault = 20;
@@ -246,6 +374,7 @@ export const ListJobsQueryParams = zod.object({
   "isFresherEligible": zod.coerce.boolean().optional().describe('Phase 2.1. Only rows the relevance classifier put on the internship, new_grad or early_career track (true) or ruled out (false). Rows not yet classified count as false. Omit for no relevance filtering — the pre-2.1 behaviour exactly.'),
   "relevanceTrack": zod.array(zod.enum(['internship', 'new_grad', 'early_career', 'not_relevant'])).optional().describe('Phase 2.1 tracks, OR-ed together. Unclassified rows never match.'),
   "minRelevanceScore": zod.coerce.number().min(listJobsQueryMinRelevanceScoreMin).max(listJobsQueryMinRelevanceScoreMax).optional().describe('Phase 2.1. Only rows scoring at least this (0–100).'),
+  "showDismissed": zod.coerce.boolean().default(listJobsQueryShowDismissedDefault).describe('Phase 3.2. By default a signed-in caller\'s dismissed jobs are hidden; set true to see them again. Ignored for an anonymous caller, who has no dismissals — the list is then exactly the pre-3.2 one.'),
   "sort": zod.enum(['newest', 'relevance']).default(listJobsQuerySortDefault).describe('`newest` (default, the pre-2.1 order — posted date desc) or `relevance` (Phase 2.1 — relevanceScore desc, unclassified last, newest first among equal scores).'),
   "page": zod.coerce.number().default(listJobsQueryPageDefault),
   "limit": zod.coerce.number().default(listJobsQueryLimitDefault)
@@ -722,6 +851,41 @@ export const DeleteJobResponse = zod.object({
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().nullish()
 })
+
+
+/**
+ * Phase 3.2. A hide, never a delete — the job row is untouched and DELETE restores it. Idempotent: dismissing twice returns the first dismissal rather than creating a second.
+ * @summary Hide a job from the queue and the jobs list
+ */
+export const DismissJobParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const dismissJobBodyReasonMax = 500;
+
+
+
+export const DismissJobBody = zod.object({
+  "reason": zod.string().max(dismissJobBodyReasonMax).nullish().describe('Optional free text. Null or absent = dismissed without a reason.')
+})
+
+export const DismissJobResponse = zod.object({
+  "id": zod.string(),
+  "profileId": zod.string(),
+  "jobId": zod.string(),
+  "reason": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Undo a dismissal
+ */
+export const RestoreDismissedJobParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const RestoreDismissedJobResponse = zod.void()
 
 
 /**

@@ -47,6 +47,10 @@ relevanceTrack?: ListJobsRelevanceTrackItem[];
  */
 minRelevanceScore?: number;
 /**
+ * Phase 3.2. By default a signed-in caller's dismissed jobs are hidden; set true to see them again. Ignored for an anonymous caller, who has no dismissals — the list is then exactly the pre-3.2 one.
+ */
+showDismissed?: boolean;
+/**
  * `newest` (default, the pre-2.1 order — posted date desc) or `relevance` (Phase 2.1 — relevanceScore desc, unclassified last, newest first among equal scores).
  */
 sort?: ListJobsSort;

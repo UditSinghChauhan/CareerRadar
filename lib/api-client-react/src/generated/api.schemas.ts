@@ -95,6 +95,12 @@ export interface Settings {
   clerkId: string;
   emailNotifications: boolean;
   deadlineAlertDays?: number;
+  /**
+     * Phase 3.3. How many applications Today's Queue asks for per day. Default 10.
+     * @minimum 1
+     * @maximum 100
+     */
+  dailyApplicationTarget?: number;
   theme: SettingsTheme;
   timezone?: string;
   createdAt?: string;
@@ -114,6 +120,11 @@ export const SettingsInputTheme = {
 export interface SettingsInput {
   emailNotifications?: boolean;
   deadlineAlertDays?: number;
+  /**
+     * @minimum 1
+     * @maximum 100
+     */
+  dailyApplicationTarget?: number;
   theme?: SettingsInputTheme;
   timezone?: string;
 }
@@ -130,6 +141,60 @@ export interface DashboardSummary {
   activeJobsCount?: number;
   byStatus?: DashboardSummaryByStatus;
 }
+
+/**
+ * The four §3.1 components on their own 0–100 scales, before their weights. `contributions` on a QueueItem is the same object after weighting.
+ */
+export interface PriorityComponents {
+  /** The stored relevance score. Saturated in practice — hundreds of active rows sit at exactly 100, which is why the other three components decide the order. */
+  relevanceScore: number;
+  /** 100 within 72h, 80 within 7d, 40 within 30d, 10 with no deadline (or one over 30 days out, or already past). Currently 10 for every row, because the providers in use publish no deadlines — the reason strings say so explicitly rather than implying the term is separating anything. */
+  deadlineUrgency: number;
+  /** 100 for the first 48 hours, then straight down to 0 at 30 days. */
+  freshness: number;
+  /** 100 when the user has bookmarked a role at this company, else 0. */
+  dreamCompanyBoost: number;
+}
+
+/**
+ * Phase 2.1 classifier verdict. Null until the row has been classified (the relevance backfill has not run yet).
+ * @nullable
+ */
+export type JobRelevanceTrack = typeof JobRelevanceTrack[keyof typeof JobRelevanceTrack] | null;
+
+
+export const JobRelevanceTrack = {
+  internship: 'internship',
+  new_grad: 'new_grad',
+  early_career: 'early_career',
+  not_relevant: 'not_relevant',
+} as const;
+
+export type JobWorkMode = typeof JobWorkMode[keyof typeof JobWorkMode];
+
+
+export const JobWorkMode = {
+  remote: 'remote',
+  hybrid: 'hybrid',
+  onsite: 'onsite',
+} as const;
+
+export type JobJobType = typeof JobJobType[keyof typeof JobJobType];
+
+
+export const JobJobType = {
+  internship: 'internship',
+  full_time: 'full_time',
+} as const;
+
+export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
+
+
+export const JobStatus = {
+  active: 'active',
+  closed: 'closed',
+  draft: 'draft',
+} as const;
 
 /**
  * @nullable
@@ -182,96 +247,6 @@ export interface Company {
   /** @nullable */
   updatedAt?: string | null;
 }
-
-export type CompanyInputSize = typeof CompanyInputSize[keyof typeof CompanyInputSize];
-
-
-export const CompanyInputSize = {
-  startup: 'startup',
-  small: 'small',
-  medium: 'medium',
-  large: 'large',
-  enterprise: 'enterprise',
-} as const;
-
-export type CompanyInputType = typeof CompanyInputType[keyof typeof CompanyInputType];
-
-
-export const CompanyInputType = {
-  product: 'product',
-  service: 'service',
-  consulting: 'consulting',
-  startup: 'startup',
-} as const;
-
-export interface CompanyInput {
-  name: string;
-  slug: string;
-  logoUrl?: string;
-  website?: string;
-  industry?: string;
-  description?: string;
-  headquarters?: string;
-  size?: CompanyInputSize;
-  type?: CompanyInputType;
-  linkedinUrl?: string;
-}
-
-export interface CompanyListResponse {
-  data: Company[];
-  meta: PaginationMeta;
-}
-
-export interface JobSource {
-  id: string;
-  name: string;
-  /** @nullable */
-  baseUrl?: string | null;
-  /** @nullable */
-  logoUrl?: string | null;
-  isActive?: boolean;
-  createdAt: string;
-}
-
-/**
- * Phase 2.1 classifier verdict. Null until the row has been classified (the relevance backfill has not run yet).
- * @nullable
- */
-export type JobRelevanceTrack = typeof JobRelevanceTrack[keyof typeof JobRelevanceTrack] | null;
-
-
-export const JobRelevanceTrack = {
-  internship: 'internship',
-  new_grad: 'new_grad',
-  early_career: 'early_career',
-  not_relevant: 'not_relevant',
-} as const;
-
-export type JobWorkMode = typeof JobWorkMode[keyof typeof JobWorkMode];
-
-
-export const JobWorkMode = {
-  remote: 'remote',
-  hybrid: 'hybrid',
-  onsite: 'onsite',
-} as const;
-
-export type JobJobType = typeof JobJobType[keyof typeof JobJobType];
-
-
-export const JobJobType = {
-  internship: 'internship',
-  full_time: 'full_time',
-} as const;
-
-export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
-
-
-export const JobStatus = {
-  active: 'active',
-  closed: 'closed',
-  draft: 'draft',
-} as const;
 
 export interface Job {
   id: string;
@@ -378,6 +353,117 @@ export interface Job {
   createdAt: string;
   /** @nullable */
   updatedAt?: string | null;
+}
+
+export interface QueueItem {
+  job: Job;
+  /** The weighted total, 0–100. */
+  priority: number;
+  components: PriorityComponents;
+  contributions: PriorityComponents;
+  /** How many rows collapsed into this one by (company, normalised title). 1 means the listing was unique. */
+  duplicateCount: number;
+  /** One plain-language line per component, in weight order. */
+  reasons: string[];
+}
+
+export interface DailyProgress {
+  appliedToday: number;
+  target: number;
+  /** Consecutive days with at least one application. A day still in progress with none logged does not break it. */
+  streakDays: number;
+  /** The IANA zone every day boundary was evaluated in. */
+  timezone: string;
+}
+
+/**
+ * The §3.1 weights the server applied, echoed for the UI.
+ */
+export type DailyQueueWeights = {[key: string]: number};
+
+export interface DailyQueue {
+  /** The single instant every row was scored against. */
+  generatedAt: string;
+  /** The local date (YYYY-MM-DD, in `progress.timezone`) whose rotation produced this order. Rows that tie on priority are ordered by a deterministic per-day shuffle, so the queue is stable within a day and rotates between days — without it the same ten rows win forever and the rest of the tied block is unreachable. */
+  queueDay: string;
+  limit: number;
+  /** Rows that passed every exclusion, before duplicate collapse. */
+  eligibleCount: number;
+  /** Distinct (company, normalised title) groups among those rows. */
+  distinctCount: number;
+  queryMs?: number;
+  progress: DailyProgress;
+  /** The §3.1 weights the server applied, echoed for the UI. */
+  weights?: DailyQueueWeights;
+  items: QueueItem[];
+}
+
+export interface DismissJobInput {
+  /**
+     * Optional free text. Null or absent = dismissed without a reason.
+     * @maxLength 500
+     * @nullable
+     */
+  reason?: string | null;
+}
+
+export interface JobDismissal {
+  id: string;
+  profileId: string;
+  jobId: string;
+  /** @nullable */
+  reason?: string | null;
+  createdAt: string;
+}
+
+export type CompanyInputSize = typeof CompanyInputSize[keyof typeof CompanyInputSize];
+
+
+export const CompanyInputSize = {
+  startup: 'startup',
+  small: 'small',
+  medium: 'medium',
+  large: 'large',
+  enterprise: 'enterprise',
+} as const;
+
+export type CompanyInputType = typeof CompanyInputType[keyof typeof CompanyInputType];
+
+
+export const CompanyInputType = {
+  product: 'product',
+  service: 'service',
+  consulting: 'consulting',
+  startup: 'startup',
+} as const;
+
+export interface CompanyInput {
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  website?: string;
+  industry?: string;
+  description?: string;
+  headquarters?: string;
+  size?: CompanyInputSize;
+  type?: CompanyInputType;
+  linkedinUrl?: string;
+}
+
+export interface CompanyListResponse {
+  data: Company[];
+  meta: PaginationMeta;
+}
+
+export interface JobSource {
+  id: string;
+  name: string;
+  /** @nullable */
+  baseUrl?: string | null;
+  /** @nullable */
+  logoUrl?: string | null;
+  isActive?: boolean;
+  createdAt: string;
 }
 
 export type JobInputWorkMode = typeof JobInputWorkMode[keyof typeof JobInputWorkMode];
@@ -647,6 +733,15 @@ export interface Notification {
   createdAt: string;
 }
 
+export type GetDailyQueueParams = {
+/**
+ * How many rows to return, 1–50. Defaults to 10, which is also the default daily target.
+ * @minimum 1
+ * @maximum 50
+ */
+limit?: number;
+};
+
 export type ListCompaniesParams = {
 search?: string;
 industry?: string;
@@ -689,6 +784,10 @@ relevanceTrack?: ListJobsRelevanceTrackItem[];
  * @maximum 100
  */
 minRelevanceScore?: number;
+/**
+ * Phase 3.2. By default a signed-in caller's dismissed jobs are hidden; set true to see them again. Ignored for an anonymous caller, who has no dismissals — the list is then exactly the pre-3.2 one.
+ */
+showDismissed?: boolean;
 /**
  * `newest` (default, the pre-2.1 order — posted date desc) or `relevance` (Phase 2.1 — relevanceScore desc, unclassified last, newest first among equal scores).
  */

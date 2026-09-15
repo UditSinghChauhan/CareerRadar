@@ -340,6 +340,9 @@ export function JobsPage() {
     isFresherEligible: filters.fresherOnly ? true : undefined,
     relevanceTrack: filters.tracks.length > 0 ? filters.tracks : undefined,
     minRelevanceScore: filters.minScore > 0 ? filters.minScore : undefined,
+    // Phase 3.2 — dismissed rows are hidden server-side unless asked for.
+    // Absent means "hide them", so this is only ever sent to widen the list.
+    showDismissed: filters.showDismissed ? true : undefined,
     // §2.3: for a profile with a graduation year, the default feed is also
     // scoped to that batch (rows naming no batch still match). Only while
     // the fresher view is on, so "Show everything" really is everything.

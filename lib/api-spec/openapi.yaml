@@ -142,6 +142,52 @@ paths:
         "401":
           description: Unauthorized
 
+  /dashboard/today:
+    get:
+      operationId: getDailyQueue
+      tags: [dashboard]
+      summary: Today's apply queue — ranked jobs to act on now
+      description: >-
+        Phase 3.1. Active, fresher-eligible jobs the user has neither applied
+        to nor dismissed, ranked by
+        `relevanceScore*0.40 + deadlineUrgency*0.30 + freshness*0.20 +
+        dreamCompanyBoost*0.10`, with duplicate listings collapsed by
+        (company, normalised title) keeping the highest-priority instance.
+
+
+        Each item carries its components and a plain-language reason per
+        component, computed server-side — the frontend must not recompute the
+        ranking.
+
+
+        Rows whose priority is identical are ordered by a deterministic
+        per-day shuffle (see `queueDay`): stable within a day, rotating
+        between days. Measured on the live table, the top ten all score
+        exactly 63.00, so without this the same ten win every day and the
+        other ~610 equally-relevant rows are never shown.
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: query
+          name: limit
+          description: >-
+            How many rows to return, 1–50. Defaults to 10, which is also the
+            default daily target.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        "200":
+          description: The ranked queue plus today's progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyQueue"
+        "401":
+          description: Unauthorized
+
   # ─── Companies ────────────────────────────────────────────────────────────────
 
   /companies:
@@ -320,6 +366,16 @@ paths:
             minimum: 0
             maximum: 100
         - in: query
+          name: showDismissed
+          description: >-
+            Phase 3.2. By default a signed-in caller's dismissed jobs are
+            hidden; set true to see them again. Ignored for an anonymous
+            caller, who has no dismissals — the list is then exactly the
+            pre-3.2 one.
+          schema:
+            type: boolean
+            default: false
+        - in: query
           name: sort
           description: >-
             `newest` (default, the pre-2.1 order — posted date desc) or
@@ -445,6 +501,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Job"
+
+  /jobs/{id}/dismiss:
+    post:
+      operationId: dismissJob
+      tags: [jobs]
+      summary: Hide a job from the queue and the jobs list
+      description: >-
+        Phase 3.2. A hide, never a delete — the job row is untouched and
+        DELETE restores it. Idempotent: dismissing twice returns the first
+        dismissal rather than creating a second.
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DismissJobInput"
+      responses:
+        "201":
+          description: The dismissal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobDismissal"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Job not found
+        "409":
+          description: The signed-in user has no profile row yet
+    delete:
+      operationId: restoreDismissedJob
+      tags: [jobs]
+      summary: Undo a dismissal
+      security:
+        - clerkAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Dismissal removed
+        "401":
+          description: Unauthorized
+        "404":
+          description: The job was not dismissed
 
   # ─── Applications ─────────────────────────────────────────────────────────────
 
@@ -928,6 +1040,13 @@ components:
           type: boolean
         deadlineAlertDays:
           type: integer
+        dailyApplicationTarget:
+          description: >-
+            Phase 3.3. How many applications Today's Queue asks for per day.
+            Default 10.
+          type: integer
+          minimum: 1
+          maximum: 100
         theme:
           type: string
           enum: [light, dark, system]
@@ -947,6 +1066,10 @@ components:
           type: boolean
         deadlineAlertDays:
           type: integer
+        dailyApplicationTarget:
+          type: integer
+          minimum: 1
+          maximum: 100
         theme:
           type: string
           enum: [light, dark, system]
@@ -982,6 +1105,150 @@ components:
           type: object
           additionalProperties:
             type: integer
+
+    # ─── Daily queue (Phase 3) ──────────────────────────────────────────────────
+
+    PriorityComponents:
+      description: >-
+        The four §3.1 components on their own 0–100 scales, before their
+        weights. `contributions` on a QueueItem is the same object after
+        weighting.
+      type: object
+      required: [relevanceScore, deadlineUrgency, freshness, dreamCompanyBoost]
+      properties:
+        relevanceScore:
+          description: >-
+            The stored relevance score. Saturated in practice — hundreds of
+            active rows sit at exactly 100, which is why the other three
+            components decide the order.
+          type: number
+        deadlineUrgency:
+          description: >-
+            100 within 72h, 80 within 7d, 40 within 30d, 10 with no deadline
+            (or one over 30 days out, or already past). Currently 10 for every
+            row, because the providers in use publish no deadlines — the
+            reason strings say so explicitly rather than implying the term is
+            separating anything.
+          type: number
+        freshness:
+          description: 100 for the first 48 hours, then straight down to 0 at 30 days.
+          type: number
+        dreamCompanyBoost:
+          description: 100 when the user has bookmarked a role at this company, else 0.
+          type: number
+
+    QueueItem:
+      type: object
+      required:
+        [job, priority, components, contributions, duplicateCount, reasons]
+      properties:
+        job:
+          $ref: "#/components/schemas/Job"
+        priority:
+          description: The weighted total, 0–100.
+          type: number
+        components:
+          $ref: "#/components/schemas/PriorityComponents"
+        contributions:
+          $ref: "#/components/schemas/PriorityComponents"
+        duplicateCount:
+          description: >-
+            How many rows collapsed into this one by (company, normalised
+            title). 1 means the listing was unique.
+          type: integer
+        reasons:
+          description: One plain-language line per component, in weight order.
+          type: array
+          items:
+            type: string
+
+    DailyProgress:
+      type: object
+      required: [appliedToday, target, streakDays, timezone]
+      properties:
+        appliedToday:
+          type: integer
+        target:
+          type: integer
+        streakDays:
+          description: >-
+            Consecutive days with at least one application. A day still in
+            progress with none logged does not break it.
+          type: integer
+        timezone:
+          description: The IANA zone every day boundary was evaluated in.
+          type: string
+
+    DailyQueue:
+      type: object
+      required:
+        [
+          generatedAt,
+          queueDay,
+          limit,
+          eligibleCount,
+          distinctCount,
+          progress,
+          items,
+        ]
+      properties:
+        generatedAt:
+          description: The single instant every row was scored against.
+          type: string
+          format: date-time
+        queueDay:
+          description: >-
+            The local date (YYYY-MM-DD, in `progress.timezone`) whose rotation
+            produced this order. Rows that tie on priority are ordered by a
+            deterministic per-day shuffle, so the queue is stable within a day
+            and rotates between days — without it the same ten rows win
+            forever and the rest of the tied block is unreachable.
+          type: string
+        limit:
+          type: integer
+        eligibleCount:
+          description: Rows that passed every exclusion, before duplicate collapse.
+          type: integer
+        distinctCount:
+          description: Distinct (company, normalised title) groups among those rows.
+          type: integer
+        queryMs:
+          type: integer
+        progress:
+          $ref: "#/components/schemas/DailyProgress"
+        weights:
+          description: The §3.1 weights the server applied, echoed for the UI.
+          type: object
+          additionalProperties:
+            type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueueItem"
+
+    DismissJobInput:
+      type: object
+      properties:
+        reason:
+          description: Optional free text. Null or absent = dismissed without a reason.
+          type: ["string", "null"]
+          maxLength: 500
+
+    JobDismissal:
+      type: object
+      required: [id, profileId, jobId, createdAt]
+      properties:
+        id:
+          type: string
+        profileId:
+          type: string
+        jobId:
+          type: string
+        reason:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
 
     # ─── Company ────────────────────────────────────────────────────────────────
 
