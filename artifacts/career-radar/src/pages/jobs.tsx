@@ -20,6 +20,7 @@ import {
   useGetApplicationStatusMap,
   useCreateApplication,
   useListApplications,
+  useListMatchScores,
 } from "@workspace/api-client-react";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,6 +28,7 @@ import {
   getListJobsQueryKey,
   getGetApplicationStatusMapQueryKey,
   getListApplicationsQueryKey,
+  getListMatchScoresQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -344,6 +346,33 @@ export function JobsPage() {
     [statusMapData],
   );
 
+  /**
+   * Phase 8 — AI match scores, as their OWN query.
+   *
+   * This is the thing §8 asks for: "never block a card's render waiting for
+   * it." The grid renders off `useListJobs` alone. This query resolves
+   * independently and, when it does, cards gain a badge; if it is slow, fails,
+   * or returns nothing because no score has been computed yet, every card still
+   * renders exactly as it did before Phase 8. There is no suspense boundary, no
+   * spinner and no `isLoading` gate tied to it anywhere on this page.
+   *
+   * It is a single pure table read for the whole profile rather than one
+   * request per card, and it is deliberately not invalidated by apply or save:
+   * scores change only when the nightly batch runs or a drawer computes one, so
+   * a long staleTime costs nothing and saves a request on every filter change.
+   */
+  const { data: matchScoreData } = useListMatchScores({
+    query: {
+      queryKey: getListMatchScoresQueryKey(),
+      staleTime: 10 * 60 * 1000,
+    },
+  });
+  const matchScores = useMemo<Record<string, number>>(() => {
+    const map: Record<string, number> = {};
+    for (const row of matchScoreData?.scores ?? []) map[row.jobId] = row.score;
+    return map;
+  }, [matchScoreData]);
+
   // The status map is status-only by design. The applied-on date for the badge
   // comes from the applications list, which uses the same limit as the
   // Applications page so both share one React Query cache entry.
@@ -554,9 +583,11 @@ export function JobsPage() {
         onApply={handleApply}
         onSave={handleSave}
         isApplyPending={pendingJobIds.has(job.id)}
+        matchScore={matchScores[job.id] ?? null}
       />
     ),
     [
+      matchScores,
       bookmarkedJobIds,
       handleBookmarkToggle,
       creatingBookmark,

@@ -17,4 +17,10 @@ export interface JobMatchScore {
   matchingSkills: string[];
   missingSkills: string[];
   recommendations: string[];
+  /** Phase 8. When this score was computed. Additive — the six fields above are unchanged. */
+  computedAt?: Date;
+  /** True when the answer came out of `job_match_scores` and cost no Gemini request. */
+  cached?: boolean;
+  /** True when the stored score was computed from different profile skills or a different resume, and the daily budget was already spent so it could not be recomputed. The number is still shown; it is just older than the profile. */
+  stale?: boolean;
 }

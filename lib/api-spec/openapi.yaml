@@ -1151,6 +1151,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/AIStatus"
 
+  /ai/match-scores:
+    get:
+      operationId: listMatchScores
+      tags: [ai]
+      summary: Every stored AI match score for the signed-in user
+      description: >-
+        A pure read of the `job_match_scores` table — it never calls Gemini and
+        never computes anything. The Jobs grid uses it to put a score badge on a
+        card AFTER the card has rendered, which is why it carries only the id
+        and the number and not the summary or the skill arrays.
+      security:
+        - clerkAuth: []
+      responses:
+        "200":
+          description: Stored scores
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchScoreList"
+        "401":
+          description: Unauthorized
+
   /ai/jobs/{id}/match:
     get:
       operationId: getJobMatchScore
@@ -1194,9 +1216,46 @@ components:
         available:
           type: boolean
         provider:
+          description: The Gemini model this deployment calls.
           type: string
         description:
           type: string
+        dailyBudget:
+          description: >-
+            Phase 8. The most Gemini requests this deployment will make in any
+            rolling 24 hours, from `AI_DAILY_BUDGET`.
+          type: integer
+        spentToday:
+          description: >-
+            Scores computed in the last 24 hours, counted from
+            `job_match_scores.computed_at` — which survives a restart, unlike an
+            in-process counter on a service that spins down every 15 minutes.
+          type: integer
+        remainingToday:
+          type: integer
+
+    MatchScoreList:
+      type: object
+      required: [scores]
+      properties:
+        scores:
+          type: array
+          items:
+            $ref: "#/components/schemas/MatchScoreSummary"
+
+    MatchScoreSummary:
+      type: object
+      required: [jobId, score]
+      properties:
+        jobId:
+          type: string
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        computedAt:
+          type: string
+          format: date-time
 
     JobMatchScore:
       type: object
@@ -1223,6 +1282,24 @@ components:
           type: array
           items:
             type: string
+        computedAt:
+          description: >-
+            Phase 8. When this score was computed. Additive — the six fields
+            above are unchanged.
+          type: string
+          format: date-time
+        cached:
+          description: >-
+            True when the answer came out of `job_match_scores` and cost no
+            Gemini request.
+          type: boolean
+        stale:
+          description: >-
+            True when the stored score was computed from different profile
+            skills or a different resume, and the daily budget was already spent
+            so it could not be recomputed. The number is still shown; it is just
+            older than the profile.
+          type: boolean
 
     # ─── Shared ─────────────────────────────────────────────────────────────────
 

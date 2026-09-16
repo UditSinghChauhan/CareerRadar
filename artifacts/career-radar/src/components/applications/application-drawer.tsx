@@ -22,6 +22,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { MatchInsights } from "./match-insights";
 import {
   DEADLINE_CLASSES,
   STATUS_LABELS,
@@ -171,6 +172,18 @@ export function ApplicationDrawer({
         </SheetHeader>
 
         <div className="mt-6 flex flex-col gap-4">
+          {/*
+            Phase 8 — AI match insights, missing skills first.
+
+            Above the editable fields because it is the reason to open this
+            drawer before an interview, and because it is the only thing here
+            the user reads rather than edits. It renders nothing at all when
+            GEMINI_API_KEY is unset or no score is available, which is why
+            there is no heading or empty state around it — an absent section
+            must leave no trace.
+          */}
+          <MatchInsights jobId={application.jobId} />
+
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="app-status" className="text-xs">
               Status

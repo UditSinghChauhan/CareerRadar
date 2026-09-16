@@ -8,6 +8,7 @@ import {
   BadgeCheck,
   Clock,
   Check,
+  Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -36,6 +37,17 @@ interface JobCardProps {
   onApply?: (jobId: string) => void;
   onSave?: (jobId: string) => void;
   isApplyPending?: boolean;
+  /**
+   * Phase 8. The stored AI match score for this job, 0–100, or null/undefined
+   * when none has been computed yet.
+   *
+   * It arrives from a SEPARATE query to `GET /api/ai/match-scores`, which is a
+   * pure table read. The card never waits for it: it renders with the badge
+   * absent and gains one when the query resolves, which is what §8's "never
+   * block a card's render waiting for it" means in practice. A card whose score
+   * has not been computed simply never shows the badge.
+   */
+  matchScore?: number | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -146,6 +158,20 @@ const trackBadge: Record<string, { label: string; className: string }> = {
   },
 };
 
+/**
+ * Phase 8. Three bands rather than a continuous gradient: the number comes from
+ * a language model and is not precise to the point, so 71 and 74 should not
+ * look like different things. Green is "apply", amber is "worth a look", muted
+ * is "probably not".
+ */
+function matchScoreClass(score: number): string {
+  if (score >= 75)
+    return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
+  if (score >= 50)
+    return "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30";
+  return "bg-muted text-muted-foreground border-border";
+}
+
 const sourcePlatformLabels: Record<string, string> = {
   greenhouse: "Greenhouse",
   lever: "Lever",
@@ -170,6 +196,7 @@ function JobCardImpl({
   onApply,
   onSave,
   isApplyPending,
+  matchScore,
 }: JobCardProps) {
   const [imgError, setImgError] = useState(false);
   const company = job.company;
@@ -376,6 +403,28 @@ function JobCardImpl({
             </TooltipContent>
           </Tooltip>
         )}
+        {/* Phase 8 — AI match score. Present only when one has been computed;
+            its absence is the normal state for most of the table and is not an
+            error, a spinner or a placeholder. */}
+        {typeof matchScore === "number" && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="outline"
+                data-testid="ai-match-badge"
+                data-match-score={matchScore}
+                className={`text-xs font-medium cursor-default ${matchScoreClass(matchScore)}`}
+              >
+                <Sparkles className="mr-1 h-3 w-3" />
+                {matchScore}% match
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs text-xs">
+              How well your profile skills fit this posting, scored by AI. Open
+              the application in the tracker for the missing-skills breakdown.
+            </TooltipContent>
+          </Tooltip>
+        )}
         <Badge variant="secondary" className="text-xs font-medium">
           {job.jobType === "internship" ? "Internship" : "Full Time"}
         </Badge>
@@ -572,6 +621,8 @@ function JobCardImpl({
  * primitive or a stable reference: `job` is an object out of the React Query
  * cache, which only changes identity when the query refetches, and the four
  * callbacks are `useCallback`-wrapped in jobs.tsx. If a new prop is ever added
- * here, it has to hold to that or the memo silently stops helping.
+ * here, it has to hold to that or the memo silently stops helping. Phase 8's
+ * `matchScore` is a number, which does — the score map is resolved to a
+ * primitive in jobs.tsx rather than passed down as an object.
  */
 export const JobCard = memo(JobCardImpl);

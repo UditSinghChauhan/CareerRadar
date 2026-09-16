@@ -10,3 +10,4 @@ export * from "./jobDismissals";
 export * from "./savedSearches";
 export * from "./notifications";
 export * from "./providerSyncLogs";
+export * from "./jobMatchScores";

@@ -84,6 +84,12 @@ it is where it is rather than trusting a number.
   skills, server-side pagination, saved searches.
 - **Notifications** — deadline reminders at 72h and 24h, new-job alerts against
   saved searches, deduplicated so six-hourly passes do not repeat themselves.
+- **AI match scores** — a 0–100 fit score on the card and, in the application
+  drawer, the skills this posting wants that your profile does not show. Scores
+  are computed once and stored, so opening the same job again costs nothing;
+  a nightly batch scores the top 50 unscored roles by relevance. Optional
+  everywhere: with no `GEMINI_API_KEY` the badge and the block are simply
+  absent.
 
 <table>
 <tr>
@@ -511,8 +517,9 @@ In rough order of how much they would change the daily experience:
 3. **A relevance score with more resolution at the top.** 719 of today's 2,109
    eligible rows tie at exactly 100 and the rotation exists to work around that. Skill overlap
    against the profile would break the tie on something meaningful rather than
-   on a hash — the AI matching service already computes exactly this, and
-   folding it in as a small, optional modifier is the obvious next step.
+   on a hash — the AI matching service already computes exactly this, and since
+   Phase 8 it stores the answer in `job_match_scores`, so folding it in as a
+   small, optional modifier is now a read rather than a request.
 4. **Email digests.** The notification bell only works if you open the app;
    the whole point is the days you do not.
 5. **A production Clerk instance.** The live deployment runs on a development

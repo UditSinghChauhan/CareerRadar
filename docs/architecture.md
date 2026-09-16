@@ -277,6 +277,53 @@ OR'd in, except when the user is using `websearch_to_tsquery`'s own syntax
 (a quoted phrase, a `-negation`, an explicit `or`), where a flat AND of every
 word would undo them.
 
+## AI match scores — `services/match-scores.service.ts`, `services/match-scores.batch.ts`
+
+Phase 8. Scoring a profile against a posting costs a Gemini request; the point
+of this layer is to make sure each one is spent at most once.
+
+**The cache is a table, not a process.** `getJobMatchScore()` used to sit behind
+a 200-entry in-memory LRU, which on a service that spins down after 15 minutes
+idle was empty on almost every request. The cache is `job_match_scores` now, one
+row per `(profile_id, job_id)`, and it survives restarts. Viewing the same job
+twice makes zero outbound calls — the assertion in
+`services/match-scores.test.ts` is the number of times the injected `generate`
+function ran, not a cache-hit ratio.
+
+**Freshness is a fingerprint, not a timestamp.** A row stores a hash of the two
+inputs the recompute rule names — the sorted `skills` array and `resumeUrl` — and
+only a mismatch forces a recompute. Comparing `profiles.updated_at` against
+`computed_at` instead would invalidate every stored score the moment the user
+edited their CGPA, which on today's table is up to 2,100 requests for a change
+the prompt does not read.
+
+**The limits were measured, and one of them could not be.** Bursting this
+project's own key on 2026-09-16 and reading the `QuotaFailure` detail out of the
+429 gave `gemini-3.5-flash-lite` 15 requests/minute and `gemini-3.6-flash` 5;
+one real scoring call is 539 prompt + 138 output tokens in about 3.2 seconds.
+The per-DAY allowance is not published any more and cannot be observed without
+exhausting it, so nothing in the design depends on knowing it. Instead the batch
+paces itself to 12 requests/minute (80% of the measured 15), the live path is
+capped by `AI_DAILY_BUDGET` counted off `computed_at`, and a 429 is classified
+by the quota id the server itself returns: `PerMinute` is waited out,
+`PerDay` stops the run.
+
+**Frequency is the lever, not the per-run cap.** This is the Phase 5 JSearch
+lesson applied: a 50-job cap protects nothing if the job runs four times a day.
+`.github/workflows/ai-batch.yml` runs it once nightly rather than hanging it off
+the six-hourly sync, and `runBatchScoringForOwner` clamps each run to whatever is
+left of the daily budget so an extra trigger cannot spend a second full batch.
+
+**What it scores is the top of the relevance ranking**, never arbitrary rows: a
+request spent on a `not_relevant` posting is one not spent on the internship at
+the top of the queue, so the selection filters on `is_fresher_eligible` and
+orders by `relevance_score DESC NULLS LAST`.
+
+Nothing in the UI waits on any of it. The Jobs grid reads scores from a separate
+`GET /api/ai/match-scores` query and renders cards without it; the apply drawer's
+interview-prep block — which leads with `missingSkills` — renders nothing at all
+when no key is configured, and never issues its request in that case.
+
 ## Testing
 
 | Layer | How |

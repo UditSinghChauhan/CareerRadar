@@ -9,6 +9,7 @@
  * POST /api/admin/backfill-location — recompute the normalised location columns
  * POST /api/admin/backfill-relevance — recompute the relevance track and score
  * POST /api/admin/generate-notifications — run the Phase 6.2 generator now
+ * POST /api/admin/score-jobs — run the Phase 8 batch match scorer now
  *
  * Not in `lib/api-spec/openapi.yaml`: no browser code calls these, matching the
  * convention already used for the sync routes.
@@ -26,6 +27,7 @@ import {
   relevanceTrackCountsFromDb,
 } from "../relevance/backfill-relevance";
 import { generateNotifications } from "../notifications/generator";
+import { parseLimit, runBatchScoringForOwner } from "./ai";
 
 const router = Router();
 
@@ -151,6 +153,36 @@ router.post("/admin/generate-notifications", requireAuth, async (req, res) => {
     return;
   }
   res.json(report);
+});
+
+// ─── POST /api/admin/score-jobs ───────────────────────────────────────────────
+// Runs the Phase 8 nightly batch scorer immediately, instead of waiting for
+// .github/workflows/ai-batch.yml. Same reason the backfills have a route: there
+// is no shell on the Render box.
+//
+// UNLIKE THE BACKFILLS, THIS ONE COSTS MONEY-EQUIVALENT QUOTA. Every job it
+// scores is one Gemini request against a free-tier allowance measured at 15
+// requests/minute, so it is not safe to call in a loop the way
+// /admin/backfill-relevance is. It clamps itself to what is left of
+// AI_DAILY_BUDGET in the rolling 24 hours and reports the spend.
+//
+// ?limit=N      score at most N jobs (1–200); default 50.
+// ?dryRun=true  report which jobs WOULD be scored and make no requests at all.
+
+router.post("/admin/score-jobs", requireAuth, async (req, res) => {
+  try {
+    const report = await runBatchScoringForOwner({
+      ...(parseLimit(req.query["limit"]) !== undefined && {
+        limit: parseLimit(req.query["limit"]) as number,
+      }),
+      dryRun: req.query["dryRun"] === "true",
+    });
+    res.json(report);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    req.log.error({ err }, "POST /admin/score-jobs — batch scoring failed");
+    res.status(500).json({ error: msg });
+  }
 });
 
 export default router;

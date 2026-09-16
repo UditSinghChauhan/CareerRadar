@@ -1,0 +1,86 @@
+# CareerRadar nightly AI match scoring (Phase 8).
+#
+# Separate from `sync.yml` on purpose, and this is the single most important
+# cost decision in the phase.
+#
+# The sync workflow runs every six hours. Hanging the batch scorer off it would
+# be four runs a day and four times the Gemini spend for the same 50 jobs —
+# which is the Phase 5 JSearch lesson exactly: a per-run cap cannot protect a
+# per-day quota, because the per-day cost is the cap multiplied by the number of
+# runs. Frequency is the lever, so the batch gets its own schedule and runs ONCE.
+#
+# WHAT ONE RUN COSTS (measured 2026-09-16 against the project's own key)
+#   model                  gemini-3.5-flash-lite
+#   free-tier limit        15 requests/minute, read from the QuotaFailure detail
+#                          of a real 429 — Google no longer publishes per-model
+#                          free-tier tables, and the per-DAY allowance could not
+#                          be measured without exhausting it
+#   one scoring request    539 prompt + 138 output tokens, ~3.2s
+#   this run, worst case   50 requests / ~34,000 tokens, paced to 12 req/min
+#                          (80% of the measured 15) so it takes ~4–5 minutes
+#   typical run            far fewer: it only scores jobs with no usable score,
+#                          so once the top of the relevance ranking is covered
+#                          and the profile has not changed, it makes 0 requests
+#
+# 02:30 UTC is 08:00 IST — the run finishes before the user opens the app, so
+# the morning's queue already carries scores, and it does not collide with the
+# 00:00/06:00 sync passes.
+#
+# Repo secrets required (the same two sync.yml uses):
+#   CAREERRADAR_URL   https://careerradar-34ec.onrender.com
+#   SYNC_CRON_SECRET  must match SYNC_CRON_SECRET in the Render environment
+name: CareerRadar AI batch scoring
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Jobs to score (1-200). Default 50."
+        required: false
+        default: "50"
+      dryRun:
+        description: "true = report what would be scored, make no Gemini requests"
+        required: false
+        default: "false"
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    steps:
+      # Identical to sync.yml's wake step, and for the same reasons: the first
+      # request after a 15-minute spin-down takes 30–60s, and a 503 is the
+      # schema drift check, which must fail the job rather than be swallowed.
+      - name: Wake the service (cold start tolerated, schema drift is not)
+        run: |
+          code=$(curl -sS -o /tmp/health.json -w '%{http_code}' \
+            --max-time 120 --retry 3 --retry-all-errors --retry-delay 20 \
+            "${{ secrets.CAREERRADAR_URL }}/api/health" || echo "000")
+          echo "GET /api/health → HTTP $code"
+          cat /tmp/health.json 2>/dev/null; echo
+          if [ "$code" = "503" ]; then
+            echo "::error::Schema drift on production — the migration in lib/db/sql/ has not been applied. See the body above."
+            exit 1
+          fi
+
+      # This one WAITS for the report rather than accepting a 202 like the sync
+      # does. A paced 50-job run is minutes, not tens of minutes, and the report
+      # is the only record of what the night actually spent — `requests`,
+      # `scored`, `failed` and `stoppedBy`. --max-time is generous enough to
+      # cover a full run that spent its whole per-minute allowance in backoff.
+      - name: Run batch match scoring
+        run: |
+          curl -sS -X POST \
+            --max-time 900 \
+            -H "x-cron-secret: ${{ secrets.SYNC_CRON_SECRET }}" \
+            -H "content-type: application/json" \
+            --fail-with-body \
+            "${{ secrets.CAREERRADAR_URL }}/api/ai/batch-score?limit=${{ github.event.inputs.limit || '50' }}&dryRun=${{ github.event.inputs.dryRun || 'false' }}" \
+            | tee /tmp/batch.json
+          echo
+          # A run stopped by the daily quota is not a failed job — the scores it
+          # did write are committed and tomorrow's run resumes — but it must be
+          # visible in the Actions log rather than buried in a JSON blob.
+          if grep -q '"stoppedBy":"daily_quota"' /tmp/batch.json; then
+            echo "::warning::Batch scoring stopped early on the daily Gemini quota. Scored jobs are saved; the rest are picked up tomorrow."
+          fi

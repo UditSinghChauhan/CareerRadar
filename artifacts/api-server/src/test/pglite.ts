@@ -52,7 +52,7 @@ export function getTestDb(): Promise<TestDb> {
 export async function truncateAll(db: TestDb): Promise<void> {
   await db.execute(
     sql.raw(
-      "TRUNCATE notifications, saved_searches, applications, bookmarks, job_dismissals, jobs, companies, job_sources, profiles, settings, provider_sync_logs RESTART IDENTITY CASCADE",
+      "TRUNCATE job_match_scores, notifications, saved_searches, applications, bookmarks, job_dismissals, jobs, companies, job_sources, profiles, settings, provider_sync_logs RESTART IDENTITY CASCADE",
     ),
   );
 }

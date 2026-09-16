@@ -15,6 +15,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { logger } from "../lib/logger";
 import {
+  GEMINI_MODEL,
   isAIAvailable,
   stripJsonFences,
 } from "../services/ai-matching.service";
@@ -23,7 +24,14 @@ import type { CaptureDraft, CaptureJobType, CaptureWorkMode } from "./types";
 /** Gemini sees at most this much of the paste — it is a JD, not a novel. */
 const MAX_PROMPT_TEXT = 12_000;
 
-const MODEL = "gemini-2.0-flash";
+/**
+ * Phase 8: one model name for the whole project, defined next to the evidence
+ * for it in ai-matching.service.ts. This file used to hold a second copy
+ * reading `gemini-2.0-flash`, which Google retired — every call 404'd and the
+ * catch below turned that into "fall back to heuristics", so the extractor
+ * looked like it was working while the AI half of it had been dead for months.
+ */
+const MODEL = GEMINI_MODEL;
 
 export { isAIAvailable };
 

@@ -52,6 +52,7 @@ import type {
   ListCompaniesParams,
   ListJobsParams,
   ListNotificationsParams,
+  MatchScoreList,
   Notification,
   NotificationListResponse,
   NotificationsDeletedResult,
@@ -2864,6 +2865,84 @@ export function useGetAIStatus<TData = Awaited<ReturnType<typeof getAIStatus>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAIStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListMatchScoresUrl = () => {
+
+
+
+
+  return `/api/ai/match-scores`
+}
+
+/**
+ * A pure read of the `job_match_scores` table — it never calls Gemini and never computes anything. The Jobs grid uses it to put a score badge on a card AFTER the card has rendered, which is why it carries only the id and the number and not the summary or the skill arrays.
+ * @summary Every stored AI match score for the signed-in user
+ */
+export const listMatchScores = async ( options?: RequestInit): Promise<MatchScoreList> => {
+
+  return customFetch<MatchScoreList>(getListMatchScoresUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMatchScoresQueryKey = () => {
+    return [
+    `/api/ai/match-scores`
+    ] as const;
+    }
+
+
+export const getListMatchScoresQueryOptions = <TData = Awaited<ReturnType<typeof listMatchScores>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMatchScores>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMatchScoresQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMatchScores>>> = ({ signal }) => listMatchScores({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMatchScores>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMatchScoresQueryResult = NonNullable<Awaited<ReturnType<typeof listMatchScores>>>
+export type ListMatchScoresQueryError = ErrorType<void>
+
+
+/**
+ * @summary Every stored AI match score for the signed-in user
+ */
+
+export function useListMatchScores<TData = Awaited<ReturnType<typeof listMatchScores>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMatchScores>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMatchScoresQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

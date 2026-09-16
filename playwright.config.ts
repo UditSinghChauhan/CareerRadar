@@ -89,6 +89,19 @@ export default defineConfig({
       env: {
         PORT: String(API_PORT),
         SYNC_CRON_SECRET: "e2e-cron-secret-never-sent-by-the-suite",
+        // Phase 8 acceptance criterion: "Every page renders with
+        // GEMINI_API_KEY unset." Pinned to empty here rather than relying on
+        // the root .env happening not to define it, so the criterion is
+        // something the suite ENFORCES rather than something it gets by luck
+        // on one machine. A developer who later adds the key to .env must not
+        // silently stop testing the degraded path — which is the path that
+        // runs on every local machine and would otherwise never be exercised.
+        //
+        // The AI-present path cannot be covered here for the opposite reason:
+        // it would make real, quota-consuming Gemini requests on every run.
+        // It is covered against an injected fake in
+        // artifacts/api-server/src/services/match-scores.test.ts.
+        GEMINI_API_KEY: "",
       },
       reuseExistingServer: false,
       timeout: 120_000,

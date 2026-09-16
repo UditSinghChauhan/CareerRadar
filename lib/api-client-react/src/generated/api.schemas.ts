@@ -7,8 +7,28 @@
  */
 export interface AIStatus {
   available: boolean;
+  /** The Gemini model this deployment calls. */
   provider: string;
   description?: string;
+  /** Phase 8. The most Gemini requests this deployment will make in any rolling 24 hours, from `AI_DAILY_BUDGET`. */
+  dailyBudget?: number;
+  /** Scores computed in the last 24 hours, counted from `job_match_scores.computed_at` — which survives a restart, unlike an in-process counter on a service that spins down every 15 minutes. */
+  spentToday?: number;
+  remainingToday?: number;
+}
+
+export interface MatchScoreSummary {
+  jobId: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  score: number;
+  computedAt?: string;
+}
+
+export interface MatchScoreList {
+  scores: MatchScoreSummary[];
 }
 
 export interface JobMatchScore {
@@ -22,6 +42,12 @@ export interface JobMatchScore {
   matchingSkills: string[];
   missingSkills: string[];
   recommendations: string[];
+  /** Phase 8. When this score was computed. Additive — the six fields above are unchanged. */
+  computedAt?: string;
+  /** True when the answer came out of `job_match_scores` and cost no Gemini request. */
+  cached?: boolean;
+  /** True when the stored score was computed from different profile skills or a different resume, and the daily budget was already spent so it could not be recomputed. The number is still shown; it is just older than the profile. */
+  stale?: boolean;
 }
 
 /**

@@ -72,6 +72,7 @@ If a backfill accompanies the change (Phase 1.5, 2.0), it runs **after** step 3,
 - `careerradar-aggregator-providers.md` — why aggregator providers must carry per-job `companySlug`/`companyName`, why `normalize()` is async and auto-creates companies, and the JSearch `/search-v2` endpoint quirk.
 - `express5-wildcard.md` — `app.get("*")` throws on init under Express 5; use `/{*splat}` for the SPA catch-all, and use exactly 3× `..` for the production static path.
 - `vite-build-vs-serve-env.md` — don't require `PORT`/`BASE_PATH` at build time; gate those checks behind dev/preview or the recursive root `pnpm run build` breaks.
+- `careerradar-gemini-model-and-quota.md` — one shared `GEMINI_MODEL` constant (a retired model 404s and looks exactly like "no API key"), the free-tier limits measured off a real 429, and why a 429 must be classified by its quota id.
 
 ---
 

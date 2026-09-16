@@ -1750,8 +1750,29 @@ export const DeleteSavedSearchResponse = zod.void()
  */
 export const GetAIStatusResponse = zod.object({
   "available": zod.boolean(),
-  "provider": zod.string(),
-  "description": zod.string().optional()
+  "provider": zod.string().describe('The Gemini model this deployment calls.'),
+  "description": zod.string().optional(),
+  "dailyBudget": zod.number().optional().describe('Phase 8. The most Gemini requests this deployment will make in any rolling 24 hours, from `AI_DAILY_BUDGET`.'),
+  "spentToday": zod.number().optional().describe('Scores computed in the last 24 hours, counted from `job_match_scores.computed_at` — which survives a restart, unlike an in-process counter on a service that spins down every 15 minutes.'),
+  "remainingToday": zod.number().optional()
+})
+
+
+/**
+ * A pure read of the `job_match_scores` table — it never calls Gemini and never computes anything. The Jobs grid uses it to put a score badge on a card AFTER the card has rendered, which is why it carries only the id and the number and not the summary or the skill arrays.
+ * @summary Every stored AI match score for the signed-in user
+ */
+export const listMatchScoresResponseScoresItemScoreMin = 0;
+export const listMatchScoresResponseScoresItemScoreMax = 100;
+
+
+
+export const ListMatchScoresResponse = zod.object({
+  "scores": zod.array(zod.object({
+  "jobId": zod.string(),
+  "score": zod.number().min(listMatchScoresResponseScoresItemScoreMin).max(listMatchScoresResponseScoresItemScoreMax),
+  "computedAt": zod.coerce.date().optional()
+}))
 })
 
 
@@ -1773,7 +1794,10 @@ export const GetJobMatchScoreResponse = zod.object({
   "summary": zod.string(),
   "matchingSkills": zod.array(zod.string()),
   "missingSkills": zod.array(zod.string()),
-  "recommendations": zod.array(zod.string())
+  "recommendations": zod.array(zod.string()),
+  "computedAt": zod.coerce.date().optional().describe('Phase 8. When this score was computed. Additive — the six fields above are unchanged.'),
+  "cached": zod.boolean().optional().describe('True when the answer came out of `job_match_scores` and cost no Gemini request.'),
+  "stale": zod.boolean().optional().describe('True when the stored score was computed from different profile skills or a different resume, and the daily budget was already spent so it could not be recomputed. The number is still shown; it is just older than the profile.')
 })
 
 

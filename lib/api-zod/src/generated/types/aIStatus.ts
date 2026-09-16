@@ -8,6 +8,12 @@
 
 export interface AIStatus {
   available: boolean;
+  /** The Gemini model this deployment calls. */
   provider: string;
   description?: string;
+  /** Phase 8. The most Gemini requests this deployment will make in any rolling 24 hours, from `AI_DAILY_BUDGET`. */
+  dailyBudget?: number;
+  /** Scores computed in the last 24 hours, counted from `job_match_scores.computed_at` — which survives a restart, unlike an in-process counter on a service that spins down every 15 minutes. */
+  spentToday?: number;
+  remainingToday?: number;
 }

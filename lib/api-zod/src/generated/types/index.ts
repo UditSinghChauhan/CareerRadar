@@ -77,6 +77,8 @@ export * from './listJobsStatus';
 export * from './listJobsWorkMode';
 export * from './listJobsWorkModesItem';
 export * from './listNotificationsParams';
+export * from './matchScoreList';
+export * from './matchScoreSummary';
 export * from './notification';
 export * from './notificationListResponse';
 export * from './notificationMetadata';
