@@ -2,7 +2,7 @@
 
 CareerRadar is a pnpm/TypeScript monorepo that aggregates SDE internship and fresher job postings in India from public ATS and job-board APIs (Greenhouse, Lever, SmartRecruiters, RemoteOK, Remotive, Adzuna, JSearch), normalizes them into Postgres, and lets the user track applications through to offer. It has one primary user — a final-year B.Tech IT student (2027 batch, Delhi NCR) hunting internships right now — and doubles as a portfolio project shown to recruiters, so the bar is "does this reduce time-to-application or prevent a missed deadline", with code quality a close second.
 
-Companion docs: `UPGRADE.md` (phased spec), `CAREERRADAR_PHASE0_SETUP.md` (deployment/environment facts — it wins where the two disagree), `CLAUDE_CODE_SESSION_PROMPTS.md` (per-session prompts).
+Companion docs: `UPGRADE.md` (phased spec), `CAREERRADAR_PHASE0_SETUP.md` (deployment/environment facts — it wins where the two disagree), `CLAUDE_CODE_SESSION_PROMPTS.md` (per-session prompts), `docs/architecture.md` (the ingestion pipeline stage by stage, and what each stage guards against).
 
 ---
 
@@ -50,6 +50,8 @@ The code and the database ship separately: Render deploys the code on merge, not
 **The safety net:** `artifacts/api-server/src/lib/schema-check.ts` compares every column the Drizzle schema declares against `information_schema` at boot and on each `/api/health` / `/api/healthz` call. A missing column makes both return **503** with the exact columns and this section's name, `POST /api/sync/cron` refuses to run, and the sync workflow's wake step fails instead of swallowing it. An unreachable database is `"schema":"unchecked"` with a 200 — the check reports drift, never outages. It never modifies the database.
 
 If a backfill accompanies the change (Phase 1.5, 2.0), it runs **after** step 3, through its authenticated admin route — there is no shell on the Render box.
+
+**Diagnosing a sync that stopped:** `GET /api/health?detail=1` adds a `sync` object — last successful sync across all providers and per-provider state (`ok` / `stale` / `failing` / `never_run` / `disabled`) with 24-hour counters. It reads `provider_sync_logs`, not `providers/metrics.ts`, because the in-memory metrics die with every spin-down and read zero for a service that is syncing fine. Keep it opt-in: the default `/api/health` body is what Render's deploy check and the sync workflow's wake step parse, and both hit a cold instance.
 
 ## Deployment facts
 

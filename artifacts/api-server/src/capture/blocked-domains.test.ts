@@ -133,6 +133,11 @@ const ALLOWED: Array<{ path: string; reason: string }> = [
     reason:
       "Fixture: the URL the spec types into the 'Contact profile' input. No request is made.",
   },
+  {
+    path: "e2e/screenshots.spec.ts",
+    reason:
+      "The same fixture as e2e/capture.spec.ts, reused so the README screenshot shows the parse that suite asserts on. Typed into the dialog as a string; nothing fetches it.",
+  },
 ];
 
 const ALLOWED_PATHS = new Set(ALLOWED.map((entry) => entry.path));

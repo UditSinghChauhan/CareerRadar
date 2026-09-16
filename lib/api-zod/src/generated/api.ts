@@ -11,9 +11,43 @@ import * as zod from 'zod';
 /**
  * @summary Health check
  */
+export const HealthCheckQueryParams = zod.object({
+  "detail": zod.enum(['1']).optional().describe('Pass `1` to add the `sync` object: last successful sync and per-provider ingestion state, read from `provider_sync_logs`. Off by default because this route is also the deploy health check and the sync workflow\'s wake step, both of which hit a cold instance where the extra queries buy nothing.')
+})
+
 export const HealthCheckResponse = zod.object({
   "status": zod.string(),
-  "schema": zod.string().optional().describe('Result of the boot-time schema drift check: `ok`, or `unchecked` when the database could not be reached. A drifted schema is not a 200 at all — see the 503 response.')
+  "schema": zod.string().optional().describe('Result of the boot-time schema drift check: `ok`, or `unchecked` when the database could not be reached. A drifted schema is not a 200 at all — see the 503 response.'),
+  "sync": zod.object({
+  "status": zod.enum(['ok', 'unchecked']).describe('`ok` once the sync log has been read, `unchecked` when the database could not be reached. An unreachable database is never an error here — this object is a diagnostic and must not be the thing that fails a health check.'),
+  "lastSyncAt": zod.coerce.date().nullable().describe('Most recent successful provider run across all providers. The headline number, and the only one that survives a spin-down.'),
+  "lastRunAt": zod.coerce.date().nullable(),
+  "lastSyncAgeSeconds": zod.number().nullable(),
+  "fresh": zod.boolean().describe('True when `lastSyncAt` falls inside `staleAfterSeconds`.'),
+  "staleAfterSeconds": zod.number(),
+  "error": zod.string().optional().describe('Why `providers` is empty. Set only when status is `unchecked`.'),
+  "scheduler": zod.object({
+  "enabled": zod.boolean(),
+  "intervalMs": zod.number(),
+  "running": zod.boolean(),
+  "runsThisProcess": zod.number(),
+  "lastRunAt": zod.coerce.date().nullable(),
+  "nextRunAt": zod.coerce.date().nullable()
+}).describe('The in-process scheduler, scoped to the process answering this request. On Render\'s free tier it dies with every spin-down, so nulls here are normal and say nothing about ingestion.'),
+  "providers": zod.array(zod.object({
+  "name": zod.string(),
+  "displayName": zod.string(),
+  "state": zod.enum(['ok', 'stale', 'failing', 'never_run', 'disabled']).describe('`ok` succeeded recently; `stale` has succeeded before but not within two scheduler intervals; `failing` its newest run failed and nothing succeeded after; `never_run` registered and enabled with no log rows; `disabled` no enabled config points at it, which is the expected state of the no-op ToS stubs.'),
+  "configuredCompanies": zod.number(),
+  "lastRunAt": zod.coerce.date().nullable(),
+  "lastSuccessAt": zod.coerce.date().nullable(),
+  "runs24h": zod.number(),
+  "failures24h": zod.number(),
+  "jobsInserted24h": zod.number(),
+  "jobsUpdated24h": zod.number(),
+  "lastError": zod.string().nullable().describe('Newest failure message. Set only while `state` is `failing`.')
+}))
+}).optional().describe('Present only when the request passed `?detail=1`.')
 })
 
 

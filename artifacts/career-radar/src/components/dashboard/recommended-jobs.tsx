@@ -1,5 +1,5 @@
 import { useListJobs, useGetProfile } from "@workspace/api-client-react";
-import type { Job } from "@workspace/api-client-react";
+import type { Job, ListJobsParams } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -127,18 +127,53 @@ function JobCardSkeleton() {
   );
 }
 
+/**
+ * What "Recommended for You" asks the server for.
+ *
+ * `isFresherEligible` is the line that matters. Without it the card asked only
+ * for active rows in the user's batch, which on a 277-row local snapshot
+ * matched 269 of them and put "Senior Manager- Category", "Sales Manager",
+ * "Sales Manager - II" and "Key Account Manager I" on screen — every one
+ * already on the classifier's `not_relevant` track at score 0 — under a
+ * heading reading "Filtered for 2027 batch". With the filter the same data
+ * matches 31. The classifier runs on every row at ingest; the card was simply
+ * not asking it.
+ *
+ * `eligibleBatch` narrows but cannot substitute: its condition is
+ * "states no batch OR states this one", and most postings state none, so it
+ * never excluded a non-engineering role.
+ *
+ * `sort: "relevance"` is the other half, and the filter alone is not enough
+ * without it. The server default is `newest`, so on the same snapshot the
+ * filtered card still opened with a score-45 row and a score-65 "Junior
+ * Payroll Assistant" above a score-100 "Backend Engineering Intern" — six
+ * eligible rows in date order rather than the six best. A heading reading
+ * "Recommended for You" has to mean recommended. `relevance` orders by
+ * `relevance_score DESC NULLS LAST` server-side, so the six shown are the six
+ * best of the whole matching set, not the six most recent of it.
+ *
+ * Exported, and the object built here rather than inline in the component, so
+ * both are assertable without rendering — the same shape every other frontend
+ * test in this package uses.
+ */
+export function recommendedJobsParams(
+  graduationYear: number | null | undefined,
+): ListJobsParams {
+  return {
+    status: "active",
+    isFresherEligible: true,
+    sort: "relevance",
+    limit: 6,
+    ...(graduationYear ? { eligibleBatch: graduationYear } : {}),
+  };
+}
+
 export function RecommendedJobs() {
   const { data: profile } = useGetProfile();
 
-  const params = {
-    status: "active" as const,
-    limit: 6,
-    ...(profile?.graduationYear
-      ? { eligibleBatch: profile.graduationYear }
-      : {}),
-  };
-
-  const { data, isLoading } = useListJobs(params);
+  const { data, isLoading } = useListJobs(
+    recommendedJobsParams(profile?.graduationYear),
+  );
   const jobs = data?.data ?? [];
 
   return (

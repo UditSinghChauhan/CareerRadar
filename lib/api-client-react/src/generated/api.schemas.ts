@@ -24,10 +24,82 @@ export interface JobMatchScore {
   recommendations: string[];
 }
 
+/**
+ * `ok` once the sync log has been read, `unchecked` when the database could not be reached. An unreachable database is never an error here — this object is a diagnostic and must not be the thing that fails a health check.
+ */
+export type SyncStatusStatus = typeof SyncStatusStatus[keyof typeof SyncStatusStatus];
+
+
+export const SyncStatusStatus = {
+  ok: 'ok',
+  unchecked: 'unchecked',
+} as const;
+
+/**
+ * `ok` succeeded recently; `stale` has succeeded before but not within two scheduler intervals; `failing` its newest run failed and nothing succeeded after; `never_run` registered and enabled with no log rows; `disabled` no enabled config points at it, which is the expected state of the no-op ToS stubs.
+ */
+export type ProviderSyncStatusState = typeof ProviderSyncStatusState[keyof typeof ProviderSyncStatusState];
+
+
+export const ProviderSyncStatusState = {
+  ok: 'ok',
+  stale: 'stale',
+  failing: 'failing',
+  never_run: 'never_run',
+  disabled: 'disabled',
+} as const;
+
+export interface ProviderSyncStatus {
+  name: string;
+  displayName: string;
+  /** `ok` succeeded recently; `stale` has succeeded before but not within two scheduler intervals; `failing` its newest run failed and nothing succeeded after; `never_run` registered and enabled with no log rows; `disabled` no enabled config points at it, which is the expected state of the no-op ToS stubs. */
+  state: ProviderSyncStatusState;
+  configuredCompanies: number;
+  lastRunAt: string | null;
+  lastSuccessAt: string | null;
+  runs24h: number;
+  failures24h: number;
+  jobsInserted24h: number;
+  jobsUpdated24h: number;
+  /** Newest failure message. Set only while `state` is `failing`. */
+  lastError: string | null;
+}
+
+/**
+ * The in-process scheduler, scoped to the process answering this request. On Render's free tier it dies with every spin-down, so nulls here are normal and say nothing about ingestion.
+ */
+export type SyncStatusScheduler = {
+  enabled: boolean;
+  intervalMs: number;
+  running: boolean;
+  runsThisProcess: number;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+};
+
+export interface SyncStatus {
+  /** `ok` once the sync log has been read, `unchecked` when the database could not be reached. An unreachable database is never an error here — this object is a diagnostic and must not be the thing that fails a health check. */
+  status: SyncStatusStatus;
+  /** Most recent successful provider run across all providers. The headline number, and the only one that survives a spin-down. */
+  lastSyncAt: string | null;
+  lastRunAt: string | null;
+  lastSyncAgeSeconds: number | null;
+  /** True when `lastSyncAt` falls inside `staleAfterSeconds`. */
+  fresh: boolean;
+  staleAfterSeconds: number;
+  /** Why `providers` is empty. Set only when status is `unchecked`. */
+  error?: string;
+  /** The in-process scheduler, scoped to the process answering this request. On Render's free tier it dies with every spin-down, so nulls here are normal and say nothing about ingestion. */
+  scheduler: SyncStatusScheduler;
+  providers: ProviderSyncStatus[];
+}
+
 export interface HealthStatus {
   status: string;
   /** Result of the boot-time schema drift check: `ok`, or `unchecked` when the database could not be reached. A drifted schema is not a 200 at all — see the 503 response. */
   schema?: string;
+  /** Present only when the request passed `?detail=1`. */
+  sync?: SyncStatus;
 }
 
 export interface PaginationMeta {
@@ -975,6 +1047,20 @@ export interface NotificationsDeletedResult {
   /** How many notifications were removed. */
   deleted: number;
 }
+
+export type HealthCheckParams = {
+/**
+ * Pass `1` to add the `sync` object: last successful sync and per-provider ingestion state, read from `provider_sync_logs`. Off by default because this route is also the deploy health check and the sync workflow's wake step, both of which hit a cold instance where the extra queries buy nothing.
+ */
+detail?: HealthCheckDetail;
+};
+
+export type HealthCheckDetail = typeof HealthCheckDetail[keyof typeof HealthCheckDetail];
+
+
+export const HealthCheckDetail = {
+  NUMBER_1: '1',
+} as const;
 
 export type GetDailyQueueParams = {
 /**

@@ -37,6 +37,19 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
+      parameters:
+        - name: detail
+          in: query
+          required: false
+          description: >-
+            Pass `1` to add the `sync` object: last successful sync and
+            per-provider ingestion state, read from `provider_sync_logs`.
+            Off by default because this route is also the deploy health
+            check and the sync workflow's wake step, both of which hit a
+            cold instance where the extra queries buy nothing.
+          schema:
+            type: string
+            enum: ["1"]
       responses:
         "200":
           description: Healthy
@@ -1224,7 +1237,144 @@ components:
             when the database could not be reached. A drifted schema is not
             a 200 at all — see the 503 response.
           type: string
+        sync:
+          description: Present only when the request passed `?detail=1`.
+          $ref: "#/components/schemas/SyncStatus"
       required: [status]
+
+    SyncStatus:
+      type: object
+      required:
+        [
+          status,
+          lastSyncAt,
+          lastRunAt,
+          lastSyncAgeSeconds,
+          fresh,
+          staleAfterSeconds,
+          scheduler,
+          providers,
+        ]
+      properties:
+        status:
+          description: >-
+            `ok` once the sync log has been read, `unchecked` when the
+            database could not be reached. An unreachable database is never
+            an error here — this object is a diagnostic and must not be the
+            thing that fails a health check.
+          type: string
+          enum: [ok, unchecked]
+        lastSyncAt:
+          description: >-
+            Most recent successful provider run across all providers. The
+            headline number, and the only one that survives a spin-down.
+          type: string
+          format: date-time
+          nullable: true
+        lastRunAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastSyncAgeSeconds:
+          type: integer
+          nullable: true
+        fresh:
+          description: True when `lastSyncAt` falls inside `staleAfterSeconds`.
+          type: boolean
+        staleAfterSeconds:
+          type: integer
+        error:
+          description: Why `providers` is empty. Set only when status is `unchecked`.
+          type: string
+        scheduler:
+          description: >-
+            The in-process scheduler, scoped to the process answering this
+            request. On Render's free tier it dies with every spin-down, so
+            nulls here are normal and say nothing about ingestion.
+          type: object
+          required:
+            [
+              enabled,
+              intervalMs,
+              running,
+              runsThisProcess,
+              lastRunAt,
+              nextRunAt,
+            ]
+          properties:
+            enabled:
+              type: boolean
+            intervalMs:
+              type: integer
+            running:
+              type: boolean
+            runsThisProcess:
+              type: integer
+            lastRunAt:
+              type: string
+              format: date-time
+              nullable: true
+            nextRunAt:
+              type: string
+              format: date-time
+              nullable: true
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderSyncStatus"
+
+    ProviderSyncStatus:
+      type: object
+      required:
+        [
+          name,
+          displayName,
+          state,
+          configuredCompanies,
+          lastRunAt,
+          lastSuccessAt,
+          runs24h,
+          failures24h,
+          jobsInserted24h,
+          jobsUpdated24h,
+          lastError,
+        ]
+      properties:
+        name:
+          type: string
+        displayName:
+          type: string
+        state:
+          description: >-
+            `ok` succeeded recently; `stale` has succeeded before but not
+            within two scheduler intervals; `failing` its newest run failed
+            and nothing succeeded after; `never_run` registered and enabled
+            with no log rows; `disabled` no enabled config points at it,
+            which is the expected state of the no-op ToS stubs.
+          type: string
+          enum: [ok, stale, failing, never_run, disabled]
+        configuredCompanies:
+          type: integer
+        lastRunAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastSuccessAt:
+          type: string
+          format: date-time
+          nullable: true
+        runs24h:
+          type: integer
+        failures24h:
+          type: integer
+        jobsInserted24h:
+          type: integer
+        jobsUpdated24h:
+          type: integer
+        lastError:
+          description: Newest failure message. Set only while `state` is `failing`.
+          type: string
+          nullable: true
 
     PaginationMeta:
       type: object
