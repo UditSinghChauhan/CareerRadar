@@ -1,114 +1,47 @@
-# CLAUDE.md
+# CareerRadar: working agreement
 
-CareerRadar is a pnpm/TypeScript monorepo that aggregates SDE internship and fresher job postings in India from public ATS and job-board APIs (Greenhouse, Lever, SmartRecruiters, RemoteOK, Remotive, Adzuna, JSearch), normalizes them into Postgres, and lets the user track applications through to offer. It has one primary user — a final-year B.Tech IT student (2027 batch, Delhi NCR) hunting internships right now — and doubles as a portfolio project shown to recruiters, so the bar is "does this reduce time-to-application or prevent a missed deadline", with code quality a close second.
+Personal placement OS for an Indian CS student. Live: https://careerradar-34ec.onrender.com
+Quality bar: the `saas-quality-standard` skill. Visual source of truth once approved: DESIGN.md.
 
-Companion docs: `UPGRADE.md` (phased spec), `CAREERRADAR_PHASE0_SETUP.md` (deployment/environment facts — it wins where the two disagree), `CLAUDE_CODE_SESSION_PROMPTS.md` (per-session prompts), `docs/architecture.md` (the ingestion pipeline stage by stage, and what each stage guards against).
+## Stack
+- pnpm workspace. Frontend: `artifacts/career-radar` (React 18, Vite, Wouter, TanStack Query, Radix/shadcn, Tailwind v4).
+- Backend: `artifacts/api-server` (Express 5, Node 22, TypeScript 5.9).
+- Database: PostgreSQL 16 with Drizzle. Never Prisma.
+- Auth: Clerk session cookies. No bearer tokens in browser code.
+- Tests: Vitest, PGlite, Playwright.
 
----
+## Commands, in this order
+1. `pnpm install`
+2. `pnpm run typecheck:libs`: always first. A stale .tsbuildinfo causes phantom errors.
+3. `pnpm run typecheck`
+4. `pnpm run lint`
+5. `pnpm run test`: api-server 944 tests, career-radar 55 tests.
+6. `pnpm run build`
+7. `pnpm run test:e2e`: needs a local Postgres and Clerk dev keys. Not runnable on a bare environment.
 
-## Hard invariants
+Requires Node 22+ and pnpm 9+.
 
-Violating any of these breaks the live deployment at `https://careerradar-34ec.onrender.com/`.
+## Rules
+- The API contract is generated. Edit `lib/api-spec/openapi.yaml`, then run orval. Never edit `generated/`.
+- Schema changes are additive only and ship separately from code. A boot-time drift check returns 503 when a column is missing.
+- Enforce host-only actions on the server, not only in the UI.
+- The relevance classifier and location normalizer are deterministic. No LLM in classification.
+- Do not add scrapers for Internshala, Unstop, Wellfound, LinkedIn or Naukri. Their terms prohibit it.
+- Secrets live only in the local `.env`. Never paste keys into chat, tests, or committed files.
+- E2E tests use test data on a local database only.
+- Every bug fix ships with a test that fails before the fix and passes after.
 
-### Repo conventions
+## Known issues
+- career-radar runs vitest 3.2.7 and api-server runs vitest 4.1.10. The jest-dom matchers are registered in `artifacts/career-radar/src/test-setup.ts`. Aligning the versions is a separate change.
+- README test counts are stale (api-server now reports 944, not 941). Fix in the README pass.
 
-- **Drizzle ORM only.** Never introduce Prisma. Schema lives in `lib/db/src/schema/`.
-- **The API contract is generated, not hand-written.** Pipeline: `lib/api-spec/openapi.yaml` → orval → `lib/api-zod/src/generated/**` and `lib/api-client-react/src/generated/**`. Any new or changed endpoint goes into `openapi.yaml` **first**, then regenerate. Never hand-edit anything under a `generated/` directory — it will be overwritten.
-- **Build order after touching `lib/*`:** `pnpm run typecheck:libs` **then** `pnpm --filter @workspace/api-server run typecheck`. Skipping the first produces phantom `TS2305 "no exported member"` errors from stale `.tsbuildinfo`.
-- **Migrations:** `pnpm --filter @workspace/db run push`, only ever against a local `DATABASE_URL`. Production gets a hand-written additive `.sql` file — see "Deploying a schema change" below. **A schema change is not done until that file has been applied to Neon.** Twice (Phase 1.5, Phase 2.0) the code reached production before the columns did and every `/api/jobs` request 500'd.
-- **Auth:** browser calls use Clerk **session cookies**. Never add `getToken()`, `setAuthTokenGetter`, or `Authorization: Bearer` to any web/browser code. Debug 401s by checking `clerkMiddleware` ordering and `requireAuth`, not token handling.
-- **Vite:** `tailwindcss({ optimize: false })` in `vite.config.ts` must stay. Removing `optimize: false` reorders nested `@layer` imports from `@clerk/themes/*.css` and breaks Clerk UI **in production builds only** — it looks fine in dev, so you will not catch it locally.
-- **esbuild:** never put a CLI `main()` guard using `import.meta.url` in a module the server bundle also imports. esbuild inlines everything into one `dist/index.mjs`, so the guard fires for every module. Expose scripts as authenticated API routes, or run them un-bundled with `tsx`.
-- **Aggregator providers** (`remoteok`, `remotive`, `adzuna`, `jsearch`) must set `companySlug: slugify(employerName)` **and** `companyName: employerName` on every `ProviderJob`. `normalize()` is async specifically so it can auto-create the `companies` row — do not revert it to a sync `.map`.
-- **devDependencies matter at build time.** `vite` is a devDependency. Never set `NODE_ENV=production` as a build-time environment variable — pnpm then skips devDeps and the build fails with `vite: not found`. The start command already sets `NODE_ENV=production` at runtime, which is correct.
+## Git
+- Start every task from a fresh main: `git checkout main && git pull --ff-only origin main`, then create a new branch.
+- One branch and one PR per task. Never force-push main.
+- Commit authorship is the owner's identity. No Co-Authored-By or Claude-Session trailers in commits or PR descriptions.
+- Default workflow: stage the named files, write the message to a file, and print the exact `git commit` command for the owner to run.
 
-### Production-safety rules
-
-- **The database has live data.** Schema changes must be **additive only**: new tables, new nullable columns, new columns with defaults. Never drop or rename a column or enum value. If a value must change meaning, add a new column and backfill.
-- **Every new user-facing feature degrades gracefully.** If an env var is missing or an external call fails, the feature hides itself — it never crashes a page. Follow the existing pattern in `ai-matching.service.ts` (`isAIAvailable()` returns false → frontend hides AI UI).
-- **Do not change existing API response shapes.** Add fields; never remove or rename them.
-- **CI must pass before a phase is done:** `pnpm run lint`, `pnpm run typecheck`, `pnpm run test`, `pnpm run build`.
-- **Legal boundary — do not cross it.** `internshala/provider.ts`, `unstop/provider.ts`, and `wellfound/provider.ts` are deliberate no-op stubs because those sites' ToS and robots.txt prohibit automated extraction. Leave them returning `[]`, and leave their explanatory comment blocks intact — those comments are the reason the code is correct, and a future session will re-add a scraper without them. Never add scraping, headless browsers, or proxy fetches for them, or for **LinkedIn** or Naukri. Phase 4 adds the legitimate alternative.
-- **Never run `git` commands.** The user handles all commits, pushes, and merges.
-
----
-
-## Deploying a schema change
-
-The code and the database ship separately: Render deploys the code on merge, nothing deploys the schema. Every change to `lib/db/src/schema/` therefore has three parts, and the phase is not complete until all three are done:
-
-1. **Schema + local push.** Edit `lib/db/src/schema/`, run `pnpm --filter @workspace/db run push` against the local `DATABASE_URL`.
-2. **The migration file.** Write `lib/db/sql/<YYYY-MM-DD>-<phase>.sql` with the same change as additive, idempotent DDL (`ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, ending with a `SELECT` from `information_schema.columns` that reads the result back). Prove it is a no-op against the already-pushed local DB before trusting it.
-3. **Apply it to Neon before or with the merge**, using the **direct** endpoint (the pooled one cannot serve introspection and `drizzle-kit push` must never point at Neon):
-   ```bash
-   # DATABASE_URL_PROD lives in .env.prod (gitignored). Source it per-command only —
-   # never into .env, never into a shell that also runs seed, db push or test:e2e.
-   ( URL=$(grep '^DATABASE_URL_PROD=' .env.prod | cut -d= -f2-); psql "$URL" -v ON_ERROR_STOP=1 -f lib/db/sql/<file>.sql )
-   ```
-   Then `curl -s https://careerradar-34ec.onrender.com/api/health` must say `"schema":"ok"`.
-
-**The safety net:** `artifacts/api-server/src/lib/schema-check.ts` compares every column the Drizzle schema declares against `information_schema` at boot and on each `/api/health` / `/api/healthz` call. A missing column makes both return **503** with the exact columns and this section's name, `POST /api/sync/cron` refuses to run, and the sync workflow's wake step fails instead of swallowing it. An unreachable database is `"schema":"unchecked"` with a 200 — the check reports drift, never outages. It never modifies the database.
-
-If a backfill accompanies the change (Phase 1.5, 2.0), it runs **after** step 3, through its authenticated admin route — there is no shell on the Render box.
-
-**Diagnosing a sync that stopped:** `GET /api/health?detail=1` adds a `sync` object — last successful sync across all providers and per-provider state (`ok` / `stale` / `failing` / `never_run` / `disabled`) with 24-hour counters. It reads `provider_sync_logs`, not `providers/metrics.ts`, because the in-memory metrics die with every spin-down and read zero for a service that is syncing fine. Keep it opt-in: the default `/api/health` body is what Render's deploy check and the sync workflow's wake step parse, and both hit a cold instance.
-
-## Deployment facts
-
-- **Host:** Render, **free tier** — `https://careerradar-34ec.onrender.com`.
-- **Database:** **Neon Postgres** (migrated off Render Postgres).
-- **Auth:** Clerk on a **development instance** (`pk_test_` / `sk_test_` keys). Dev instances have a user cap; a production instance needs DNS on a domain the user controls, which an `onrender.com` subdomain cannot provide. Fine for a single-user tool — know it before sharing the URL.
-- **Sync is driven by env vars:** `PROVIDER_ENABLED`, `PROVIDER_INTERVAL_MS`, `PROVIDER_CONCURRENCY`, `PROVIDER_RUN_ON_START`, plus `SYNC_CRON_SECRET` for the external `POST /api/sync/cron` trigger. No cron on Render's free tier — a GitHub Actions scheduled workflow (`.github/workflows/sync.yml`) wakes the service and fires the trigger.
-- **512 MB RAM / 0.1 CPU.** Backfill scripts batch at 500 rows and never load a whole table into memory; batch AI scoring caps concurrency at 2.
-- **Ephemeral filesystem.** Anything written to disk is lost on redeploy, restart, and spin-down. Never store resume uploads or generated exports locally — keep `resumeUrl` external and stream exports in the HTTP response.
-- **15-minute spin-down.** Free services sleep after 15 minutes idle; the next request takes ~30–60s to wake, and the in-process `setInterval` scheduler dies with it. Tolerate the cold start — **do not add a keep-alive ping**: staying awake 24/7 burns the entire 750 instance-hour monthly allowance and suspends the service mid hiring season.
-
----
-
-## `.agents/memory/`
-
-- `MEMORY.md` — index of the memory files below, one line each.
-- `careerradar-stack.md` — core stack decisions: Drizzle not Prisma, Clerk cookie auth, JIT profile/settings provisioning on first GET, lib rebuild order, Tailwind v4 `optimize: false`, esbuild `import.meta.url` trap, push-then-seed before first server start, and verified live ATS provider status.
-- `careerradar-aggregator-providers.md` — why aggregator providers must carry per-job `companySlug`/`companyName`, why `normalize()` is async and auto-creates companies, and the JSearch `/search-v2` endpoint quirk.
-- `express5-wildcard.md` — `app.get("*")` throws on init under Express 5; use `/{*splat}` for the SPA catch-all, and use exactly 3× `..` for the production static path.
-- `vite-build-vs-serve-env.md` — don't require `PORT`/`BASE_PATH` at build time; gate those checks behind dev/preview or the recursive root `pnpm run build` breaks.
-- `careerradar-gemini-model-and-quota.md` — one shared `GEMINI_MODEL` constant (a retired model 404s and looks exactly like "no API key"), the free-tier limits measured off a real 429, and why a 429 must be classified by its quota id.
-
----
-
-## Commands
-
-Full verification sequence, in this order:
-
-```bash
-pnpm run typecheck:libs
-pnpm run typecheck
-pnpm run lint
-pnpm run test
-pnpm run build
-```
-
-Note: the root `package.json` defines all five steps — `lint` is `prettier --check .` and `test` fans out with `pnpm -r --if-present run test` to the per-package `vitest run` in `artifacts/api-server` and `artifacts/career-radar`.
-
-Other useful commands:
-
-```bash
-pnpm --filter @workspace/db run push            # migrations — LOCAL DATABASE_URL ONLY
-pnpm --filter @workspace/api-server run seed
-pnpm --filter @workspace/api-server run dev     # :8080
-pnpm --filter @workspace/career-radar run dev   # :5173
-```
-
----
-
-## Never do
-
-- Edit anything under a `generated/` directory.
-- Hand-write API types instead of updating `lib/api-spec/openapi.yaml` and regenerating.
-- Add `Authorization: Bearer` or `getToken()` to frontend code.
-- Change `tailwindcss({ optimize: false })` in `vite.config.ts`.
-- Drop or rename a database column.
-- Run `drizzle push` against a non-local `DATABASE_URL`.
-- Merge a schema change without its `lib/db/sql/` file applied to Neon (see "Deploying a schema change").
-- Put `DATABASE_URL_PROD` into `.env`, or export it into a shell that runs seed, `db push`, or `test:e2e`.
-- Run any `git` command.
+## Done means
+- All commands above pass, with exact results reported.
+- UI changes include screenshots at 375, 768 and 1280 px.
+- The diff has been self-reviewed for dead code, debug output, and unrelated changes.
