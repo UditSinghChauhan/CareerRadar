@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ArrowRight, Briefcase, CheckCircle2, Target, Zap } from "lucide-react";
 
 export function LandingPage() {
@@ -7,13 +8,16 @@ export function LandingPage() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background selection:bg-primary/20">
-      <header className="h-16 flex items-center justify-between px-6 lg:px-12 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
+      <header className="h-16 flex items-center justify-between px-4 sm:px-6 lg:px-12 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center space-x-2 text-primary font-bold text-xl">
           <Briefcase className="h-6 w-6" />
           <span>CareerRadar</span>
         </div>
-        <div className="flex items-center space-x-4">
-          <Link href={`${basePath}/sign-in`}>
+        <div className="flex items-center gap-1 sm:gap-4">
+          <ThemeToggle />
+          {/* Hidden on phones, where the hero's "Sign in to dashboard" covers
+              it and the header would otherwise overflow 375px. */}
+          <Link href={`${basePath}/sign-in`} className="hidden sm:block">
             <Button variant="ghost">Sign In</Button>
           </Link>
           <Link href={`${basePath}/sign-up`}>

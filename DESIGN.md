@@ -12,6 +12,9 @@ Direction: quiet, precise, product-first. Apple-like restraint in structure and 
 | accent | #0E7C66 | #3FB89C | single action color, links, focus |
 | on-accent | #FFFFFF | #000000 | text on accent fill |
 | border | #D2D2D7 | #38383A | dividers |
+| fill | #F5F5F7 | #2C2C2E | hover, chips and secondary buttons on cards |
+| danger | #C4291C | #FF6961 | errors and destructive actions |
+| on-danger | #FFFFFF | #000000 | text on danger fill |
 
 Contrast: all text pairs meet WCAG AA (4.5:1 body, 3:1 large). Verify with the accessibility-review skill before merge.
 
@@ -31,7 +34,7 @@ Contrast: all text pairs meet WCAG AA (4.5:1 body, 3:1 large). Verify with the a
 - Breakpoints: 375 (mobile), 768 (tablet), 1280 (desktop). Every screen is checked at all three.
 
 ## Shape and depth
-- Radius: 12px (inputs, small cards), 20px (cards), 999px (buttons, tags).
+- Radius: 4px (checkboxes, menu items), 12px (inputs, small cards), 20px (cards), 999px (buttons, tags).
 - One shadow only: 0 10px 30px rgba(0,0,0,0.08). Dark mode uses a 1px border instead.
 
 ## Motion

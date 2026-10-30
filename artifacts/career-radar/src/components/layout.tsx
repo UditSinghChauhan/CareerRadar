@@ -19,6 +19,7 @@ import {
   SheetHeader,
 } from "@/components/ui/sheet";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
 
 const NAV_ITEMS = [
@@ -116,7 +117,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Empty space for desktop header left */}
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-1 sm:gap-4">
+            <ThemeToggle />
             <NotificationBell />
             <span className="text-sm font-medium hidden sm:inline-block">
               {user?.fullName || user?.primaryEmailAddress?.emailAddress}
@@ -125,10 +127,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
+              aria-label="Sign out"
               className="text-muted-foreground hover:text-foreground"
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign out
+              <LogOut aria-hidden="true" />
+              <span className="hidden sm:inline">Sign out</span>
             </Button>
           </div>
         </header>

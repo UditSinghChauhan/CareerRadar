@@ -17,8 +17,8 @@ interface ApplicationChartProps {
 }
 
 const STATUS_STAGES = [
-  { key: "saved", label: "Saved", color: "hsl(var(--muted-foreground))" },
-  { key: "applied", label: "Applied", color: "hsl(250 89% 65%)" },
+  { key: "saved", label: "Saved", color: "var(--muted-foreground)" },
+  { key: "applied", label: "Applied", color: "var(--primary)" },
   {
     key: "assessment",
     label: "Assessment",
@@ -97,15 +97,15 @@ export function ApplicationChart({
                 type="category"
                 dataKey="label"
                 width={72}
-                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
-                cursor={{ fill: "hsl(var(--muted))" }}
+                cursor={{ fill: "var(--muted)" }}
                 contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: "0.375rem",
                   fontSize: "12px",
                 }}
