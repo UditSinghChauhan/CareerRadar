@@ -360,7 +360,3 @@ a narrower prompt: name the specific files it may touch.
 
 ---
 
-## Keep applying while this builds
-
-None of this replaces sending applications today. Amazon's SDE I Intern requisition for the 2027 batch
-is rolling, and the tool will not be finished before the cycle peaks.
