@@ -10,6 +10,7 @@ Direction: quiet, precise, product-first. Apple-like restraint in structure and 
 | text | #1D1D1F | #F5F5F7 | headings, body |
 | text-muted | #6E6E73 | #A1A1A6 | captions, meta |
 | accent | #0E7C66 | #3FB89C | single action color, links, focus |
+| on-accent | #FFFFFF | #000000 | text on accent fill |
 | border | #D2D2D7 | #38383A | dividers |
 
 Contrast: all text pairs meet WCAG AA (4.5:1 body, 3:1 large). Verify with the accessibility-review skill before merge.
@@ -42,7 +43,8 @@ Contrast: all text pairs meet WCAG AA (4.5:1 body, 3:1 large). Verify with the a
 - Nav: sticky, 56px high, translucent surface with 20px backdrop blur.
 - Hero: one headline, one line of support text, one primary action, one product image.
 - Feature section: alternates surface and bg backgrounds. One idea per section.
-- Button primary: accent fill, white text. Secondary: text-only link with an arrow.
+- Button primary: accent fill with the on-accent token. Light: #FFFFFF on #0E7C66 (5.1:1). Dark: #000000 on #3FB89C (8.5:1).
+- Button secondary: text-only link with an arrow.
 - Focus: 2px accent ring, 2px offset, on every interactive element.
 - Every data view has empty, loading, error, and success states.
 
