@@ -44,6 +44,7 @@ Contrast: all text pairs meet WCAG AA (4.5:1 body, 3:1 large). Verify with the a
 - Hero: one headline, one line of support text, one primary action, one product image.
 - Feature section: alternates surface and bg backgrounds. One idea per section.
 - Button primary: accent fill with the on-accent token. Light: #FFFFFF on #0E7C66 (5.1:1). Dark: #000000 on #3FB89C (8.5:1).
+- Button secondary: text-only link with an arrow.
 - Focus: 2px accent ring, 2px offset, on every interactive element.
 - Every data view has empty, loading, error, and success states.
 
