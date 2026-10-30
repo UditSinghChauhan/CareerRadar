@@ -45,3 +45,12 @@ Requires Node 22+ and pnpm 9+.
 - All commands above pass, with exact results reported.
 - UI changes include screenshots at 375, 768 and 1280 px.
 - The diff has been self-reviewed for dead code, debug output, and unrelated changes.
+
+## Git
+- Start every task from a fresh main: `git checkout main && git pull --ff-only origin main`, then create a task branch (`feat/…`, `fix/…`, `docs/…`).
+- Commit and push only task branches. Never push to or merge into main. Each task opens one PR. The owner reviews the diff and merges.
+- Before the first commit in a session, run:
+  `git config user.name "Udit Singh Chauhan"` and
+  `git config user.email "187852344+UditSinghChauhan@users.noreply.github.com"`
+- Commits and PR descriptions contain no Co-Authored-By, Claude-Session, or "Generated with" lines.
+- Commit messages follow Conventional Commits. Each commit states what changed and why.
