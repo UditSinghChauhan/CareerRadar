@@ -10,7 +10,11 @@ Direction: quiet, precise, product-first. Apple-like restraint in structure and 
 | text | #1D1D1F | #F5F5F7 | headings, body |
 | text-muted | #6E6E73 | #A1A1A6 | captions, meta |
 | accent | #0E7C66 | #3FB89C | single action color, links, focus |
+| on-accent | #FFFFFF | #000000 | text on accent fill |
 | border | #D2D2D7 | #38383A | dividers |
+| fill | #F5F5F7 | #2C2C2E | hover, chips and secondary buttons on cards |
+| danger | #C4291C | #FF6961 | errors and destructive actions |
+| on-danger | #FFFFFF | #000000 | text on danger fill |
 
 Contrast: all text pairs meet WCAG AA (4.5:1 body, 3:1 large). Verify with the accessibility-review skill before merge.
 
@@ -30,7 +34,7 @@ Contrast: all text pairs meet WCAG AA (4.5:1 body, 3:1 large). Verify with the a
 - Breakpoints: 375 (mobile), 768 (tablet), 1280 (desktop). Every screen is checked at all three.
 
 ## Shape and depth
-- Radius: 12px (inputs, small cards), 20px (cards), 999px (buttons, tags).
+- Radius: 4px (checkboxes, menu items), 12px (inputs, small cards), 20px (cards), 999px (buttons, tags).
 - One shadow only: 0 10px 30px rgba(0,0,0,0.08). Dark mode uses a 1px border instead.
 
 ## Motion
@@ -42,7 +46,8 @@ Contrast: all text pairs meet WCAG AA (4.5:1 body, 3:1 large). Verify with the a
 - Nav: sticky, 56px high, translucent surface with 20px backdrop blur.
 - Hero: one headline, one line of support text, one primary action, one product image.
 - Feature section: alternates surface and bg backgrounds. One idea per section.
-- Button primary: accent fill, white text. Secondary: text-only link with an arrow.
+- Button primary: accent fill with the on-accent token. Light: #FFFFFF on #0E7C66 (5.1:1). Dark: #000000 on #3FB89C (8.5:1).
+- Button secondary: text-only link with an arrow.
 - Focus: 2px accent ring, 2px offset, on every interactive element.
 - Every data view has empty, loading, error, and success states.
 

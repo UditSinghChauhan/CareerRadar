@@ -141,48 +141,23 @@ const clerkAppearance = {
     logoLinkUrl: basePath || "/",
     logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
   },
+  // Colours come from the shadcn theme, which reads the CSS tokens in
+  // index.css, so the sign-in card follows light and dark mode with the rest
+  // of the app. Only shape and layout are set here.
   variables: {
-    colorPrimary: "hsl(250 89% 65%)",
-    colorForeground: "hsl(0 0% 9%)",
-    colorMutedForeground: "hsl(0 0% 45%)",
-    colorDanger: "hsl(0 84% 60%)",
-    colorBackground: "hsl(0 0% 100%)",
-    colorInput: "hsl(0 0% 98%)",
-    colorInputForeground: "hsl(0 0% 9%)",
-    colorNeutral: "hsl(0 0% 90%)",
-    fontFamily: "Geist, sans-serif",
-    borderRadius: "0.5rem",
+    fontFamily: "Inter, system-ui, sans-serif",
+    borderRadius: "0.75rem",
   },
   elements: {
     rootBox: "w-full flex justify-center",
+    // DESIGN.md: one shadow in light mode, a 1px border instead in dark.
     cardBox:
-      "bg-white rounded-2xl w-[440px] max-w-full overflow-hidden border border-gray-200 shadow-sm",
-    card: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    headerTitle: "text-2xl font-bold tracking-tight text-gray-900",
-    headerSubtitle: "text-sm text-gray-500",
-    socialButtonsBlockButtonText: "text-sm font-medium",
-    formFieldLabel: "text-sm font-medium text-gray-900",
-    footerActionLink:
-      "text-sm font-medium text-[hsl(250,89%,65%)] hover:text-[hsl(250,89%,55%)]",
-    footerActionText: "text-sm text-gray-500",
-    dividerText: "text-xs text-gray-400 font-medium",
-    identityPreviewEditButton: "text-[hsl(250,89%,65%)]",
-    formFieldSuccessText: "text-green-600",
-    alertText: "text-[hsl(0,84%,60%)]",
+      "w-[440px] max-w-full rounded-[20px] border-transparent! shadow-card! dark:border-border! dark:shadow-none!",
     logoBox: "flex justify-center mb-6",
-    logoImage: "h-12 w-auto",
-    socialButtonsBlockButton:
-      "border border-gray-200 rounded-md hover:bg-gray-50",
-    formButtonPrimary:
-      "bg-[hsl(250,89%,65%)] hover:bg-[hsl(250,89%,55%)] text-white shadow-sm rounded-md",
-    formFieldInput:
-      "flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(250,89%,65%)]",
-    footerAction: "mt-6 border-t border-gray-100 pt-6",
-    dividerLine: "bg-gray-200",
-    alert: "bg-red-50 border border-red-200 rounded-md p-3",
-    otpCodeFieldInput: "border border-gray-200 rounded-md",
-    formFieldRow: "mb-4",
+    // logo.svg draws in currentColor, which an <img> resolves to black.
+    logoImage: "h-12 w-auto dark:invert",
+    formButtonPrimary: "rounded-full",
+    socialButtonsBlockButton: "rounded-full",
     main: "w-full",
   },
 };
