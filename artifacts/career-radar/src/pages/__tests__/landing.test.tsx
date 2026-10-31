@@ -1,6 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { LandingPage, PRIORITY_COMPONENTS } from "../landing";
+import { LandingPage, PRIORITY_COMPONENTS, SOURCES } from "../landing";
+import { nextThemeChoice } from "@/components/landing/landing-theme-toggle";
+import { ILLUSTRATIVE_QUEUE } from "@/components/landing/landing-queue";
 
 describe("LandingPage", () => {
   it("has exactly one h1, stating the outcome", () => {
@@ -21,13 +23,16 @@ describe("LandingPage", () => {
     }
   });
 
-  it("offers sign-in from the header", () => {
+  it("offers sign-in and the theme toggle from the header", () => {
     render(<LandingPage />);
     const header = within(screen.getByRole("banner"));
     expect(header.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",
       "/sign-in",
     );
+    expect(
+      header.getByRole("button", { name: /Switch to (dark|light) theme/ }),
+    ).toBeInTheDocument();
   });
 
   it("names the radar chart with the counts it draws", () => {
@@ -37,9 +42,79 @@ describe("LandingPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("links to GitHub exactly twice: once in the hero, once in the footer", () => {
+    render(<LandingPage />);
+    const github = screen
+      .getAllByRole("link")
+      .filter((a) => a.getAttribute("href")?.includes("github.com"));
+    expect(github).toHaveLength(2);
+    expect(github[0].closest("section")).toHaveClass("lp-hero");
+    expect(github[1].closest("footer")).not.toBeNull();
+  });
+
+  it("states the deadline caveat the README measures, not a working signal", () => {
+    // Before this change the page listed "Deadline 30%: how soon applications
+    // close" with no caveat, while the README measures a deadline on 13 of
+    // 4,995 rows and none of the fresher-eligible ones.
+    render(<LandingPage />);
+    expect(screen.getByText(/13 of 4,995 rows/)).toBeInTheDocument();
+    expect(screen.queryByText("How soon applications close")).toBeNull();
+  });
+
+  it("says the reminder hours as a sentence, not as bare figures", () => {
+    render(<LandingPage />);
+    expect(
+      screen.getByText(
+        /you get a reminder 72 hours and again 24 hours before it closes/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("labels the walkthrough rows as illustrative and keeps the demo inert", () => {
+    const { container } = render(<LandingPage />);
+    expect(screen.getByText(/Illustrative rows\./)).toBeInTheDocument();
+    const stages = container.querySelectorAll(".lp-stage");
+    expect(stages.length).toBeGreaterThan(0);
+    stages.forEach((stage) => expect(stage).toHaveAttribute("inert"));
+  });
+
+  it("renders every source both as a table row and as a phone card", () => {
+    const { container } = render(<LandingPage />);
+    expect(container.querySelectorAll(".lp-sources tbody tr")).toHaveLength(
+      SOURCES.length,
+    );
+    expect(container.querySelectorAll(".lp-source-cards li")).toHaveLength(
+      SOURCES.length,
+    );
+  });
+
   it("publishes priority weights that add up to 100%", () => {
     // Mirrors PRIORITY_WEIGHTS in artifacts/api-server/src/queue/priority.ts.
     const total = PRIORITY_COMPONENTS.reduce((sum, c) => sum + c.weight, 0);
     expect(total).toBe(100);
+  });
+});
+
+describe("illustrative queue", () => {
+  it("records its source and date and carries no deadline", () => {
+    expect(ILLUSTRATIVE_QUEUE.illustrative).toBe(true);
+    expect(ILLUSTRATIVE_QUEUE.source).toMatch(/^Illustrative\./);
+    expect(ILLUSTRATIVE_QUEUE.date).toBe("2026-09-16");
+    expect(ILLUSTRATIVE_QUEUE.items).toHaveLength(10);
+    for (const item of ILLUSTRATIVE_QUEUE.items) {
+      expect(item.contributions.deadlineUrgency).toBe(3);
+    }
+  });
+});
+
+describe("nextThemeChoice", () => {
+  it("pins the opposite theme when it differs from the system", () => {
+    expect(nextThemeChoice("light", false)).toBe("dark");
+    expect(nextThemeChoice("dark", true)).toBe("light");
+  });
+
+  it("returns to following the system when the choice matches it", () => {
+    expect(nextThemeChoice("light", true)).toBe("system");
+    expect(nextThemeChoice("dark", false)).toBe("system");
   });
 });
