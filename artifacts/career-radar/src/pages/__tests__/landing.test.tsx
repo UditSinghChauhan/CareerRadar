@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { LandingPage, PRIORITY_COMPONENTS } from "../landing";
 
@@ -23,15 +23,18 @@ describe("LandingPage", () => {
 
   it("offers sign-in from the header", () => {
     render(<LandingPage />);
-    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+    const header = within(screen.getByRole("banner"));
+    expect(header.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",
       "/sign-in",
     );
   });
 
-  it("gives the hero image a text alternative", () => {
+  it("names the radar chart with the counts it draws", () => {
     render(<LandingPage />);
-    expect(screen.getByRole("img", { name: /Today's Queue/ })).toBeVisible();
+    expect(
+      screen.getByRole("img", { name: /Radar chart of 4,512 active postings/ }),
+    ).toBeInTheDocument();
   });
 
   it("publishes priority weights that add up to 100%", () => {
