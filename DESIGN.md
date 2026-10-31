@@ -6,9 +6,15 @@ Scope: the landing page. The app screens keep their current tokens (`src/index.c
 
 ## Direction
 
-A product page in the Apple and Stripe Press manner. The chrome is neutral: white and light grey in light, near-black in dark. The only colour on the page comes from the product itself: the radar, the found roles, the score rows and the one accent action. Premium comes from restraint. Each section has one focus, the type is set exactly, and motion reveals content rather than decorating it.
+A product page in the Apple and Stripe Press manner, built around one object and one moment.
 
-The page must answer three questions in this order. What is it? (the hero, within five seconds). How does it work? (the walkthrough). Can I check it? (proof, sources, code).
+- **The object:** the radar. One large lit disc in the hero, drawn from the real point field (one point per active posting, measured 16 September 2026). Its rings carry real counts, not decoration.
+- **The moment:** the walkthrough. The radar's ten found roles rise out of the field in rank order and land on the rank badges of the real queue component. Then the queue explains a rank and takes an application.
+- **The chrome:** neutral. White and light grey in light, near-black in dark. The only colour on the page comes from the product: the found roles, the queue and the one accent action.
+
+The page answers three questions in order. What is it? (the hero, within five seconds). How does it work? (the walkthrough). Can I check it? (proof, sources, code).
+
+Chosen on 2026-10-31 from three concept mockups (`docs/screenshots/landing-redesign/concepts/`): concept A's hero, concept B's walkthrough and concept C's restrained light sections. Each alone had a gap. A explained nothing after the hero, B's opening was a split layout, and C had no signature moment.
 
 ## Colour
 
@@ -82,7 +88,7 @@ Vantage passes every text pair. But its lime signal fails as a data mark in ligh
 
 ## Type
 
-One family: **Geist** (OFL), a single variable woff2 for the weight axis, Latin subset, 29.4 KB. It is self-hosted, loaded once, and preloaded. The fallback is `ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`, with a metric-adjusted `@font-face` ("Geist Fallback", `local("Arial")` plus `size-adjust`) so that swapping in Geist does not shift layout.
+One family: **Geist** (OFL), a single variable woff2 for the weight axis, Latin subset, 29.4 KB. It is self-hosted, declared only in the landing stylesheet, and loaded once with `font-display: swap`. The fallback is `ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`, with a metric-adjusted `@font-face` ("Geist Fallback", `local("Arial")` plus `size-adjust`) so that swapping in Geist does not shift layout.
 
 ### Comparison
 
@@ -125,14 +131,14 @@ Not used: SF Pro (proprietary) and Geist Mono (a second family).
 
 - The base unit is 4px. Tokens: 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 160.
 - Section padding (block): 160px at 1024px and wider, 128px from 640 to 1023px, 96px under 640px.
-- Containers: text 680px; content 1120px; walkthrough 1200px. Gutters are 48px at 1024 and up, 32px from 640 to 1023, and 20px under 640.
+- Containers: text 680px; content 1120px, the walkthrough included, so the page keeps one pair of margins. Gutters are 48px at 1024 and up, 32px from 640 to 1023, and 20px under 640.
 - A heading has twice as much space above it as below it.
 - Widths checked: 375, 768, 1280, 1440. No horizontal scroll at any width.
 
 ## Shape and depth
 
 - Radius: a pill (999px) for buttons and the toggle, 12px for the product frame and cards, and 6px for chips and rank badges.
-- Hairlines: 1px in `rule`.
+- Hairlines: 1px in `rule`, only on real tables, control edges and the product frame. Sections are separated by space and tone steps, not lines.
 - **One shadow**, used only by the product frame, in light only: `0 1px 2px oklch(0% 0 0 / 0.04), 0 16px 40px -12px oklch(0% 0 0 / 0.14)`. In dark it resolves to `none`; the frame is separated by `surface-2` and a hairline.
 - No gradients, glass panels, glows or decorative icons. The one exception is the navigation's translucency (see Components).
 
@@ -166,102 +172,94 @@ Not used: SF Pro (proprietary) and Geist Mono (a second family).
 
 ## Components
 
-- **Navigation:** sticky and always visible (it does not retract), 56px tall, holding the wordmark, "Sign in" (a text link with a 44px hit area), the theme toggle, and "Get started" as a secondary (hairline) button. The background is `bg` at 80% with `backdrop-filter: saturate(180%) blur(20px)`. A 1px hairline fades in at the bottom once the page scrolls past 8px. Under `prefers-reduced-transparency` or without `backdrop-filter` support, the background is solid `bg`.
+- **Navigation:** sticky and always visible (it does not retract), 56px tall.
+  - Contents: the wordmark, "Sign in" (a text link with a 44px hit area), the theme toggle, and "Get started" as a secondary (hairline) button.
+  - Background: `bg` at 80% with `backdrop-filter: saturate(180%) blur(20px)`.
+  - While it sits over the dark walkthrough band it takes that band's tokens, so it never lays light glass over near-black. It has no bottom hairline.
+  - Under `prefers-reduced-transparency`, increased contrast, or without `backdrop-filter` support, the background is solid `bg`.
 - **Primary button:** `accent` fill, `accent-on` label, pill, 48px tall, label 17px/500.
-- **Secondary button:** transparent with a 1px `field-edge` pill, `ink` label, 40px tall in the navigation with a 44px hit area.
+- **Secondary button:** transparent with a 1px `field-edge` pill and an `ink` label. It is 36px tall in the navigation, with a 44px hit area.
 - **Text link:** `accent`, underlined on hover and on focus.
-- **Product frame:** `surface-2` in dark and `bg` with the one shadow in light, 12px radius, 1px `rule`. It holds HTML-rendered queue rows. It never holds a raster screenshot, so its text stays legible at every width.
+- **The radar (hero object):** a canvas drawn from `buildField()` in `radar-field.tsx`.
+  - Its box is square and reserved before the script runs, so it causes no layout shift.
+  - The disc rises from the bottom of the first screen.
+  - The rings are labelled with real counts (4,512 active, 2,109 open to freshers, 10 for you today).
+  - The sweep pauses off screen. A visible "Pause the sweep" control stops it.
+  - Under reduced motion it shows one still frame with the ten found.
+- **The queue (walkthrough):** the app's real `TodaysQueue` component, fed a committed illustrative queue (`src/components/landing/illustrative-queue.json`) through a local query cache.
+  - The app's alias tokens (`--background`, `--card`, `--foreground`, `--primary`, `--muted-foreground`, `--border` and others) are remapped inside the frame to this page's tokens. It reads as one product, and Geist replaces Geologica inside it.
+  - The frame is `inert`: it demonstrates and does not act. A visually hidden sentence describes what it shows.
 
 ## Sections
 
-Positions are targets for the build, and Phase 3 measures them. "1280" means a 1280×800 viewport and "375" means 375×812.
+Positions are targets. Phase 3 measures them. "1280" means 1280×800 and "375" means 375×812.
 
 ### 1. Hero (bg)
 - **Feel:** one product, one sentence, one action, then the instrument.
 - **Content:**
   - centred headline: "Ten roles worth applying to, every morning."
-  - one lead line: "A ranked queue of SDE roles for Indian CS freshers, with the reason for every rank."
-  - one primary "Get started"
-  - one quiet line: "Free and open source. Read the code on GitHub", which is the hero's only GitHub link
-  - the radar, centred below, in a box with a fixed aspect ratio (1:1, `min(560px, 88vw)`) that is reserved before the script runs
-  - the measurement caption and pause control under the radar
-- **Reveal:** on load, the headline, lead, action and quiet line fade and rise over 600ms, staggered by 60ms. The radar fades in over 600ms after a 120ms delay, then the sweep starts.
+  - one lead: "A ranked queue of SDE roles for Indian CS freshers, with the reason for every rank."
+  - one primary action, "Get started"
+  - a quiet line: "Free and open source. Read the code on GitHub", which is the hero's only GitHub link
+  - below it, the radar disc, `min(1040px, 132vw)` wide, cropped by the hero's lower edge at about 58% of its height
+- **Reveal:** on load, the text block fades and rises over 600ms with a 60ms stagger. The disc fades in over 600ms after 120ms, and then the sweep starts.
 - **At scroll 0:**
-  - 1280: the text block fills roughly the top 470px, and the top third of the radar shows under it as an invitation to scroll.
-  - 375: the headline (3 lines), lead, action and quiet line fill roughly 560px, and the radar's upper edge shows.
+  - 1280: the text block fills the top ~430px, and the disc's upper third and its three ring labels show below.
+  - 375: the headline (3 lines), lead and action fill ~460px, and the disc's top arc and first label show below.
 
-### 2. Walkthrough: how the queue works (dark band in both themes)
+### 2. Walkthrough: rank, reason, apply (dark band in both themes)
 - **Feel:** a guided demonstration. The reader scrolls and the product answers.
 - **Layout from 1024px:**
-  - Two columns. The left holds three numbered steps, each about 70vh tall. The right holds a sticky product frame, vertically centred.
-  - A step becomes active when its heading crosses the middle of the viewport.
-  - The frame changes state in 350ms by cross-fading the parts that change, with no layout jump, because the frame's height is fixed.
-- **Steps:**
-  1. **Rank.** "Every morning, every open role you can apply to is scored on four terms: relevance 40%, deadline 30%, freshness 20%, and dream company 10%. The top ten make your queue."
-     - Frame: three ranked rows with rank, title, company, city and priority.
-  2. **Reason.** "Each row says why it sits where it does, including what isn't working. Sources rarely publish deadlines (13 of 4,995 rows), so today the deadline term gives every role the same score."
-     - Frame: row 1 expands to show its four weighted contributions and its reason lines.
-  3. **Apply.** "Apply opens the employer's own posting and logs the application. The row leaves your queue and today's count goes up."
-     - Frame: row 1's Apply shows its pressed state, the row leaves, and the counter goes from 0 / 10 to 1 / 10.
-- **Under 1024px:** no sticky frame. Each step is followed by its own frame state inline, so phones get all three states.
-- **Reveal:** step text uses the 600ms reveal, and the frame changes state in 350ms.
-- **Data:** the rows come from a committed JSON file that records its source and date (see Open decisions). They are never invented without an on-page "illustrative" label.
+  - Two columns, 5 to 7. The left holds three steps, each about 75vh tall. The right holds a sticky stage, 64px from the top, at most 720px tall.
+  - A step is active when its middle crosses the middle of the viewport.
+  - The stage changes state in 350ms. Its height is fixed, so nothing jumps.
+- **Step 1, Rank:** "Ten rise out of the field, in order."
+  - Copy: the four weights, and "The highest ten become your queue".
+  - Stage: the field dims, and the ten found dots travel to a column, each labelled with its priority.
+- **Step 2, Reason:** "Each one tells you why."
+  - Copy: the four scores and a plain reason, including the deadline caveat (13 of 4,995 rows).
+  - Stage: the real queue, with row 1 ringed in `signal` and its reason lines shown beside it in a quiet panel.
+- **Step 3, Apply:** "Apply, and it's logged."
+  - Copy: Apply opens the employer's posting and logs it.
+  - Stage: the queue after one application. Row 1 has left, and the count reads 1 / 10.
+- **Under 1024px:** no sticky stage. Each step is followed by its own stage state inline.
+- **Label:** "Illustrative rows. Scores and reasons come from the real ranking code." appears under the steps.
 
-### 3. Open and checkable (bg)
-- **Feel:** proof, stated plainly.
-- **One idea:** you can check every claim.
-- **Three blocks at most:**
-  - "No model decides what you see." The classifier and location normalizer are deterministic rules, tested case by case.
+### 3. Built to be checked (bg)
+- **One idea:** you can check every claim. There are three text blocks in three columns from 1024px, with no tiles or icons.
+- **The blocks:**
+  - "No model decides what you see."
   - "944 backend tests," counted 31 October 2026.
-  - "Every rank has a reason you can read." This links to the walkthrough, not to GitHub.
-- **Layout:** three columns from 1024px, one column below. Text blocks only, with no tiles and no icons.
-- **Reveal:** blocks rise in a 60ms stagger, 600ms each.
-- **At 1280:** all three blocks are visible at once.
+  - "Postings from the source." These are employers' own ATS boards and free APIs, never scraped job sites.
+- **Reveal:** 600ms, with a 60ms stagger.
 
 ### 4. After you apply (surface band)
-- **Feel:** the tool keeps working after the click.
 - **Two blocks:**
-  - The board: "From saved to offer on one board: applied, online assessment, interview and offer, with referrals and follow-ups beside each role."
+  - The board: saved to offer.
   - Reminders, as one plain sentence: "When a source publishes a deadline, you get a reminder 72 hours and again 24 hours before it closes."
-- **Reveal:** 600ms.
 
 ### 5. Where postings come from (bg)
-- **Feel:** a reference table you can trust.
-- **Four sources:** ATS boards, free-API job boards, Adzuna and JSearch, each with origin, sync and closing rule.
 - **640px and up:** a table with hairline rows.
-- **Under 640px:** one card per source. The source names are the title, followed by two short lines: "From: …", and "Synced …, closes …".
-- **Target:** under 480px tall at 375, against 860px today.
-- **Reveal:** the table or cards fade in as one block, 600ms.
+- **Under 640px:** one card per source.
+- **Height at 375:** 607px, measured (860px before).
 
 ### 6. Questions (surface band)
-- **Content:** three questions with answers, as a definition list.
-- **Reveal:** 600ms, no stagger.
+- Three questions with their answers, set as a definition list.
 
 ### 7. Footer (bg)
-- **Content:** the wordmark, one line, "Get started" (the only accent in its viewport), "Source on GitHub" (the footer's only GitHub link), "Sign in", and "MIT licence".
-- **Static:** no reveal.
+- The wordmark, one line, "Get started" (the only accent in its viewport), "Source on GitHub" (the footer's only GitHub link), "Sign in", and "MIT licence".
 
 ## Content
 
-- Lead with the outcome. Every number is real and carries its measurement date. No placeholder copy, and no invented figures, quotes or logos.
+- Every number is real and carries its measurement date. Rows in the walkthrough are illustrative, and they are labelled in the code and on the page.
 - The deadline claim follows the README. The weight is 30%, but sources rarely publish deadlines (13 of 4,995 rows), so today the term gives every role the same score.
-- The 2,109-of-4,512 figure appears once, in the radar's caption.
-- Every data view the page renders has loading, empty, error and success states. The landing renders only committed static data, so the walkthrough frame's states are the three steps. It has no network state.
+- The 2,109-of-4,512 figures appear once, on the radar's rings.
+- The landing renders only committed static data, so it has no loading, empty or error state. The walkthrough's three states are its data states.
 
 ## Decisions
 
-- 2026-10-31 (this change): replaced Vantage with Neutral chrome and Geist.
-  - The landing page now has light and dark themes. It was dark only.
-  - Lime stays as the dark accent. Light uses deep green `47% 0.13 138`, because lime on white measures 1.33:1.
-  - Scroll reveals are now allowed, with opacity and transform only, and off under reduced motion.
-  - The navigation is now sticky rather than retracting.
-  - The evidence is the Phase 0 audit and the measurements above.
+- 2026-10-31: the Neutral chrome, Geist, light and dark themes, and the concept synthesis above, replacing Vantage.
+  - **Rows:** illustrative. The 16 September 2026 queue cannot be re-exported, because the queue is computed at request time. The only record of it, `docs/screenshots/daily-queue-reasons.png`, shows three complete rows from a test account, and one of them conflicts with the README. Illustrative rows built by the real scoring code are more honest than a partial copy.
+  - **Font:** Geist, self-hosted for the landing page only. The app keeps Geologica until it is migrated in a separate change.
+  - **No flash:** one inline script in `index.html` sets the theme before first paint. It is the only change outside the landing page's files, and no other way gives a flash-free load in a client-rendered app.
 - 2026-10-31 (earlier, superseded): Vantage, with Geologica, dark only and no scroll reveals.
-
-## Open decisions (need the owner before Phase 2)
-
-1. **Queue data source.**
-   - The 16 September 2026 queue cannot be re-exported from the live API. The queue is recomputed at request time against the current time and today's active rows, and no database snapshot or export from that day is in the repository.
-   - The only record of it is `docs/screenshots/daily-queue-reasons.png`. That screenshot is dated Wednesday, 16 September 2026, from an end-to-end test account, and shows rows 1 to 3 in full.
-   - Its row 1 shows "Deadline 24.0 · Closes in 7 days", which conflicts with the README's "zero fresher-eligible rows have a deadline".
-2. **Files outside the stated scope.** The no-flash script and loading one font once both need `artifacts/career-radar/index.html`, which today loads Geologica from Google Fonts for the app as well.
