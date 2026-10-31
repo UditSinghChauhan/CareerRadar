@@ -145,14 +145,13 @@ const clerkAppearance = {
   // index.css, so the sign-in card follows light and dark mode with the rest
   // of the app. Only shape and layout are set here.
   variables: {
-    fontFamily: "Inter, system-ui, sans-serif",
-    borderRadius: "0.75rem",
+    fontFamily: "Geologica, ui-sans-serif, system-ui, sans-serif",
+    borderRadius: "0.25rem",
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    // DESIGN.md: one shadow in light mode, a 1px border instead in dark.
-    cardBox:
-      "w-[440px] max-w-full rounded-[20px] border-transparent! shadow-card! dark:border-border! dark:shadow-none!",
+    // DESIGN.md: flat depth, a hairline frame instead of a shadow.
+    cardBox: "w-[440px] max-w-full rounded-xl border-border! shadow-none!",
     logoBox: "flex justify-center mb-6",
     // logo.svg draws in currentColor, which an <img> resolves to black.
     logoImage: "h-12 w-auto dark:invert",

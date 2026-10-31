@@ -1,61 +1,71 @@
 # DESIGN.md: CareerRadar
 
-Direction: quiet, precise, product-first. Apple-like restraint in structure and motion, with an original palette and type. No gradients, no decorative icons, no glass effects beyond the nav.
+The locked system. Every page and screen reads this first and shares it. Change it on purpose; the file is the rule.
 
-## Color (tokens)
-| Token | Light | Dark | Role |
+Direction: reality capture at night. CareerRadar is a radar over the job market, so the product is shown as an instrument: a field of measured points, a sweep that passes through them, and one lime signal for what was found. The page is quiet around that one moving thing.
+
+## System
+- Genre: modern-minimal (Hallmark)
+- Theme: Vantage, steel colourway, adapted: the point field is the postings, the sweep is the radar
+- Axes: dark/grotesk-sans/chromatic-lime · posture: restrained
+- Landing: Bento Grid shape, Stage hero, banner over a bar, mast footer, dark only
+- App screens: the same tokens in a dark (Vantage) and a light (steel on paper) colourway
+
+## Colour
+Tokens live in `artifacts/career-radar/src/index.css` (app) and `src/styles/landing.css` (landing). Values are OKLCH.
+
+| Role | Light | Dark | Use |
 |---|---|---|---|
-| bg | #FFFFFF | #000000 | page |
-| surface | #F5F5F7 | #1C1C1E | alternating sections, cards |
-| text | #1D1D1F | #F5F5F7 | headings, body |
-| text-muted | #6E6E73 | #A1A1A6 | captions, meta |
-| accent | #0E7C66 | #3FB89C | single action color, links, focus |
-| on-accent | #FFFFFF | #000000 | text on accent fill |
-| border | #D2D2D7 | #38383A | dividers |
-| fill | #F5F5F7 | #2C2C2E | hover, chips and secondary buttons on cards |
-| danger | #C4291C | #FF6961 | errors and destructive actions |
-| on-danger | #FFFFFF | #000000 | text on danger fill |
+| paper | 98.5% 0.003 230 | 13.5% 0.012 235 | page |
+| paper-2 | 96.5% 0.005 230 | 17% 0.014 235 | cards, wells |
+| paper-3 | 93.5% 0.007 230 | 21% 0.016 235 | hover, chips, secondary buttons |
+| ink | 22% 0.015 235 | 95% 0.006 230 | headings, body |
+| ink-2 | 36% 0.015 235 | 82% 0.012 230 | running text on the landing |
+| ink-muted | 50% 0.016 235 | 66% 0.016 230 | captions, meta |
+| rule | 89% 0.007 230 | 27% 0.014 235 | hairlines, card frames |
+| field-edge | 62% 0.012 230 | 52% 0.016 232 | input borders (3:1 against paper) |
+| accent-text | 48% 0.14 135 | 89% 0.19 126 | primary action, links, focus, selection |
+| accent-on | 98.5% 0.01 126 | 19% 0.04 126 | text on the accent fill |
+| signal | 89% 0.19 126 | 89% 0.19 126 | found, live: the ten, a live row, a switch that is on |
+| error | 52% 0.18 27 | 72% 0.15 27 | errors and destructive actions |
 
-Contrast: all text pairs meet WCAG AA (4.5:1 body, 3:1 large). Verify with the accessibility-review skill before merge.
+Contrast, measured: every text pair passes WCAG AA in both colourways; the tightest are accent-text on paper-3 in light (5.15:1) and ink-muted on paper-3 in dark (5.71:1). Input edges are 3.3:1 or more against their surface.
+
+Lime marks only what is found, live or primary. Never a heading, never a fill larger than a pill.
 
 ## Type
-- Family: Inter (display optical size for headlines), fallback system-ui. Not SF Pro.
-- Scale (desktop / mobile):
-  - display: 64 / 40, line 1.05, tracking -0.03em
-  - h2: 44 / 32, line 1.1, tracking -0.02em
-  - h3: 24 / 20, line 1.3
-  - body: 19 / 17, line 1.5
-  - caption: 14 / 13, line 1.4, text-muted
-- Max line length: 680px for body text.
+- Geologica, one family. Display: weight 300, `"SHRP" 100` (sharpened corners), tracking -0.035em, line-height 1.0 to 1.05, sentence case. Body: weight 300 on the landing at 17px, 400 in the app.
+- Figures: tabular numerals, weight 400; a unit after its figure, a step smaller, in ink-muted.
+- Labels, captions and table heads: the body face a step smaller, sentence case, untracked. Never tracked capitals, never monospace except for code.
+- Landing scale (fluid, capped): display 44 to 84px, section 32 to 56px, title 20 to 26px, lead 18 to 22px, body 16 to 17px, caption 14px. App screens keep Tailwind's compact scale.
 
-## Spacing and layout
-- 4px base grid. Section padding: 120px desktop, 80px tablet, 64px mobile.
-- Content width: 1200px. Text width: 680px.
-- Breakpoints: 375 (mobile), 768 (tablet), 1280 (desktop). Every screen is checked at all three.
+## Space and layout
+- 4px base. Landing: one container capped at 1440px with 64px gutters (24px under 60rem, 16px under 40rem), twelve columns 32px apart. Section gaps 120, 144 and 176px, mixed.
+- Breakpoints checked: 375, 768, 1280, 1440 and 1920. No horizontal scroll at any width.
 
 ## Shape and depth
-- Radius: 4px (checkboxes, menu items), 12px (inputs, small cards), 20px (cards), 999px (buttons, tags).
-- One shadow only: 0 10px 30px rgba(0,0,0,0.08). Dark mode uses a 1px border instead.
+- Frames are hairlines (1px rule). Radius: 2px small controls, 4px inputs and frames, 6px cards. Buttons and tags are pills.
+- Flat: no shadows. A measured thing is framed by corner ticks (10px), not a full box.
+
+## Controls
+- Primary: accent fill, accent-on text, pill, 48px on the landing and 36px in the app with a 44px hit area.
+- Secondary: a hairline pill in rule-2 with ink text.
+- Focus: 2px accent ring, 2px offset, on every interactive element, instant.
 
 ## Motion
-- Duration 200–400ms. Easing cubic-bezier(0.22, 1, 0.36, 1).
-- Animate only opacity and transform. Reveal sections on scroll (opacity, translateY 24px).
-- prefers-reduced-motion disables all reveal motion.
-
-## Components
-- Nav: sticky, 56px high, translucent surface with 20px backdrop blur.
-- Hero: one headline, one line of support text, one primary action, one product image.
-- Feature section: alternates surface and bg backgrounds. One idea per section.
-- Button primary: accent fill with the on-accent token. Light: #FFFFFF on #0E7C66 (5.1:1). Dark: #000000 on #3FB89C (8.5:1).
-- Button secondary: text-only link with an arrow.
-- Focus: 2px accent ring, 2px offset, on every interactive element.
-- Every data view has empty, loading, error, and success states.
+- Character: calm. Durations 120, 220 and 420ms; easing cubic-bezier(0.16, 1, 0.3, 1). Animate transform and opacity only.
+- The radar sweep is the only continuous motion. It pauses off screen, and under reduced motion it is one still frame with the ten already found.
+- No scroll reveals.
 
 ## Content
-- Lead each section with the outcome, not the feature.
-- Use real numbers with their date. Example: "4,512 postings ranked daily (measured 2026-09-16)."
-- No placeholder copy. No marketing adjectives without evidence.
+- Lead with the outcome. Every number is real and carries its measurement date. No placeholder copy, no invented figures, quotes or logos.
+- Every data view has loading, empty, error and full states.
 
 ## Decisions
-- Accent: teal #0E7C66 (light) and #3FB89C (dark). Single accent for all actions, links, and focus. Chosen for contrast, and for standing out from the default blue used on most portfolio sites.
-- Theme: follows the system setting by default. A manual light/dark toggle sits in the nav and persists in localStorage. Light is the fallback when the system has no preference. Both themes are designed and verified, not derived by inverting colors.
+- 2026-10-31: replaced the Apple-restraint system (teal, Inter, 12 and 20px radius, one soft shadow). It was correct but read as a template. Vantage gives the product a subject of its own: the radar it is named after.
+- Accent: lime (Vantage's signal) in dark; a darker green in light so the accent can carry text on light surfaces.
+- Theme: the app follows the system setting, with a manual toggle in the app header that persists in localStorage. The landing page is dark only; its material is the night radar.
+- Font: Geologica replaces Inter. Inter as a display face is the most common generated look.
+
+## Exports
+The Hallmark scaffold for this system is Vantage (`theme.mjs scaffold vantage`). The landing stylesheet carries the Hallmark stamp in its first lines.
