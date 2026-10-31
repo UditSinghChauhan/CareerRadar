@@ -338,14 +338,12 @@
       const stages = [];
       document.addEventListener("DOMContentLoaded", () => {});
       const desktop = buildStage(document.getElementById("stage"), 10);
-      document
-        .querySelectorAll(".inline-stage")
-        .forEach((el) =>
-          stages.push({
-            s: buildStage(el, el.dataset.state === "2" ? 3 : 10),
-            state: +el.dataset.state,
-          }),
-        );
+      document.querySelectorAll(".inline-stage").forEach((el) =>
+        stages.push({
+          s: buildStage(el, el.dataset.state === "2" ? 3 : 10),
+          state: +el.dataset.state,
+        }),
+      );
 
       let active = 0;
       function setActive(i) {
