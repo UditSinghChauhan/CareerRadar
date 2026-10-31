@@ -43,160 +43,123 @@
   --color-destructive-border: var(--destructive-border);
 
   --color-surface: var(--surface);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
 
   --font-sans: var(--app-font-sans);
   --font-mono: var(--app-font-mono);
 
-  /* DESIGN.md "Shape and depth": 12px inputs and small cards, 20px cards,
-     999px buttons and tags (rounded-full). radius-sm stays small for
-     checkboxes and menu items, where 12px would read as a circle. */
-  --radius-sm: 4px;
-  --radius-md: 12px;
-  --radius-lg: 12px;
-  --radius-xl: 20px;
-  --radius-2xl: 20px;
+  /* DESIGN.md "Shape": hairline frames at 4px; pills stay rounded-full. */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 6px;
 
-  /* DESIGN.md: the only shadow. Dark mode swaps it for a 1px border. */
-  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.08);
-
-  /* DESIGN.md "Type" scale, mobile and desktop sizes as separate steps. */
-  --text-display: 4rem;
-  --text-display--line-height: 1.05;
-  --text-display--letter-spacing: -0.03em;
-  --text-display-sm: 2.5rem;
-  --text-display-sm--line-height: 1.05;
-  --text-display-sm--letter-spacing: -0.03em;
-  --text-h2: 2.75rem;
-  --text-h2--line-height: 1.1;
-  --text-h2--letter-spacing: -0.02em;
-  --text-h2-sm: 2rem;
-  --text-h2-sm--line-height: 1.1;
-  --text-h2-sm--letter-spacing: -0.02em;
-  --text-h3: 1.5rem;
-  --text-h3--line-height: 1.3;
-  --text-h3-sm: 1.25rem;
-  --text-h3-sm--line-height: 1.3;
-  --text-body: 1.1875rem;
-  --text-body--line-height: 1.5;
-  --text-body-sm: 1.0625rem;
-  --text-body-sm--line-height: 1.5;
-  --text-caption: 0.875rem;
-  --text-caption--line-height: 1.4;
+  /* DESIGN.md "Depth": flat. Frames are hairlines, never shadows. */
+  --shadow-card: none;
 
   /* DESIGN.md "Motion". */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --default-transition-duration: 200ms;
-  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --default-transition-duration: 220ms;
+  --default-transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Colour tokens from DESIGN.md. Values are complete colours, not HSL
-   triples, because Clerk's shadcn theme reads var(--primary) and friends
-   directly; a bare triple is not a colour and made it fall back to defaults. */
+/* Colour tokens from DESIGN.md (Vantage, steel colourway). The named roles
+   come first; the shadcn and Clerk variables below only point at them. Dark
+   is the Vantage night; light is its steel-on-paper counterpart, with the
+   accent darkened so it can carry text on light surfaces. */
 :root {
-  --app-font-sans: "Inter", system-ui, sans-serif;
+  --app-font-sans: "Geologica", ui-sans-serif, system-ui, sans-serif;
   --app-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  --background: #ffffff;
-  --foreground: #1d1d1f;
-  --surface: #f5f5f7;
+  --paper: oklch(98.5% 0.003 230);
+  --paper-2: oklch(96.5% 0.005 230);
+  --paper-3: oklch(93.5% 0.007 230);
+  --ink: oklch(22% 0.015 235);
+  --ink-2: oklch(36% 0.015 235);
+  --ink-muted: oklch(50% 0.016 235);
+  --rule: oklch(89% 0.007 230);
+  --rule-2: oklch(80% 0.01 230);
+  --field-edge: oklch(62% 0.012 230);
+  --accent-text: oklch(48% 0.14 135);
+  --accent-on: oklch(98.5% 0.01 126);
+  --signal: oklch(89% 0.19 126);
+  --signal-ink: oklch(19% 0.04 126);
+  --error: oklch(52% 0.18 27);
+  --error-on: oklch(98.5% 0.01 27);
 
-  --card: #ffffff;
-  --card-foreground: #1d1d1f;
-  --card-border: #d2d2d7;
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --surface: var(--paper-2);
 
-  --popover: #ffffff;
-  --popover-foreground: #1d1d1f;
-  --popover-border: #d2d2d7;
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --card-border: var(--rule);
 
-  --primary: #0e7c66;
-  --primary-foreground: #ffffff;
-  --primary-border: #0e7c66;
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --popover-border: var(--rule);
 
-  --secondary: #f5f5f7;
-  --secondary-foreground: #1d1d1f;
-  --secondary-border: #f5f5f7;
+  --primary: var(--accent-text);
+  --primary-foreground: var(--accent-on);
+  --primary-border: var(--accent-text);
 
-  --muted: #f5f5f7;
-  --muted-foreground: #6e6e73;
-  --muted-border: #d2d2d7;
+  --secondary: var(--paper-3);
+  --secondary-foreground: var(--ink);
+  --secondary-border: var(--paper-3);
 
-  --accent: #f5f5f7;
-  --accent-foreground: #1d1d1f;
-  --accent-border: #d2d2d7;
+  --muted: var(--paper-2);
+  --muted-foreground: var(--ink-muted);
+  --muted-border: var(--rule);
 
-  --destructive: #c4291c;
-  --destructive-foreground: #ffffff;
-  --destructive-border: #c4291c;
+  --accent: var(--paper-3);
+  --accent-foreground: var(--ink);
+  --accent-border: var(--rule);
 
-  --border: #d2d2d7;
-  --input: #d2d2d7;
-  --ring: #0e7c66;
+  --destructive: var(--error);
+  --destructive-foreground: var(--error-on);
+  --destructive-border: var(--error);
 
-  /* Read by the shadcn button and badge outline variants. They were never
-     defined, so those borders fell back to currentColor (near-black). */
-  --button-outline: #d2d2d7;
-  --badge-outline: #d2d2d7;
+  --border: var(--rule);
+  --input: var(--field-edge);
+  --ring: var(--accent-text);
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #1d1d1f;
-  --sidebar-border: #d2d2d7;
-  --sidebar-primary: #0e7c66;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f5f5f7;
-  --sidebar-accent-foreground: #1d1d1f;
-  --sidebar-ring: #0e7c66;
+  /* Read by the shadcn button and badge outline variants. */
+  --button-outline: var(--rule-2);
+  --badge-outline: var(--rule-2);
 
-  --radius: 12px;
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-border: var(--rule);
+  --sidebar-primary: var(--accent-text);
+  --sidebar-primary-foreground: var(--accent-on);
+  --sidebar-accent: var(--paper-3);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-ring: var(--accent-text);
+
+  --radius: 4px;
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #f5f5f7;
-  --surface: #1c1c1e;
+  --paper: oklch(13.5% 0.012 235);
+  --paper-2: oklch(17% 0.014 235);
+  --paper-3: oklch(21% 0.016 235);
+  --ink: oklch(95% 0.006 230);
+  --ink-2: oklch(82% 0.012 230);
+  --ink-muted: oklch(66% 0.016 230);
+  --rule: oklch(27% 0.014 235);
+  --rule-2: oklch(34% 0.016 235);
+  --field-edge: oklch(52% 0.016 232);
+  --accent-text: oklch(89% 0.19 126);
+  --accent-on: oklch(19% 0.04 126);
+  --error: oklch(72% 0.15 27);
+  --error-on: oklch(19% 0.04 27);
 
-  --card: #1c1c1e;
-  --card-foreground: #f5f5f7;
-  --card-border: #38383a;
-
-  --popover: #1c1c1e;
-  --popover-foreground: #f5f5f7;
-  --popover-border: #38383a;
-
-  --primary: #3fb89c;
-  --primary-foreground: #000000;
-  --primary-border: #3fb89c;
-
-  --secondary: #2c2c2e;
-  --secondary-foreground: #f5f5f7;
-  --secondary-border: #2c2c2e;
-
-  --muted: #2c2c2e;
-  --muted-foreground: #a1a1a6;
-  --muted-border: #38383a;
-
-  --accent: #2c2c2e;
-  --accent-foreground: #f5f5f7;
-  --accent-border: #38383a;
-
-  --destructive: #ff6961;
-  --destructive-foreground: #000000;
-  --destructive-border: #ff6961;
-
-  --border: #38383a;
-  --input: #38383a;
-  --ring: #3fb89c;
-
-  --button-outline: #38383a;
-  --badge-outline: #38383a;
-
-  --sidebar: #000000;
-  --sidebar-foreground: #f5f5f7;
-  --sidebar-border: #38383a;
-  --sidebar-primary: #3fb89c;
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #2c2c2e;
-  --sidebar-accent-foreground: #f5f5f7;
-  --sidebar-ring: #3fb89c;
+  --card: var(--paper-2);
+  --popover: var(--paper-2);
+  --secondary: var(--paper-3);
+  --secondary-border: var(--paper-3);
 }
 
 @layer base {
@@ -206,26 +169,27 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+  /* Geologica's sharpened corners are the display voice; body stays soft. */
+  h1,
+  h2,
+  h3 {
+    font-variation-settings: "SHRP" 100;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--signal) 30%, transparent);
+  }
+  html {
+    scrollbar-color: var(--ink-muted) var(--paper);
+  }
+  html,
+  body {
+    overflow-x: clip;
+  }
   /* DESIGN.md: 2px accent ring, 2px offset, on every interactive element.
      Components that draw their own ring set outline-none and override this. */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-  }
-}
-
-/* DESIGN.md "Motion": sections reveal on scroll with opacity and a 24px
-   rise. Content only starts hidden once script has marked it pending, so a
-   page without JavaScript, or with reduced motion, shows everything. */
-@media (prefers-reduced-motion: no-preference) {
-  [data-reveal="pending"] {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  [data-reveal] {
-    transition:
-      opacity 400ms var(--ease-out),
-      transform 400ms var(--ease-out);
   }
 }
 

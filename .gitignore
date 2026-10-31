@@ -54,3 +54,6 @@ Thumbs.db
 /e2e/.report
 /playwright/.cache
 .env.prod
+
+# Hallmark design-tool workspace: before/after records, screenshots, build log
+.hallmark/
