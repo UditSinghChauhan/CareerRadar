@@ -1,0 +1,414 @@
+{
+  "illustrative": true,
+  "note": "Illustrative rows for landing concepts. Scores and reasons come from api-server/src/queue/priority.ts; companies and titles are invented.",
+  "generatedAt": "2026-09-16T03:30:00.000Z",
+  "queueDay": "2026-09-16",
+  "limit": 10,
+  "eligibleCount": 2109,
+  "distinctCount": 1840,
+  "progress": {
+    "appliedToday": 0,
+    "target": 10,
+    "streakDays": 0,
+    "timezone": "Asia/Kolkata"
+  },
+  "weights": {
+    "relevanceScore": 0.4,
+    "deadlineUrgency": 0.3,
+    "freshness": 0.2,
+    "dreamCompanyBoost": 0.1
+  },
+  "items": [
+    {
+      "job": {
+        "id": "illustrative-1",
+        "companyId": "illustrative-company-1",
+        "title": "Software Engineer, New Grad",
+        "location": "Bengaluru",
+        "relevanceTrack": "new_grad",
+        "jobType": "full_time",
+        "workMode": "hybrid",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-15T03:30:00.000Z",
+        "createdAt": "2026-09-15T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-1",
+          "name": "Northwind Labs",
+          "logoUrl": null
+        }
+      },
+      "priority": 73,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 100,
+        "dreamCompanyBoost": 100
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 20,
+        "dreamCompanyBoost": 10
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 100/100 — top of the classifier's band, shared with hundreds of others, so the terms below decide the order",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted in the last 48 hours",
+        "You have bookmarked a role at this company"
+      ]
+    },
+    {
+      "job": {
+        "id": "illustrative-2",
+        "companyId": "illustrative-company-2",
+        "title": "SDE Intern, Payments",
+        "location": "Bengaluru",
+        "relevanceTrack": "internship",
+        "jobType": "internship",
+        "workMode": "onsite",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-14T15:30:00.000Z",
+        "createdAt": "2026-09-14T15:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-2",
+          "name": "Tallyfin",
+          "logoUrl": null
+        }
+      },
+      "priority": 63,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 100,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 20,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 100/100 — top of the classifier's band, shared with hundreds of others, so the terms below decide the order",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted in the last 48 hours"
+      ]
+    },
+    {
+      "job": {
+        "id": "illustrative-3",
+        "companyId": "illustrative-company-3",
+        "title": "Graduate Engineer, Platform",
+        "location": "Pune",
+        "relevanceTrack": "new_grad",
+        "jobType": "full_time",
+        "workMode": "hybrid",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-13T03:30:00.000Z",
+        "createdAt": "2026-09-13T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-3",
+          "name": "Kestrel Cloud",
+          "logoUrl": null
+        }
+      },
+      "priority": 62.29,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 96.43,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 19.29,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 100/100 — top of the classifier's band, shared with hundreds of others, so the terms below decide the order",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted 3 days ago (freshness 96/100)"
+      ]
+    },
+    {
+      "job": {
+        "id": "illustrative-4",
+        "companyId": "illustrative-company-4",
+        "title": "Backend Engineer I",
+        "location": "Hyderabad",
+        "relevanceTrack": "new_grad",
+        "jobType": "full_time",
+        "workMode": "onsite",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-11T03:30:00.000Z",
+        "createdAt": "2026-09-11T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-4",
+          "name": "Orbit Retail",
+          "logoUrl": null
+        }
+      },
+      "priority": 60.86,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 89.29,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 17.86,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 100/100 — top of the classifier's band, shared with hundreds of others, so the terms below decide the order",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted 5 days ago (freshness 89/100)"
+      ]
+    },
+    {
+      "job": {
+        "id": "illustrative-5",
+        "companyId": "illustrative-company-5",
+        "title": "Software Engineer Intern",
+        "location": "Gurugram",
+        "relevanceTrack": "internship",
+        "jobType": "internship",
+        "workMode": "hybrid",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-10T03:30:00.000Z",
+        "createdAt": "2026-09-10T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-5",
+          "name": "Meridian Health",
+          "logoUrl": null
+        }
+      },
+      "priority": 60.14,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 85.71,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 17.14,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 100/100 — top of the classifier's band, shared with hundreds of others, so the terms below decide the order",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted 6 days ago (freshness 86/100)"
+      ]
+    },
+    {
+      "job": {
+        "id": "illustrative-6",
+        "companyId": "illustrative-company-6",
+        "title": "Associate Software Engineer",
+        "location": "Chennai",
+        "relevanceTrack": "new_grad",
+        "jobType": "full_time",
+        "workMode": "onsite",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-08T03:30:00.000Z",
+        "createdAt": "2026-09-08T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-6",
+          "name": "Lumen Logistics",
+          "logoUrl": null
+        }
+      },
+      "priority": 58.71,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 78.57,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 15.71,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 100/100 — top of the classifier's band, shared with hundreds of others, so the terms below decide the order",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted 8 days ago (freshness 79/100)"
+      ]
+    },
+    {
+      "job": {
+        "id": "illustrative-8",
+        "companyId": "illustrative-company-8",
+        "title": "SDE 1, Search",
+        "location": "Bengaluru",
+        "relevanceTrack": "new_grad",
+        "jobType": "full_time",
+        "workMode": "hybrid",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-05T03:30:00.000Z",
+        "createdAt": "2026-09-05T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-8",
+          "name": "Quill Commerce",
+          "logoUrl": null
+        }
+      },
+      "priority": 56.57,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 67.86,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 13.57,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 100/100 — top of the classifier's band, shared with hundreds of others, so the terms below decide the order",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted 11 days ago (freshness 68/100)"
+      ]
+    },
+    {
+      "job": {
+        "id": "illustrative-7",
+        "companyId": "illustrative-company-7",
+        "title": "Frontend Engineer, Early Career",
+        "location": "Remote, India",
+        "relevanceTrack": "early_career",
+        "jobType": "full_time",
+        "workMode": "remote",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-14T03:30:00.000Z",
+        "createdAt": "2026-09-14T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-7",
+          "name": "Paper Trail",
+          "logoUrl": null
+        }
+      },
+      "priority": 55,
+      "components": {
+        "relevanceScore": 80,
+        "deadlineUrgency": 10,
+        "freshness": 100,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 32,
+        "deadlineUrgency": 3,
+        "freshness": 20,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 80/100",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted in the last 48 hours"
+      ]
+    },
+    {
+      "job": {
+        "id": "illustrative-10",
+        "companyId": "illustrative-company-10",
+        "title": "Software Developer, Graduate",
+        "location": "Noida",
+        "relevanceTrack": "new_grad",
+        "jobType": "full_time",
+        "workMode": "onsite",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-02T03:30:00.000Z",
+        "createdAt": "2026-09-02T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-10",
+          "name": "Harbor Systems",
+          "logoUrl": null
+        }
+      },
+      "priority": 54.43,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 57.14,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 11.43,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 100/100 — top of the classifier's band, shared with hundreds of others, so the terms below decide the order",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted 14 days ago (freshness 57/100)"
+      ]
+    },
+    {
+      "job": {
+        "id": "illustrative-9",
+        "companyId": "illustrative-company-9",
+        "title": "Data Engineer Intern",
+        "location": "Mumbai",
+        "relevanceTrack": "internship",
+        "jobType": "internship",
+        "workMode": "onsite",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-12T03:30:00.000Z",
+        "createdAt": "2026-09-12T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-9",
+          "name": "Sable Analytics",
+          "logoUrl": null
+        }
+      },
+      "priority": 53.57,
+      "components": {
+        "relevanceScore": 80,
+        "deadlineUrgency": 10,
+        "freshness": 92.86,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 32,
+        "deadlineUrgency": 3,
+        "freshness": 18.57,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": [
+        "Relevance 80/100",
+        "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
+        "Posted 4 days ago (freshness 93/100)"
+      ]
+    }
+  ]
+}

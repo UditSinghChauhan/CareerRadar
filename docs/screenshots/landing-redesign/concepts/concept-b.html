@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Concept B: the resolve</title>
+    <link rel="stylesheet" href="assets/app.css" />
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      body {
+        margin: 0;
+        background: #0a0a0a;
+      }
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 32px;
+      }
+      .hero__act {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      .walk {
+        display: grid;
+        grid-template-columns: 5fr 7fr;
+        gap: 64px;
+      }
+      .steps {
+        padding: 0 0 30vh;
+      }
+      .step--hero {
+        min-height: calc(100vh - 56px);
+        opacity: 1;
+      }
+      .step--hero .display {
+        font-size: clamp(2.75rem, 1.6rem + 2.6vw, 3.75rem);
+      }
+      .step--hero .lead {
+        margin-top: 20px;
+        max-width: 28ch;
+      }
+      .step--hero .hero__act {
+        margin-top: 32px;
+      }
+      .step--hero .fig {
+        margin-top: 40px;
+        max-width: 36ch;
+      }
+      .step {
+        min-height: 78vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        opacity: 0.35;
+        transition: opacity 350ms cubic-bezier(0.65, 0, 0.35, 1);
+      }
+      .step.is-active {
+        opacity: 1;
+      }
+      .step__n {
+        font-size: 15px;
+        color: var(--k-signal);
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 14px;
+      }
+      .step h2 {
+        font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        margin: 0 0 16px;
+      }
+      .step .body {
+        max-width: 40ch;
+      }
+      .step .fig {
+        margin-top: 18px;
+        font-size: 14px;
+        color: var(--k-muted);
+      }
+      .step .fig b {
+        color: var(--k-ink);
+        font-weight: 600;
+      }
+      .stage-col {
+        position: relative;
+      }
+      .stage {
+        position: sticky;
+        top: 64px;
+        height: calc(100vh - 96px);
+        max-height: 720px;
+      }
+      .stage__q {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        border-radius: 16px;
+        opacity: 0;
+        transition: opacity 350ms cubic-bezier(0.65, 0, 0.35, 1);
+      }
+      .stage.s2 .stage__q {
+        opacity: 1;
+      }
+      .stage canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .stage__note {
+        position: absolute;
+        left: 0;
+        bottom: -36px;
+      }
+      .inline-stage {
+        display: none;
+      }
+
+      @media (max-width: 1023px) {
+        .wrap {
+          padding: 0 20px;
+        }
+        .step--hero {
+          min-height: 0;
+          padding-top: 40px;
+        }
+        .walk {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+        .stage-col {
+          display: none;
+        }
+        .steps {
+          padding: 48px 0 64px;
+        }
+        .step {
+          min-height: 0;
+          opacity: 1;
+          margin-bottom: 56px;
+        }
+        .inline-stage {
+          display: block;
+          position: relative;
+          margin-top: 24px;
+          height: 360px;
+        }
+        .inline-stage canvas {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+        }
+        .inline-stage .stage__q {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+        }
+        .inline-stage.s2 {
+          height: auto;
+        }
+        .inline-stage.s2 .stage__q {
+          position: relative;
+          opacity: 1;
+          max-height: 520px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="c is-dark">
+      <div id="nav"></div>
+      <div class="wrap">
+        <section class="walk" aria-label="How the queue works">
+          <div class="steps">
+            <article class="step step--hero is-active" data-step="0">
+              <h1 class="display">
+                Ten roles worth applying to, every morning.
+              </h1>
+              <p class="lead">
+                A ranked queue of SDE roles for Indian CS freshers, with the
+                reason for every rank.
+              </p>
+              <div class="hero__act">
+                <a class="btn" href="#">Get started</a>
+                <p class="quiet">
+                  Free and open source. <a href="#">Read the code</a>
+                </p>
+              </div>
+              <p class="fig num">
+                The radar: <b>4,512</b> active postings, <b>2,109</b> open to
+                freshers nearest the centre. Measured 16 September 2026.
+              </p>
+              <div class="inline-stage" data-state="0"></div>
+            </article>
+            <article class="step" data-step="1">
+              <p class="step__n">1 of 2</p>
+              <h2>Ten rise out of the field, in order.</h2>
+              <p class="body">
+                Each is scored on relevance 40%, deadline 30%, freshness 20% and
+                dream company 10%. The highest ten become your queue.
+              </p>
+              <p class="fig">
+                <span class="illus"
+                  >Illustrative rows. Scores and reasons come from the real
+                  ranking code.</span
+                >
+              </p>
+              <div class="inline-stage" data-state="1"></div>
+            </article>
+            <article class="step" data-step="2">
+              <p class="step__n">2 of 2</p>
+              <h2>Each one tells you why.</h2>
+              <p class="body">
+                Every row shows its four scores and a plain reason, including
+                what isn't working: sources rarely publish deadlines, so that
+                term scores every role the same. Apply opens the employer's page
+                and logs it.
+              </p>
+              <p class="fig">
+                <span class="illus"
+                  >Illustrative rows. Scores and reasons come from the real
+                  ranking code.</span
+                >
+              </p>
+              <div class="inline-stage" data-state="2"></div>
+            </article>
+          </div>
+          <div class="stage-col">
+            <div class="stage" id="stage" data-state="0"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script src="assets/concepts.js"></script>
+    <script src="radar.js"></script>
+    <script>
+      document.getElementById("nav").outerHTML = navHTML(true);
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function buildStage(el, limit) {
+        el.innerHTML = '<div class="stage__q"></div><canvas></canvas>';
+        const q = el.querySelector(".stage__q");
+        CR.mountQueue(q, { limit });
+        const note = document.createElement("p");
+        note.className = "stage__note";
+        note.innerHTML =
+          '<span class="illus">Illustrative rows. Scores and reasons come from the real ranking code.</span>';
+        return { el, q, canvas: el.querySelector("canvas") };
+      }
+
+      // Badge centres of the real rows, relative to the stage.
+      function badges(stage) {
+        const box = stage.el.getBoundingClientRect();
+        return [...stage.q.querySelectorAll('[data-testid="queue-row"]')].map(
+          (row, i) => {
+            const b = row.querySelector("span").getBoundingClientRect();
+            return {
+              x: b.left - box.left + b.width / 2,
+              y: b.top - box.top + b.height / 2,
+              rank: i + 1,
+            };
+          },
+        );
+      }
+
+      function render(stage, state, t = 1) {
+        stage.el.classList.toggle("s2", state === 2);
+        const c = stage.canvas,
+          w = c.clientWidth,
+          h = c.clientHeight;
+        if (!w || !h) return;
+        const R = Math.min(w, h) / 2 - 16;
+        if (state === 0) {
+          drawRadar(c, { theme: "dark", lit: true, r: R });
+          return;
+        }
+        // Ranks follow the field: the found point nearest the centre is rank 1.
+        const field = CR.field
+          .filter((p) => p.found)
+          .map((p, i) => ({ i, d: Math.hypot(p.x, p.y) }))
+          .sort((a, b) => a.d - b.d)
+          .map((o) => o.i);
+        const targets = badges(stage);
+        const visible = targets.filter((tg) => tg.y < h - 8);
+        if (state === 1) {
+          // The column the rows will occupy: ten slots spread over the stage height.
+          const slots = field.map((_, k) => ({
+            x: Math.min(64, w * 0.12),
+            y: 28 + k * ((h - 56) / 9),
+          }));
+          const found = new Array(10);
+          field.forEach((fi, k) => (found[fi] = slots[k]));
+          const info = drawRadar(c, {
+            theme: "dark",
+            lit: false,
+            r: R,
+            cx: w * 0.58,
+            dim: 0.72,
+            trails: true,
+            found,
+          });
+          const ctx = c.getContext("2d");
+          ctx.font = "500 13px Geist, sans-serif";
+          ctx.fillStyle = getComputedStyle(c).getPropertyValue("--k-ink");
+          ctx.textBaseline = "middle";
+          CR.queue.items.forEach((it, k) => {
+            const s = slots[k];
+            ctx.fillStyle = getComputedStyle(c).getPropertyValue("--k-muted");
+            ctx.fillText(String(k + 1).padStart(2, " "), s.x - 34, s.y);
+            ctx.fillStyle = getComputedStyle(c).getPropertyValue("--k-ink");
+            ctx.fillText(it.priority.toFixed(1), s.x + 16, s.y);
+          });
+          return;
+        }
+        // State 2: the dots have landed on the rank badges of the real rows.
+        const ctx = c.getContext("2d");
+        const dpr = devicePixelRatio || 1;
+        c.width = w * dpr;
+        c.height = h * dpr;
+        ctx.scale(dpr, dpr);
+        const sig = getComputedStyle(c).getPropertyValue("--k-signal");
+        ctx.strokeStyle = sig;
+        ctx.lineWidth = 2;
+        visible.forEach((b) => {
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, 17, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+      }
+
+      const stages = [];
+      document.addEventListener("DOMContentLoaded", () => {});
+      const desktop = buildStage(document.getElementById("stage"), 10);
+      document
+        .querySelectorAll(".inline-stage")
+        .forEach((el) =>
+          stages.push({
+            s: buildStage(el, el.dataset.state === "2" ? 3 : 10),
+            state: +el.dataset.state,
+          }),
+        );
+
+      let active = 0;
+      function setActive(i) {
+        active = i;
+        document
+          .querySelectorAll(".step:not(.step--hero)")
+          .forEach((s) =>
+            s.classList.toggle("is-active", +s.dataset.step === i),
+          );
+        render(desktop, i);
+      }
+      const io = new IntersectionObserver(
+        (es) =>
+          es.forEach(
+            (e) => e.isIntersecting && setActive(+e.target.dataset.step),
+          ),
+        { rootMargin: "-45% 0px -45% 0px" },
+      );
+      document.querySelectorAll(".step").forEach((s) => io.observe(s));
+
+      document.fonts.ready.then(() =>
+        requestAnimationFrame(() => {
+          setActive(0);
+          stages.forEach(({ s, state }) => render(s, state));
+          document.body.dataset.ready = "1";
+        }),
+      );
+      addEventListener("resize", () => {
+        render(desktop, active);
+        stages.forEach(({ s, state }) => render(s, state));
+      });
+    </script>
+  </body>
+</html>

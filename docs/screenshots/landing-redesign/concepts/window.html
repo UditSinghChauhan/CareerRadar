@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Queue window</title>
+    <link rel="stylesheet" href="assets/app.css" />
+    <style>
+      @font-face {
+        font-family: "Geologica";
+        src: url("assets/geologica-latin-wght.woff2") format("woff2");
+        font-weight: 100 900;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--background);
+      }
+      body {
+        padding: 12px;
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="q"></div>
+    <script src="assets/concepts.js"></script>
+    <script>
+      const s = new URLSearchParams(location.search).get("state") || "ranked";
+      CR.mountQueue(
+        document.getElementById("q"),
+        s === "applied" ? { skip: 1, applied: 1, limit: 9 } : { limit: 10 },
+      );
+      if (s === "later")
+        setTimeout(
+          () =>
+            scrollTo(
+              0,
+              document.querySelectorAll('[data-testid="queue-row"]')[3]
+                .offsetTop - 12,
+            ),
+          150,
+        );
+      if (s === "reason") {
+        // Open the real row's "Why this ranks 1st" tooltip, as a hover would.
+        setTimeout(() => {
+          const icon = document.querySelector(
+            '[data-testid="priority-breakdown"] svg',
+          );
+          icon.dispatchEvent(
+            new PointerEvent("pointermove", {
+              bubbles: true,
+              pointerType: "mouse",
+            }),
+          );
+        }, 100);
+      }
+    </script>
+  </body>
+</html>

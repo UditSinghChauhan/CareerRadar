@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Concept A: the instrument</title>
+    <link rel="stylesheet" href="assets/app.css" />
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      body {
+        margin: 0;
+      }
+      .a-hero {
+        position: relative;
+        text-align: center;
+        padding: 72px 24px 0;
+        overflow: hidden;
+      }
+      .a-hero .lead {
+        max-width: 30ch;
+        margin: 20px auto 0;
+      }
+      .hero__act {
+        margin-top: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+      /* The object: one large disc, reserved before script runs (no layout shift). */
+      .object {
+        position: relative;
+        width: min(1040px, 132vw);
+        aspect-ratio: 1;
+        margin: 56px auto 0;
+        margin-bottom: calc(min(1040px, 132vw) * -0.42);
+      }
+      .object canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .ring-label {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 13px;
+        color: var(--k-muted);
+        white-space: nowrap;
+        background: var(--k-bg);
+        padding: 0 8px;
+      }
+      .ring-label b {
+        color: var(--k-ink);
+        font-weight: 600;
+      }
+      .fold-fade {
+        position: relative;
+        height: 0;
+      }
+
+      .walk {
+        position: relative;
+        padding: 96px 24px 140px;
+        text-align: center;
+        background: var(--k-bg);
+      }
+      .walk .lead {
+        max-width: 34ch;
+        margin: 18px auto 0;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 32px;
+        max-width: 980px;
+        margin: 64px auto 48px;
+        text-align: left;
+      }
+      .step h3 {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        margin: 0 0 8px;
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .step h3 span {
+        color: var(--k-signal);
+        font-variant-numeric: tabular-nums;
+        font-size: 15px;
+      }
+      .frame {
+        max-width: 880px;
+        margin: 0 auto;
+        text-align: left;
+        border: 1px solid var(--k-rule);
+        box-shadow: var(--k-shadow);
+      }
+      .frame-note {
+        margin-top: 16px;
+      }
+      @media (max-width: 639px) {
+        .a-hero {
+          padding-top: 48px;
+        }
+        .object {
+          margin-top: 40px;
+        }
+        .steps {
+          grid-template-columns: 1fr;
+          gap: 24px;
+          margin: 40px auto 32px;
+        }
+        .walk {
+          padding: 88px 20px 96px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="c" id="page">
+      <div id="nav"></div>
+      <section class="a-hero">
+        <h1 class="display">Ten roles worth applying to, every morning.</h1>
+        <p class="lead">
+          A ranked queue of SDE roles for Indian CS freshers, with the reason
+          for every rank.
+        </p>
+        <div class="hero__act">
+          <a class="btn" href="#">Get started</a>
+          <p class="quiet">
+            Free and open source. <a href="#">Read the code on GitHub</a>
+          </p>
+        </div>
+        <div
+          class="object"
+          aria-label="Radar of 4,512 active postings measured on 16 September 2026; 2,109 open to freshers sit nearer the centre; ten found roles are lit."
+          role="img"
+        >
+          <canvas id="radar"></canvas>
+          <span class="ring-label num" style="top: 0.6%"
+            ><b>4,512</b> active postings</span
+          >
+          <span class="ring-label num" style="top: 17.6%"
+            ><b>2,109</b> open to freshers</span
+          >
+          <span class="ring-label num" style="top: 34.4%"
+            ><b>10</b> for you today</span
+          >
+        </div>
+      </section>
+
+      <section class="walk">
+        <h2 class="h2">Then it tells you why.</h2>
+        <p class="lead">
+          Every row carries its score and the reason it sits where it does.
+        </p>
+        <div class="steps">
+          <div class="step">
+            <h3><span>1</span>Rank</h3>
+            <p class="body">
+              Relevance 40%, deadline 30%, freshness 20%, dream company 10%. The
+              top ten make your queue.
+            </p>
+          </div>
+          <div class="step">
+            <h3><span>2</span>Reason</h3>
+            <p class="body">
+              Each row says why, including what isn't working: sources rarely
+              publish deadlines, so that term scores every role the same.
+            </p>
+          </div>
+          <div class="step">
+            <h3><span>3</span>Apply</h3>
+            <p class="body">
+              Apply opens the employer's posting and logs it. The row leaves and
+              today's count goes up.
+            </p>
+          </div>
+        </div>
+        <div class="frame" id="queue"></div>
+        <p class="frame-note">
+          <span class="illus"
+            >Illustrative rows. Scores and reasons come from the real ranking
+            code.</span
+          >
+        </p>
+      </section>
+    </div>
+    <script src="assets/concepts.js"></script>
+    <script src="radar.js"></script>
+    <script>
+      const theme = new URLSearchParams(location.search).get("theme") || "dark";
+      const dark = theme === "dark";
+      const page = document.getElementById("page");
+      if (dark) page.classList.add("is-dark");
+      document.body.style.background = dark ? "#0a0a0a" : "#fff";
+      document.getElementById("nav").outerHTML = navHTML(dark);
+      const q = document.getElementById("queue");
+      if (dark) document.documentElement.classList.add("dark");
+      CR.mountQueue(q, { limit: 4 });
+      document.fonts.ready.then(() => {
+        drawRadar(document.getElementById("radar"), {
+          theme,
+          lit: true,
+          pointScale: 1.25,
+        });
+        document.body.dataset.ready = "1";
+      });
+    </script>
+  </body>
+</html>
