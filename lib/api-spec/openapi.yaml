@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: public
+    description: Unauthenticated read-only figures for the landing page
   - name: profile
     description: User profile management
   - name: settings
@@ -63,6 +65,26 @@ paths:
             have. The body lists them per table and names the migration to
             apply. Callers that tolerate a cold start must still treat this
             as a failure.
+
+  /public/stats:
+    get:
+      operationId: getPublicStats
+      tags: [public]
+      summary: Live posting counts for the landing page
+      description: >-
+        No session needed. Counts active postings and the fresher-eligible
+        subset, plus the most recent successful provider sync. Cached in
+        process for ten minutes, so a busy landing page costs one pair of
+        count queries per instance per ten minutes.
+      responses:
+        "200":
+          description: Current counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicStats"
+        "503":
+          description: The database could not be read. The landing page falls back to its committed figures.
 
   /profile:
     get:
@@ -1207,6 +1229,20 @@ components:
       scheme: bearer
 
   schemas:
+    PublicStats:
+      type: object
+      required: [activePostings, openToFreshers, lastSyncedAt]
+      properties:
+        activePostings:
+          type: integer
+          description: Rows in `jobs` with status `active`.
+        openToFreshers:
+          type: integer
+          description: Active rows the fresher classifier marked eligible.
+        lastSyncedAt:
+          type: ["string", "null"]
+          format: date-time
+          description: Most recent successful provider sync, or null if none is logged.
     # ─── AI ──────────────────────────────────────────────────────────────────────
 
     AIStatus:

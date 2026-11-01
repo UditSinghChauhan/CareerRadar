@@ -38,7 +38,7 @@ The ranking can be explained and checked. Classification and ranking are determi
 ## Brand Commitments
 
 - The name is CareerRadar. The logo mark is three concentric circles (`public/logo.svg`).
-- Voice: plain, specific, measured. Every number carries its measurement date.
+- Voice: plain, specific, measured. Every number on the page is real: live from the API where possible, otherwise a committed measurement whose date is recorded in a code comment, not on the page.
 - Open source under the MIT licence: https://github.com/UditSinghChauhan/CareerRadar
 
 ## Evidence on Hand
@@ -52,7 +52,7 @@ The ranking can be explained and checked. Classification and ranking are determi
 
 1. Show the reason, not just the rank.
 2. Say when a signal is missing, rather than letting it look as though it is working.
-3. Every claim on the page can be checked against the code or a dated measurement.
+3. Every claim on the page can be checked against the code or a recorded measurement.
 4. Ten good roles beat a feed of hundreds.
 
 ## Accessibility & Inclusion

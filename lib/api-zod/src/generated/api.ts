@@ -52,6 +52,17 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * No session needed. Counts active postings and the fresher-eligible subset, plus the most recent successful provider sync. Cached in process for ten minutes, so a busy landing page costs one pair of count queries per instance per ten minutes.
+ * @summary Live posting counts for the landing page
+ */
+export const GetPublicStatsResponse = zod.object({
+  "activePostings": zod.number().describe('Rows in `jobs` with status `active`.'),
+  "openToFreshers": zod.number().describe('Active rows the fresher classifier marked eligible.'),
+  "lastSyncedAt": zod.coerce.date().nullable().describe('Most recent successful provider sync, or null if none is logged.')
+})
+
+
+/**
  * @summary Get current user's profile
  */
 export const GetProfileResponse = zod.object({

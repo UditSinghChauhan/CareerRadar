@@ -52,6 +52,20 @@ describe("LandingPage", () => {
     expect(github[1].closest("footer")).not.toBeNull();
   });
 
+  it("prints no date anywhere on the page", () => {
+    // The page claims to be live; "Measured 16 September 2026." and
+    // "Counted on 31 October 2026" contradicted that.
+    const { container } = render(<LandingPage />);
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(
+      /\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/,
+    );
+    expect(text).not.toMatch(/\b20\d\d\b/);
+    for (const el of container.querySelectorAll("[aria-label]")) {
+      expect(el.getAttribute("aria-label")).not.toMatch(/\b20\d\d\b/);
+    }
+  });
+
   it("states the deadline caveat the README measures, not a working signal", () => {
     // Before this change the page listed "Deadline 30%: how soon applications
     // close" with no caveat, while the README measures a deadline on 13 of

@@ -35,12 +35,6 @@ Requires Node 22+ and pnpm 9+.
 - career-radar runs vitest 3.2.7 and api-server runs vitest 4.1.10. The jest-dom matchers are registered in `artifacts/career-radar/src/test-setup.ts`. Aligning the versions is a separate change.
 - README test counts are stale (api-server now reports 944, not 941). Fix in the README pass.
 
-## Git
-- Start every task from a fresh main: `git checkout main && git pull --ff-only origin main`, then create a new branch.
-- One branch and one PR per task. Never force-push main.
-- Commit authorship is the owner's identity. No Co-Authored-By or Claude-Session trailers in commits or PR descriptions.
-- Default workflow: stage the named files, write the message to a file, and print the exact `git commit` command for the owner to run.
-
 ## Done means
 - All commands above pass, with exact results reported.
 - UI changes include screenshots at 375, 768 and 1280 px.
@@ -61,7 +55,7 @@ Act as a senior product designer and principal engineer finishing a portfolio pr
 - Every change states the problem, the evidence (a screenshot, a failing test, an audit finding, or a measured before/after), the fix, and the expected effect.
 - Rank findings by impact on a first-time visitor and on a recruiter reading the code. Fix the top findings first. Record the rest as a list in the PR description, not as silent scope creep.
 - Do not make a change you cannot justify in one sentence.
-- Prefer removing or simplifying over adding.
+- Prefer the simplest implementation of the approved design; do not simplify the design itself.
 - Do not invent metrics. If a number is not measured, say so.
 - If you are not sure, say what you checked and what remains uncertain.
 

@@ -290,7 +290,7 @@ export function RadarField() {
         <canvas
           ref={canvasRef}
           role="img"
-          aria-label="Radar chart of 4,512 active postings measured on 16 September 2026. The 2,109 open to freshers sit nearest the centre; the ten roles of a day's queue are lit."
+          aria-label="Radar chart of 4,512 active postings. The 2,109 open to freshers sit nearest the centre; the ten roles of a day's queue are lit."
         />
         {RINGS.map((ring) => (
           <span
@@ -305,7 +305,6 @@ export function RadarField() {
         ))}
       </div>
       <figcaption className="lp-radar__caption">
-        <span>Measured 16 September 2026.</span>
         {!reduced && (
           <button
             type="button"

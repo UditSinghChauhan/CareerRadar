@@ -108,8 +108,7 @@ export function Walkthrough() {
             ))}
           </ol>
           <p className="lp-illus">
-            Illustrative rows. Scores and reasons come from the real ranking
-            code.
+            Illustrative rows. Scores come from the real ranking code.
           </p>
         </div>
         {wide && (

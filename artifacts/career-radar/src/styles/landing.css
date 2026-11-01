@@ -455,8 +455,11 @@
 }
 /* The disc is cropped at 58% of its height, a horizon; the caption sits
    under it, clear of the found roles. */
+/* The disc fades into the page through a mask instead of ending at a hard
+   crop, so no edge or band marks where the hero stops. */
 .lp-hero__object .lp-radar__disc {
-  clip-path: inset(-24px -24px 42% -24px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 58%);
+  mask-image: linear-gradient(to bottom, #000 30%, transparent 58%);
 }
 
 /* Entrance: the hero fades and rises once, on load. */

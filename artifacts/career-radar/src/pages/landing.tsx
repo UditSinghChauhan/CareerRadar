@@ -17,7 +17,8 @@ const PROOF = [
   },
   {
     title: "944 backend tests.",
-    body: "Counted on 31 October 2026, from the ranking and the classifier to every provider's sync.",
+    // Counted 2026-10-31 from `pnpm --filter @workspace/api-server test`.
+    body: "From the ranking and the classifier to every provider's sync.",
   },
   {
     title: "Postings from the source.",

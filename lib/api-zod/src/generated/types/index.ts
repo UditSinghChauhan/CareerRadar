@@ -91,6 +91,7 @@ export * from './profile';
 export * from './profileInput';
 export * from './providerSyncStatus';
 export * from './providerSyncStatusState';
+export * from './publicStats';
 export * from './queueItem';
 export * from './savedSearch';
 export * from './savedSearchFilters';
