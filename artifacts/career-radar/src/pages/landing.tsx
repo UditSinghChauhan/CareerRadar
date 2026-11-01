@@ -5,10 +5,10 @@ import { LandingNav } from "@/components/landing/nav";
 import { LogoMark } from "@/components/landing/logo-mark";
 import { useGrain } from "@/components/landing/use-grain";
 import { usePublicStats } from "@/components/landing/use-public-stats";
-import { Walkthrough } from "@/components/landing/walkthrough";
+import { Chapter } from "@/components/landing/chapter";
 import "@/styles/landing.css";
 
-export { PRIORITY_COMPONENTS } from "@/components/landing/walkthrough";
+export { PRIORITY_COMPONENTS } from "@/components/landing/explain-card";
 
 const REPO_URL = "https://github.com/UditSinghChauhan/CareerRadar";
 
@@ -113,7 +113,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <Walkthrough />
+        <Chapter stats={stats} />
 
         <section className="lp-section" aria-labelledby="proof-head">
           <div className="lp-container">

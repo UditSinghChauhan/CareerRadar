@@ -67,13 +67,14 @@ describe("LandingPage", () => {
     }
   });
 
-  it("states the deadline caveat the README measures, not a working signal", () => {
-    // Before this change the page listed "Deadline 30%: how soon applications
-    // close" with no caveat, while the README measures a deadline on 13 of
-    // 4,995 rows and none of the fresher-eligible ones.
+  it("says the deadline term is not separating rows, rather than implying it works", () => {
+    // Sources rarely publish deadlines, so every row scores the same there.
     render(<LandingPage />);
-    expect(screen.getByText(/13 of 4,995 rows/)).toBeInTheDocument();
-    expect(screen.queryByText("How soon applications close")).toBeNull();
+    expect(
+      screen.getAllByText(
+        /No closing date listed, so every row scores the same/,
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it("says the reminder hours as a sentence, not as bare figures", () => {
@@ -85,12 +86,24 @@ describe("LandingPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("labels the walkthrough rows as illustrative and keeps the demo inert", () => {
+  it("labels the queue rows as illustrative and keeps every product frame inert", () => {
     const { container } = render(<LandingPage />);
     expect(screen.getByText(/Illustrative rows\./)).toBeInTheDocument();
-    const stages = container.querySelectorAll(".lp-stage");
-    expect(stages.length).toBeGreaterThan(0);
-    stages.forEach((stage) => expect(stage).toHaveAttribute("inert"));
+    const frames = container.querySelectorAll(".lp-qframe");
+    expect(frames.length).toBeGreaterThan(0);
+    frames.forEach((frame) => expect(frame).toHaveAttribute("inert"));
+  });
+
+  it("walks from every open role to ten, in four beats", () => {
+    render(<LandingPage />);
+    for (const line of [
+      "4,512 open roles.",
+      "2,109 you can actually apply to.",
+      "Ten worth your morning.",
+      "Each one tells you why.",
+    ]) {
+      expect(screen.getByText(line)).toBeInTheDocument();
+    }
   });
 
   it("renders every source both as a table row and as a phone card", () => {

@@ -170,7 +170,7 @@ export type FieldFrame = {
   sweep: number | null;
   /** 0 to 1: how far the ineligible field has dimmed (chapter beat 2). */
   dimOuter?: number;
-  /** Radius multiplier applied to every non-found point (chapter beat 2). */
+  /** Radius multiplier for the rings and every point but the found ones (chapter beat 2). */
   contract?: number;
   /** 0 to 1 per rank (index rank - 1): how lit each found role is. */
   lit: readonly number[];
@@ -202,7 +202,7 @@ export function drawField(
     ctx.arc(
       cx,
       cy,
-      R * frac * (i === 0 ? 1 : contract) - 0.5,
+      R * frac * contract - 0.5,
       -Math.PI / 2,
       -Math.PI / 2 + TAU * k,
     );
@@ -234,13 +234,17 @@ export function drawField(
       lift = since < 0.3 ? 1 - since / 0.3 : 0;
     }
     const base = p.tone === 0 ? 0.24 : p.tone === 1 ? 0.42 : 0.66;
-    const outer = p.tone === 0 ? 1 - 0.85 * dim : 1 + 0.25 * dim;
+    const outer = p.tone === 0 ? 1 - dim : 1 + 0.6 * dim;
     const a = (base + 0.3 * lift) * p.fade * outer * reveal;
     if (a <= 0.01) continue;
     ctx.globalAlpha = Math.min(1, a);
     const s = (p.size + lift * 0.5) * scale * 0.8;
-    const k = p.tone === 0 ? 1 : contract;
-    ctx.fillRect(cx + p.x * R * k - s / 2, cy + p.y * R * k - s / 2, s, s);
+    ctx.fillRect(
+      cx + p.x * R * contract - s / 2,
+      cy + p.y * R * contract - s / 2,
+      s,
+      s,
+    );
   }
   ctx.globalAlpha = 1;
 
