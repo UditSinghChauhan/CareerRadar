@@ -1,7 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { LandingPage, PRIORITY_COMPONENTS, SOURCES } from "../landing";
+import { LandingPage, SOURCES } from "../landing";
+import { PRIORITY_COMPONENTS } from "@/components/landing/explain-card";
 import { QUESTIONS } from "@/components/landing/faq";
 import classifier from "@/components/landing/classifier-demo.json";
 import {
@@ -10,9 +11,16 @@ import {
 } from "@/components/landing/use-public-stats";
 import { ILLUSTRATIVE_QUEUE } from "@/components/landing/landing-queue";
 
+/** Renders the landing and waits for the chapters it mounts after the hero. */
+async function renderLanding() {
+  const utils = render(<LandingPage />);
+  await screen.findByRole("heading", { name: "Questions" });
+  return utils;
+}
+
 describe("LandingPage", () => {
-  it("has exactly one h1, stating the outcome", () => {
-    render(<LandingPage />);
+  it("has exactly one h1, stating the outcome", async () => {
+    await renderLanding();
     const headings = screen.getAllByRole("heading", { level: 1 });
     expect(headings).toHaveLength(1);
     expect(headings[0]).toHaveTextContent(
@@ -20,8 +28,8 @@ describe("LandingPage", () => {
     );
   });
 
-  it("sends every Get started action to sign-up", () => {
-    render(<LandingPage />);
+  it("sends every Get started action to sign-up", async () => {
+    await renderLanding();
     const links = screen.getAllByRole("link", { name: "Get started" });
     expect(links.length).toBeGreaterThan(0);
     for (const link of links) {
@@ -29,8 +37,8 @@ describe("LandingPage", () => {
     }
   });
 
-  it("offers sign-in from the header and no theme toggle: the landing is dark only", () => {
-    render(<LandingPage />);
+  it("offers sign-in from the header and no theme toggle: the landing is dark only", async () => {
+    await renderLanding();
     const header = within(screen.getByRole("banner"));
     expect(header.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",
@@ -39,15 +47,15 @@ describe("LandingPage", () => {
     expect(screen.queryByRole("button", { name: /theme/i })).toBeNull();
   });
 
-  it("names the radar chart with the counts it draws", () => {
-    render(<LandingPage />);
+  it("names the radar chart with the counts it draws", async () => {
+    await renderLanding();
     expect(
       screen.getByRole("img", { name: /Radar chart of 4,512 open roles/ }),
     ).toBeInTheDocument();
   });
 
-  it("links the code from the hero, the closing and the footer", () => {
-    const { container } = render(<LandingPage />);
+  it("links the code from the hero, the closing and the footer", async () => {
+    const { container } = await renderLanding();
     const repo = [...container.querySelectorAll("a")].filter(
       (a) =>
         a.getAttribute("href") ===
@@ -60,8 +68,8 @@ describe("LandingPage", () => {
     ]);
   });
 
-  it("credits the designer and links to their GitHub, with no empty portfolio links", () => {
-    render(<LandingPage />);
+  it("credits the designer and links to their GitHub, with no empty portfolio links", async () => {
+    await renderLanding();
     const footer = within(screen.getByRole("contentinfo"));
     expect(
       footer.getByRole("link", { name: "Udit Singh Chauhan" }),
@@ -75,8 +83,8 @@ describe("LandingPage", () => {
     expect(footer.queryByRole("link", { name: "LinkedIn" })).toBeNull();
   });
 
-  it("closes on tomorrow's ten with the count and the action", () => {
-    render(<LandingPage />);
+  it("closes on tomorrow's ten with the count and the action", async () => {
+    await renderLanding();
     const closing = screen.getByRole("heading", {
       name: "Tomorrow’s ten are already being ranked.",
     });
@@ -88,10 +96,10 @@ describe("LandingPage", () => {
     );
   });
 
-  it("prints no date anywhere on the page", () => {
+  it("prints no date anywhere on the page", async () => {
     // The page claims to be live; "Measured 16 September 2026." and
     // "Counted on 31 October 2026" contradicted that.
-    const { container } = render(<LandingPage />);
+    const { container } = await renderLanding();
     const text = container.textContent ?? "";
     expect(text).not.toMatch(
       /\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/,
@@ -102,9 +110,9 @@ describe("LandingPage", () => {
     }
   });
 
-  it("says the deadline term is not separating rows, rather than implying it works", () => {
+  it("says the deadline term is not separating rows, rather than implying it works", async () => {
     // Sources rarely publish deadlines, so every row scores the same there.
-    render(<LandingPage />);
+    await renderLanding();
     expect(
       screen.getAllByText(
         /No closing date listed, so every row scores the same/,
@@ -112,8 +120,8 @@ describe("LandingPage", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("says the reminder hours as a sentence, not as bare figures", () => {
-    render(<LandingPage />);
+  it("says the reminder hours as a sentence, not as bare figures", async () => {
+    await renderLanding();
     expect(
       screen.getByText(
         /When a source publishes a deadline: 72 hours before it closes, and again at 24\./,
@@ -121,16 +129,16 @@ describe("LandingPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("labels the queue rows as illustrative and keeps every product frame inert", () => {
-    const { container } = render(<LandingPage />);
+  it("labels the queue rows as illustrative and keeps every product frame inert", async () => {
+    const { container } = await renderLanding();
     expect(screen.getByText(/Illustrative rows\./)).toBeInTheDocument();
     const frames = container.querySelectorAll(".lp-qframe");
     expect(frames.length).toBeGreaterThan(0);
     frames.forEach((frame) => expect(frame).toHaveAttribute("inert"));
   });
 
-  it("walks from every open role to ten, in four beats", () => {
-    render(<LandingPage />);
+  it("walks from every open role to ten, in four beats", async () => {
+    await renderLanding();
     for (const line of [
       "4,512 open roles.",
       "2,109 you can actually apply to.",
@@ -141,8 +149,8 @@ describe("LandingPage", () => {
     }
   });
 
-  it("lists every source in the sync table behind its disclosure", () => {
-    const { container } = render(<LandingPage />);
+  it("lists every source in the sync table behind its disclosure", async () => {
+    const { container } = await renderLanding();
     expect(container.querySelectorAll(".lp-sync tbody tr")).toHaveLength(
       SOURCES.length,
     );
@@ -150,7 +158,7 @@ describe("LandingPage", () => {
   });
 
   it("answers four questions in an accordion, the first open", async () => {
-    render(<LandingPage />);
+    await renderLanding();
     const triggers = QUESTIONS.map((item) =>
       screen.getByRole("button", { name: item.q }),
     );
@@ -162,16 +170,16 @@ describe("LandingPage", () => {
     expect(triggers[0]).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("replaces text-only sections with six working tiles", () => {
-    const { container } = render(<LandingPage />);
+  it("replaces text-only sections with six working tiles", async () => {
+    const { container } = await renderLanding();
     expect(container.querySelectorAll(".lp-bento > .lp-tile")).toHaveLength(6);
     expect(
       screen.getByRole("heading", { name: "No model decides what you see." }),
     ).toBeInTheDocument();
   });
 
-  it("shows the real app in five captures, each with alt text and a reserved box", () => {
-    const { container } = render(<LandingPage />);
+  it("shows the real app in five captures, each with alt text and a reserved box", async () => {
+    const { container } = await renderLanding();
     const imgs = [...container.querySelectorAll(".lp-shot img")];
     expect(imgs).toHaveLength(5);
     for (const img of imgs) {
@@ -185,7 +193,7 @@ describe("LandingPage", () => {
     }
   });
 
-  it("publishes priority weights that add up to 100%", () => {
+  it("publishes priority weights that add up to 100%", async () => {
     // Mirrors PRIORITY_WEIGHTS in artifacts/api-server/src/queue/priority.ts.
     const total = PRIORITY_COMPONENTS.reduce((sum, c) => sum + c.weight, 0);
     expect(total).toBe(100);
@@ -193,7 +201,7 @@ describe("LandingPage", () => {
 });
 
 describe("illustrative queue", () => {
-  it("records its source and date and carries no deadline", () => {
+  it("records its source and date and carries no deadline", async () => {
     expect(ILLUSTRATIVE_QUEUE.illustrative).toBe(true);
     expect(ILLUSTRATIVE_QUEUE.source).toMatch(/^Illustrative\./);
     expect(ILLUSTRATIVE_QUEUE.date).toBe("2026-09-16");
@@ -205,7 +213,7 @@ describe("illustrative queue", () => {
 });
 
 describe("classifier demo", () => {
-  it("asks only rules that exist, and decides on the last one asked", () => {
+  it("asks only rules that exist, and decides on the last one asked", async () => {
     for (const t of classifier.titles) {
       expect(t.answers.length).toBeGreaterThan(0);
       expect(t.answers.length).toBeLessThanOrEqual(classifier.rules.length);
@@ -233,7 +241,7 @@ describe("live counts", () => {
       ),
     );
     resetPublicStats();
-    render(<LandingPage />);
+    await renderLanding();
     // On the hero radar and on the closing count.
     expect(await screen.findAllByText("Live")).toHaveLength(2);
     expect(
@@ -249,7 +257,7 @@ describe("live counts", () => {
       vi.fn(async () => new Response("", { status: 503 })),
     );
     resetPublicStats();
-    render(<LandingPage />);
+    await renderLanding();
     await new Promise((r) => setTimeout(r, 20));
     expect(screen.queryByText("Live")).toBeNull();
     expect(
@@ -259,7 +267,7 @@ describe("live counts", () => {
 });
 
 describe("acceptStats", () => {
-  it("takes plausible live figures and marks them live", () => {
+  it("takes plausible live figures and marks them live", async () => {
     expect(
       acceptStats({
         activePostings: 4600,
@@ -269,7 +277,7 @@ describe("acceptStats", () => {
     ).toEqual({ activePostings: 4600, openToFreshers: 2150, live: true });
   });
 
-  it("refuses an outage dressed as data, so the committed figures stay", () => {
+  it("refuses an outage dressed as data, so the committed figures stay", async () => {
     expect(acceptStats({ activePostings: 0, openToFreshers: 0 })).toBeNull();
     expect(acceptStats({ activePostings: 10, openToFreshers: 20 })).toBeNull();
     expect(acceptStats({ activePostings: "4512" })).toBeNull();

@@ -25,7 +25,6 @@ const T = {
   ringStagger: 120,
   pointsFrom: 120,
   pointsSpread: 650,
-  pointsFade: 260,
   foundFrom: 950,
   foundStagger: 70,
   foundRise: 220,
@@ -94,16 +93,9 @@ export function HeroRadar({ stats }: { stats: LandingStats }) {
         cy: h / 2,
         R,
         rings,
-        reveal: done
-          ? () => 1
-          : (r) =>
-              easeOut(
-                span(
-                  t,
-                  T.pointsFrom + r * T.pointsSpread,
-                  T.pointsFrom + r * T.pointsSpread + T.pointsFade,
-                ),
-              ),
+        revealRadius: done
+          ? undefined
+          : Math.min(1.02, Math.max(0, (t - T.pointsFrom) / T.pointsSpread)),
         sweep: reduced ? STILL_SWEEP : t >= T.sweepFrom ? sweep : null,
         lit,
         pulse,
@@ -117,6 +109,12 @@ export function HeroRadar({ stats }: { stats: LandingStats }) {
         last = now;
       }
       const t = now - t0;
+      // After the intro the sweep redraws at 30fps: a 7-second turn looks
+      // the same, and the main thread gets every other frame back.
+      if (t >= T.sweepFrom + 50 && now - last < 30) {
+        if (seen && !heldRef.current) frame = requestAnimationFrame(tick);
+        return;
+      }
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       if (t >= T.sweepFrom && !heldRef.current) {

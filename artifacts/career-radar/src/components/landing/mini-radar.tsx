@@ -43,9 +43,7 @@ export function MiniRadar({
       ctx.clearRect(0, 0, w, h);
       const k = mode === "field" ? 1 : easeOut(span(t, 0, 1200));
       const intro =
-        mode === "field"
-          ? (r: number) => easeOut(span(t, r * 600, r * 600 + 300))
-          : () => 1;
+        mode === "field" && t < 900 ? Math.max(0, t / 650) : undefined;
       drawField(ctx, points, pal, {
         cx: w / 2,
         cy: h / 2,
@@ -53,7 +51,7 @@ export function MiniRadar({
         rings: RING_FRACTIONS.map((_, i) =>
           mode === "field" ? easeOut(span(t, i * 100, 700)) : 1,
         ),
-        reveal: intro,
+        revealRadius: intro,
         sweep: null,
         dimOuter: k,
         contract: 1 - 0.26 * k,

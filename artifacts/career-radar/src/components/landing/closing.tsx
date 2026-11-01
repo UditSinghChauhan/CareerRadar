@@ -33,6 +33,8 @@ function ClosingRadar() {
     let sweep = Math.PI * 1.15;
     let last = performance.now();
     let frame = 0;
+    // Three turns each time it comes into view, then it rests.
+    let turned = 0;
     const paint = () => {
       const { w, h, dpr } = size;
       if (!w || !h) return;
@@ -43,16 +45,22 @@ function ClosingRadar() {
         cy: h / 2,
         R: Math.min(w, h) / 2 - 1,
         rings: RING_FRACTIONS.map(() => 1),
-        reveal: () => 1,
         sweep,
         lit,
       });
     };
     const tick = (now: number) => {
-      sweep = (sweep + (Math.min(50, now - last) / 7000) * TAU) % TAU;
+      // 30fps is plenty for a 7-second turn.
+      if (now - last < 30) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      const step = (Math.min(50, now - last) / 7000) * TAU;
+      sweep = (sweep + step) % TAU;
+      turned += step;
       last = now;
       paint();
-      frame = requestAnimationFrame(tick);
+      frame = turned < 3 * TAU ? requestAnimationFrame(tick) : 0;
     };
     paint();
     if (active && !reduced) {

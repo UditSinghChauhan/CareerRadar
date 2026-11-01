@@ -26,7 +26,7 @@ export function LandingNav({
       <div className="lp-container lp-nav__in">
         <Link href="/" className="lp-word" aria-label="CareerRadar, home">
           <LogoMark />
-          CareerRadar
+          <span translate="no">CareerRadar</span>
         </Link>
         <nav aria-label="Main" className="lp-nav__r">
           <Link

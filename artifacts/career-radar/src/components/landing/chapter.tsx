@@ -232,7 +232,7 @@ function Scene({
           cy,
           R,
           rings: RING_FRACTIONS.map(() => 1),
-          reveal: () => 1 - leave,
+          alpha: 1 - leave,
           sweep: null,
           dimOuter: dim,
           contract: lerp(1, 0.74, dim),

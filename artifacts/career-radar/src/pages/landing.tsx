@@ -1,22 +1,37 @@
-import { useRef } from "react";
+import {
+  lazy,
+  startTransition,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Link } from "wouter";
 import { HeroRadar } from "@/components/landing/hero-radar";
 import { LandingNav } from "@/components/landing/nav";
-import { Closing } from "@/components/landing/closing";
 import { LandingFooter } from "@/components/landing/footer";
 import { REPO_URL } from "@/components/landing/links";
 import { useGrain } from "@/components/landing/use-grain";
 import { usePublicStats } from "@/components/landing/use-public-stats";
-import { ApplyChapter } from "@/components/landing/apply-chapter";
-import { Bento } from "@/components/landing/bento";
-import { Chapter } from "@/components/landing/chapter";
-import { Faq } from "@/components/landing/faq";
-import { Showcase } from "@/components/landing/showcase";
 import "@/styles/landing.css";
 
-export { PRIORITY_COMPONENTS } from "@/components/landing/explain-card";
-
 export { SOURCES } from "@/components/landing/sources";
+
+const loadBelowFold = () => import("@/components/landing/below-fold");
+const BelowFold = lazy(loadBelowFold);
+
+/** True one frame after the hero has painted. */
+function useAfterFirstPaint() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    void loadBelowFold();
+    const id = requestAnimationFrame(() =>
+      startTransition(() => setReady(true)),
+    );
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return ready;
+}
 
 export function LandingPage() {
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -25,6 +40,7 @@ export function LandingPage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const stats = usePublicStats();
   useGrain(rootRef);
+  const belowFold = useAfterFirstPaint();
 
   return (
     <div className="lp" ref={rootRef}>
@@ -61,13 +77,13 @@ export function LandingPage() {
           </div>
         </section>
 
-        <Chapter stats={stats} />
-
-        <ApplyChapter />
-        <Bento />
-        <Showcase />
-        <Faq />
-        <Closing stats={stats} signUpHref={signUpHref} />
+        {belowFold ? (
+          <Suspense fallback={<div className="lp-pending" />}>
+            <BelowFold stats={stats} signUpHref={signUpHref} />
+          </Suspense>
+        ) : (
+          <div className="lp-pending" />
+        )}
       </main>
 
       <LandingFooter signInHref={signInHref} />

@@ -19,8 +19,8 @@ import { SOURCES } from "./sources";
 export const BACKEND_TESTS = 963;
 
 /**
- * Steps through `count` states every `ms` while `active`. Under reduced
- * motion it holds `rest` (the end state) and never moves.
+ * Steps through `count` states every `ms` while `active`, for three cycles.
+ * Under reduced motion it holds `rest` (the end state) and never moves.
  */
 function useLoop(active: boolean, count: number, ms: number, rest: number) {
   const reduced = useReducedMotion();
@@ -31,11 +31,24 @@ function useLoop(active: boolean, count: number, ms: number, rest: number) {
       return;
     }
     if (!active) return;
-    const id = window.setInterval(() => setStep((s) => (s + 1) % count), ms);
+    // Three cycles each time the tile comes into view, then it rests on its
+    // end state: nothing on the page moves on its own indefinitely.
+    let ticks = 0;
+    const id = window.setInterval(() => {
+      ticks += 1;
+      if (ticks >= count * LOOP_CYCLES) {
+        window.clearInterval(id);
+        setStep(rest);
+        return;
+      }
+      setStep((s) => (s + 1) % count);
+    }, ms);
     return () => window.clearInterval(id);
   }, [active, count, ms, rest, reduced]);
   return step;
 }
+
+const LOOP_CYCLES = 3;
 
 function Tile({
   className,

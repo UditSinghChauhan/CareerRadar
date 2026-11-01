@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
@@ -10,9 +10,36 @@ const port = rawPort ? Number(rawPort) : 5173;
 // BASE_PATH: use env var if set (Replit), otherwise default to "/"
 const basePath = process.env.BASE_PATH ?? "/";
 
+/**
+ * Vite writes the stylesheet after the module preloads, so on a slow
+ * connection it queues behind 200 kB of JavaScript. The landing's hero is
+ * static HTML in index.html and paints as soon as this CSS arrives, so it
+ * goes first.
+ */
+const stylesheetFirst: Plugin = {
+  name: "careerradar:stylesheet-first",
+  enforce: "post",
+  transformIndexHtml: {
+    order: "post",
+    handler(html) {
+      const sheets = html.match(
+        /<link rel="stylesheet"[^>]*href="[^"]*\/assets\/[^"]+\.css"[^>]*>/g,
+      );
+      if (!sheets) return html;
+      let out = html;
+      for (const tag of sheets) out = out.replace(tag, "");
+      return out.replace(
+        /<meta charset="UTF-8" \/>/,
+        (m) => `${m}\n    ${sheets.join("\n    ")}`,
+      );
+    },
+  },
+};
+
 export default defineConfig({
   base: basePath,
   plugins: [
+    stylesheetFirst,
     react(),
     tailwindcss({ optimize: false }),
     // Replit-specific plugins only when running in Replit dev environment
@@ -96,9 +123,30 @@ export default defineConfig({
           if (
             id.includes("recharts") ||
             id.includes("victory-vendor") ||
-            /[\\/]node_modules[\\/]d3-/.test(id)
+            /[\\/]node_modules[\\/]d3-/.test(id) ||
+            // Recharts' own dependencies: without these lines they landed in
+            // the shared vendor chunk, which the landing page loads.
+            /[\\/]node_modules[\\/](lodash|decimal\.js-light|react-smooth|fast-equals|eventemitter3|tiny-invariant|recharts-scale|react-transition-group)[\\/]/.test(
+              id,
+            )
           ) {
             return "charts";
+          }
+          // Forms are used by the signed-in app only.
+          if (
+            /[\\/]node_modules[\\/](react-hook-form|@hookform|zod)[\\/]/.test(
+              id,
+            )
+          ) {
+            return "forms";
+          }
+          // The landing's motion library, cached on its own.
+          if (
+            /[\\/]node_modules[\\/](framer-motion|motion-dom|motion-utils)[\\/]/.test(
+              id,
+            )
+          ) {
+            return "motion";
           }
           if (id.includes("@radix-ui")) return "radix";
           if (id.includes("@tanstack")) return "query";

@@ -108,8 +108,15 @@ Built with framer-motion. Only `transform`, `opacity` and `filter` animate. Nati
 - **Reveal** (`<Reveal>`): opacity 0 to 1, y 24px to 0, blur 8px to 0, 600ms, siblings staggered 70ms. Runs once at 20% in view. Content is visible without script.
 - **Load sequence** (hero, within the first second): the rings draw in, points fade in from the centre outward, the counts tick up, the ten found roles light in rank order with a glow pulse, then the sweep starts.
 - **Pinned chapter:** about 400vh, every frame a pure function of scroll progress, so it scrubs backward exactly as it plays forward. An "01 / 04" indicator in lime shows the beat. Under 1024px there is no pin: each beat is inline and plays a short in-view animation.
-- **Continuous motion** (the sweep, bento loops, the source marquee) pauses when off screen and when the tab is hidden.
+- **Continuous motion** pauses when off screen and when the tab is hidden. Only the hero sweep runs indefinitely, and it has a visible "Pause the sweep" control. The bento loops run three cycles each time they come into view, the closing radar three turns, and the source marquee one pass (paused under the pointer), then each rests on its end state.
+- **Frame budget:** the point field is pre-drawn once per size into two cached layers (eligible and not), so a frame is a few `drawImage` calls, not 4,500 squares. After the load sequence the sweep redraws at 30fps; large canvases draw at 1.5x at most.
 - **Reduced motion:** every animation shows its final state instantly. The pinned chapter becomes four still beats. The sweep stops on a frame with the ten found. Loops show their end state. The marquee is a static list.
+
+## Loading
+
+- `index.html` carries the navigation and hero as static markup (only on `/`), so the headline paints with the HTML; `pre-render.test.tsx` keeps it identical to what React renders. React boots after that first paint.
+- Everything after the hero is a separate chunk, mounted in a React transition once the hero has painted. The app's pages, chart and form libraries load only with the signed-in app.
+- The stylesheet is the first request in `<head>`; the app's Google Font loads without blocking.
 
 ## Navigation
 

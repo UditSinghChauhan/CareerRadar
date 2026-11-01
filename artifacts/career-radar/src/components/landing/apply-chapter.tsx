@@ -123,7 +123,7 @@ export function ApplyChapter() {
                     animate={
                       step >= 3 || reduced
                         ? { opacity: 1, y: 0 }
-                        : { opacity: 0.25, y: 24 }
+                        : { opacity: 0, y: 24 }
                     }
                     transition={{ ...t, delay: reduced ? 0 : i * 0.08 }}
                   >

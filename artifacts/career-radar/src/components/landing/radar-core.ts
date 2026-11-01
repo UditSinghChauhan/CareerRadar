@@ -145,17 +145,15 @@ export function readPalette(el: Element): Palette {
 /** Sizes a canvas's backing store to its box. Returns CSS-pixel size. */
 export function fitCanvas(canvas: HTMLCanvasElement) {
   const rect = canvas.getBoundingClientRect();
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // Large canvases draw at 1.5x at most: the points are soft squares, and
+  // fewer pixels keeps every frame well under a 60fps budget on a phone.
+  const big = rect.width * rect.height > 500_000;
+  const dpr = Math.min(window.devicePixelRatio || 1, big ? 1.5 : 2);
   const w = Math.round(rect.width * dpr);
   const h = Math.round(rect.height * dpr);
   if (canvas.width !== w) canvas.width = w;
   if (canvas.height !== h) canvas.height = h;
   return { w: rect.width, h: rect.height, dpr };
-}
-
-/** How long ago, as a fraction of a turn, the sweep passed this angle. */
-export function sinceSweep(sweep: number, angle: number) {
-  return ((((sweep - angle) % TAU) + TAU) % TAU) / TAU;
 }
 
 export type FieldFrame = {
@@ -164,8 +162,13 @@ export type FieldFrame = {
   R: number;
   /** 0 to 1 per ring, outermost first: how much of each circle is drawn. */
   rings: readonly number[];
-  /** Multiplier on a point's opacity, by its distance from the centre. */
-  reveal: (r: number) => number;
+  /**
+   * The radius (as a fraction of R) out to which points have appeared, for
+   * the load sequence; points fade in over a soft edge. Omit for all.
+   */
+  revealRadius?: number;
+  /** Opacity of the whole point field. */
+  alpha?: number;
   /** The sweep's angle, or null for no sweep. */
   sweep: number | null;
   /** 0 to 1: how far the ineligible field has dimmed (chapter beat 2). */
@@ -180,6 +183,48 @@ export type FieldFrame = {
   hideFound?: boolean;
 };
 
+type Layer = HTMLCanvasElement;
+const layers = new Map<string, Layer>();
+
+/**
+ * The field's points pre-drawn once per size into an offscreen layer:
+ * "outer" holds the postings a fresher cannot apply to, "inner" the rest.
+ * Each frame then draws a layer or two instead of 4,500 squares, which is
+ * what keeps the sweep and the scrubbed chapter at 60fps on a phone.
+ */
+function layer(
+  points: Point[],
+  colour: string,
+  R: number,
+  dpr: number,
+  which: "outer" | "inner",
+): Layer {
+  const key = `${which}|${Math.round(R)}|${dpr}|${colour}`;
+  const hit = layers.get(key);
+  if (hit) return hit;
+  if (layers.size > 12) layers.clear();
+  const c = document.createElement("canvas");
+  const px = Math.ceil(2 * R * dpr) + 2;
+  c.width = c.height = px;
+  const g = c.getContext("2d");
+  if (g) {
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = colour;
+    const scale = Math.max(0.8, R / 300);
+    for (const p of points) {
+      if (p.found || (which === "outer") !== (p.tone === 0)) continue;
+      const base = p.tone === 0 ? 0.24 : p.tone === 1 ? 0.42 : 0.66;
+      const a = base * p.fade;
+      if (a <= 0.01) continue;
+      g.globalAlpha = a;
+      const s = p.size * scale * 0.8;
+      g.fillRect(R + p.x * R - s / 2, R + p.y * R - s / 2, s, s);
+    }
+  }
+  layers.set(key, c);
+  return c;
+}
+
 /** Draws one frame of the field. Pure: everything it shows comes from `f`. */
 export function drawField(
   ctx: CanvasRenderingContext2D,
@@ -188,13 +233,16 @@ export function drawField(
   f: FieldFrame,
 ) {
   const { cx, cy, R } = f;
+  const dpr = ctx.getTransform().a || 1;
   const scale = Math.max(0.8, R / 300);
   const dim = f.dimOuter ?? 0;
   const contract = f.contract ?? 1;
+  const alpha = f.alpha ?? 1;
 
   // Rings, drawn clockwise from the top as they come in.
   ctx.strokeStyle = pal.rule;
   ctx.lineWidth = 1;
+  ctx.globalAlpha = alpha;
   RING_FRACTIONS.forEach((frac, i) => {
     const k = f.rings[i] ?? 1;
     if (k <= 0) return;
@@ -208,6 +256,7 @@ export function drawField(
     );
     ctx.stroke();
   });
+  ctx.globalAlpha = 1;
 
   // The sweep: a lime wedge trailing the beam.
   if (f.sweep !== null && "createConicGradient" in ctx) {
@@ -223,30 +272,36 @@ export function drawField(
     ctx.fill();
   }
 
-  ctx.fillStyle = pal.point;
-  for (const p of points) {
-    if (p.found) continue;
-    const reveal = f.reveal(p.r);
-    if (reveal <= 0) continue;
-    let lift = 0;
-    if (f.sweep !== null) {
-      const since = sinceSweep(f.sweep, p.angle);
-      lift = since < 0.3 ? 1 - since / 0.3 : 0;
+  const outer = layer(points, pal.point, R, dpr, "outer");
+  const inner = layer(points, pal.point, R, dpr, "inner");
+  const d = 2 * R * contract;
+  const x = cx - R * contract;
+  const y = cy - R * contract;
+  const reveal = f.revealRadius;
+
+  if (reveal === undefined) {
+    ctx.globalAlpha = alpha * (1 - dim);
+    if (ctx.globalAlpha > 0.01) ctx.drawImage(outer, x, y, d, d);
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(inner, x, y, d, d);
+    // Beat 2: the eligible field brightens as the rest falls away.
+    if (dim > 0) {
+      ctx.globalAlpha = alpha * 0.6 * dim;
+      ctx.drawImage(inner, x, y, d, d);
     }
-    const base = p.tone === 0 ? 0.24 : p.tone === 1 ? 0.42 : 0.66;
-    const outer = p.tone === 0 ? 1 - dim : 1 + 0.6 * dim;
-    const a = (base + 0.3 * lift) * p.fade * outer * reveal;
-    if (a <= 0.01) continue;
-    ctx.globalAlpha = Math.min(1, a);
-    const s = (p.size + lift * 0.5) * scale * 0.8;
-    ctx.fillRect(
-      cx + p.x * R * contract - s / 2,
-      cy + p.y * R * contract - s / 2,
-      s,
-      s,
-    );
+    ctx.globalAlpha = 1;
+  } else if (reveal > 0) {
+    // The load sequence: the field appears from the centre outward, inside a
+    // growing circle. One clipped draw per layer, so the intro stays cheap.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * reveal, 0, TAU);
+    ctx.clip();
+    ctx.globalAlpha = alpha * Math.min(1, 0.35 + reveal);
+    ctx.drawImage(outer, x, y, d, d);
+    ctx.drawImage(inner, x, y, d, d);
+    ctx.restore();
   }
-  ctx.globalAlpha = 1;
 
   if (f.hideFound) return;
   for (const p of foundInRank(points)) {

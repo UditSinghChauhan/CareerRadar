@@ -15,7 +15,7 @@ Quality bar: the `saas-quality-standard` skill. Visual source of truth once appr
 2. `pnpm run typecheck:libs`: always first. A stale .tsbuildinfo causes phantom errors.
 3. `pnpm run typecheck`
 4. `pnpm run lint`
-5. `pnpm run test`: api-server 944 tests, career-radar 55 tests.
+5. `pnpm run test`: api-server 963 tests, career-radar 87 tests.
 6. `pnpm run build`
 7. `pnpm run test:e2e`: needs a local Postgres and Clerk dev keys. Not runnable on a bare environment.
 
