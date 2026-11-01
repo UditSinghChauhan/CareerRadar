@@ -5,3 +5,5 @@ dist
 pnpm-lock.yaml
 *.md
 .hallmark
+# Built bundles for the static landing concept mockups (see concepts/build/build.mjs)
+docs/screenshots/landing-redesign/concepts/assets

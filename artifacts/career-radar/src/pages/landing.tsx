@@ -1,54 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { RadarField } from "@/components/landing/radar-field";
+import { LandingThemeToggle } from "@/components/landing/landing-theme-toggle";
+import { useReveal } from "@/components/landing/use-reveal";
+import { Walkthrough } from "@/components/landing/walkthrough";
 import "@/styles/landing.css";
+
+export { PRIORITY_COMPONENTS } from "@/components/landing/walkthrough";
 
 const REPO_URL = "https://github.com/UditSinghChauhan/CareerRadar";
 
-/**
- * The daily-queue priority weights, as set in
- * artifacts/api-server/src/queue/priority.ts (PRIORITY_WEIGHTS). Shown on the
- * page so the claim "you can check the ranking" is itself checkable.
- */
-export const PRIORITY_COMPONENTS = [
+const PROOF = [
   {
-    name: "Relevance",
-    weight: 40,
-    detail: "How clearly the posting is for a fresher",
-  },
-  { name: "Deadline", weight: 30, detail: "How soon applications close" },
-  { name: "Freshness", weight: 20, detail: "How recently it was posted" },
-  {
-    name: "Dream company",
-    weight: 10,
-    detail: "Whether you have bookmarked a role at that company",
-  },
-] as const;
-
-const PANELS = [
-  {
-    title: "Ten roles, ranked",
-    body: "Every morning the queue picks ten roles from everything open to you, highest priority first.",
-    src: "landing/queue.webp",
-    width: 2044,
-    height: 1254,
-    alt: "Today's Queue: four ranked internships from Microsoft, Flipkart, Swiggy and Adobe, each with its priority score and an Apply button.",
+    title: "No model decides what you see.",
+    body: "The fresher classifier and the location normalizer are deterministic rules in the repository, tested case by case.",
   },
   {
-    title: "Only what you can apply to",
-    body: "Search runs on the server across titles, descriptions and skills, with batch, location and relevance filters.",
-    src: "landing/jobs.webp",
-    width: 2366,
-    height: 1672,
-    alt: "Jobs Explorer: filters for job type, relevance and location beside cards for Canonical, Rubrik, Swiggy and Adobe roles.",
+    title: "944 backend tests.",
+    body: "Counted on 31 October 2026, from the ranking and the classifier to every provider's sync.",
   },
   {
-    title: "The reason for every rank",
-    body: "Each row shows its relevance, deadline and freshness scores, and a sentence on why it sits where it does.",
-    src: "landing/reason.webp",
-    width: 1948,
-    height: 272,
-    alt: "One queue row: Relevance 40.0, Deadline 24.0, Freshness 15.2, and the line explaining that relevance is shared by hundreds of roles, so the other terms decide the order.",
+    title: "Postings from the source.",
+    body: "Employers' own careers pages and free job-board APIs. Never scraped from sites whose terms forbid it.",
   },
 ] as const;
 
@@ -67,7 +40,7 @@ const QUESTIONS = [
   },
 ] as const;
 
-const SOURCES = [
+export const SOURCES = [
   {
     names: "Greenhouse, Lever, Ashby, SmartRecruiters, Workday",
     from: "The employer’s own careers page",
@@ -97,38 +70,33 @@ const SOURCES = [
 export function LandingPage() {
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
   const signUpHref = `${basePath}/sign-up`;
-  const asset = (src: string) => `${import.meta.env.BASE_URL}${src}`;
-
-  const barHidden = useRetractingBar();
-  useDocumentTheme("vantage");
-  const [activePanel, panelRefs] = useActivePanel(PANELS.length);
+  const signInHref = `${basePath}/sign-in`;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const overDark = useNavOverBand(rootRef);
+  useReveal(rootRef);
 
   return (
-    <div className="vantage" data-theme="vantage">
-      <a className="skip" href="#main">
+    <div className="lp" ref={rootRef}>
+      <a className="lp-skip" href="#main">
         Skip to content
       </a>
 
-      <div className="banner">
-        <div className="container">
-          <p>
-            The ranking, the classifier and 944 backend tests are open source.
-          </p>
-          <a href={REPO_URL}>Read the code on GitHub</a>
-        </div>
-      </div>
-
-      <header className={barHidden ? "bar is-hidden" : "bar"}>
-        <div className="container">
-          <Link href="/" className="wordmark">
+      <header
+        className={["lp-nav", overDark && "is-over-dark"]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <div className="lp-container lp-nav__in">
+          <Link href="/" className="lp-word">
             <LogoMark />
             CareerRadar
           </Link>
-          <nav aria-label="Account">
-            <Link href={`${basePath}/sign-in`} className="link">
+          <nav aria-label="Account" className="lp-nav__r">
+            <Link href={signInHref} className="lp-nav__link">
               Sign in
             </Link>
-            <Link href={`${basePath}/sign-up`} className="btn btn--small">
+            <LandingThemeToggle />
+            <Link href={signUpHref} className="lp-btn2">
               Get started
             </Link>
           </nav>
@@ -136,164 +104,84 @@ export function LandingPage() {
       </header>
 
       <main id="main">
-        <section className="hero">
-          <div className="container">
-            <div className="hero__text">
-              <h1>Ten roles worth applying to, every morning.</h1>
-              <p className="lead">
-                A radar over every SDE posting, ranked for Indian CS freshers.
-              </p>
-              <div className="hero__actions">
-                <Link href={signUpHref} className="btn">
-                  Get started
-                </Link>
-                <a href={REPO_URL} className="btn btn--quiet">
-                  Read the code
+        <section className="lp-hero" aria-labelledby="hero-head">
+          <div className="lp-hero__text">
+            <h1 id="hero-head" className="lp-display" data-enter>
+              Ten roles worth applying to, every morning.
+            </h1>
+            <p className="lp-lead" data-enter>
+              A ranked queue of SDE roles for Indian CS freshers, with the
+              reason for every rank.
+            </p>
+            <div className="lp-hero__act" data-enter>
+              <Link href={signUpHref} className="lp-btn">
+                Get started
+              </Link>
+              <p className="lp-quiet">
+                Free and open source.{" "}
+                <a href={REPO_URL} className="lp-link">
+                  Read the code on GitHub
                 </a>
-              </div>
+              </p>
             </div>
+          </div>
+          <div className="lp-hero__object" data-enter>
             <RadarField />
           </div>
         </section>
 
-        <section className="section" aria-labelledby="product-head">
-          <div className="container">
-            <div className="head">
-              <h2 id="product-head">What you open each morning</h2>
-            </div>
-            <div className="pinned">
-              <div className="pinned__stage ticks" aria-hidden="true">
-                <img
-                  key={PANELS[activePanel].src}
-                  src={asset(PANELS[activePanel].src)}
-                  width={PANELS[activePanel].width}
-                  height={PANELS[activePanel].height}
-                  alt=""
-                  loading="lazy"
-                />
-              </div>
-              <ol className="pinned__panels">
-                {PANELS.map((panel, i) => (
-                  <li
-                    key={panel.title}
-                    ref={(el) => {
-                      panelRefs.current[i] = el;
-                    }}
-                    className={i === activePanel ? "panel is-active" : "panel"}
-                  >
-                    <h3>{panel.title}</h3>
-                    <p>{panel.body}</p>
-                    <img
-                      className="panel__shot"
-                      src={asset(panel.src)}
-                      width={panel.width}
-                      height={panel.height}
-                      alt={panel.alt}
-                      loading="lazy"
-                    />
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
-        </section>
+        <Walkthrough />
 
-        <section className="section" aria-labelledby="checked-head">
-          <div className="container">
-            <div className="head">
-              <h2 id="checked-head">Built to be checked</h2>
-            </div>
-            <div className="bento">
-              <article className="tile tile--lead">
-                <h3>How a role is ranked</h3>
-                <dl className="weights">
-                  {PRIORITY_COMPONENTS.map((c, i) => (
-                    <div className="weight" key={c.name}>
-                      <dt>{c.name}</dt>
-                      <dd className="weight__value num">
-                        {c.weight}
-                        <span className="unit">%</span>
-                      </dd>
-                      <dd className="weight__track" aria-hidden="true">
-                        <div
-                          className={
-                            i === 0
-                              ? "weight__fill weight__fill--lead"
-                              : "weight__fill"
-                          }
-                          style={{ width: `${c.weight * 2.5}%` }}
-                        />
-                      </dd>
-                      <dd className="weight__note">{c.detail}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </article>
-              <article className="tile tile--wide ticks">
-                <p className="tile__figure num">
-                  2,109 <span className="of">of 4,512</span>
-                </p>
-                <p>
-                  Active postings plausibly open to a fresher, measured on 16
-                  September 2026.
-                </p>
-              </article>
-              <article className="tile tile--wide">
-                <h3>No model decides what you see</h3>
-                <p>
-                  The fresher classifier and the location normalizer are
-                  deterministic rules, tested case by case.
-                </p>
-              </article>
-              <article className="tile tile--third ticks">
-                <p className="tile__figure num">944</p>
-                <p>Backend tests in the repository, counted 31 October 2026.</p>
-              </article>
-              <article className="tile tile--third ticks">
-                <p className="tile__figure num">
-                  72<span className="unit"> h</span> 24
-                  <span className="unit"> h</span>
-                </p>
-                <p>Deadline reminders before a saved role closes.</p>
-              </article>
-              <article className="tile tile--third">
-                <h3>Saved to offer, on one board</h3>
-                <p>
-                  Applied, OA, interview and offer, with referrals and
-                  follow-ups tracked beside each role.
-                </p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="section section--band"
-          aria-labelledby="questions-head"
-        >
-          <div className="container rows">
-            <h2 id="questions-head">Questions</h2>
-            <dl>
-              {QUESTIONS.map((item) => (
-                <div className="row" key={item.q}>
-                  <dt>{item.q}</dt>
-                  <dd>{item.a}</dd>
+        <section className="lp-section" aria-labelledby="proof-head">
+          <div className="lp-container">
+            <h2 id="proof-head" className="lp-h2" data-reveal>
+              Built to be checked
+            </h2>
+            <div className="lp-trio">
+              {PROOF.map((p) => (
+                <div key={p.title} data-reveal>
+                  <h3 className="lp-h3">{p.title}</h3>
+                  <p className="lp-body">{p.body}</p>
                 </div>
               ))}
-            </dl>
+            </div>
           </div>
         </section>
 
         <section
-          className="section section--last"
-          aria-labelledby="sources-head"
+          className="lp-section lp-section--band"
+          aria-labelledby="after-head"
         >
-          <div className="container">
-            <div className="head">
-              <h2 id="sources-head">Where postings come from</h2>
+          <div className="lp-container">
+            <h2 id="after-head" className="lp-h2" data-reveal>
+              After you apply
+            </h2>
+            <div className="lp-duo">
+              <div data-reveal>
+                <h3 className="lp-h3">From saved to offer, on one board.</h3>
+                <p className="lp-body">
+                  Applied, online assessment, interview and offer, with
+                  referrals and follow-ups kept beside each role.
+                </p>
+              </div>
+              <div data-reveal>
+                <h3 className="lp-h3">Reminders before a role closes.</h3>
+                <p className="lp-body">
+                  When a source publishes a deadline, you get a reminder 72
+                  hours and again 24 hours before it closes.
+                </p>
+              </div>
             </div>
-            <div className="table-wrap">
-              <table className="sources">
+          </div>
+        </section>
+
+        <section className="lp-section" aria-labelledby="sources-head">
+          <div className="lp-container">
+            <h2 id="sources-head" className="lp-h2" data-reveal>
+              Where postings come from
+            </h2>
+            <div className="lp-sources" data-reveal>
+              <table>
                 <thead>
                   <tr>
                     <th scope="col">Source</th>
@@ -305,106 +193,101 @@ export function LandingPage() {
                 <tbody>
                   {SOURCES.map((s) => (
                     <tr key={s.names}>
-                      <td data-label="Source">{s.names}</td>
-                      <td data-label="Listings from">{s.from}</td>
-                      <td data-label="Synced">{s.synced}</td>
-                      <td data-label="Closed">{s.closes}</td>
+                      <th scope="row">{s.names}</th>
+                      <td>{s.from}</td>
+                      <td>{s.synced}</td>
+                      <td>{s.closes}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              <ul className="lp-source-cards">
+                {SOURCES.map((s) => (
+                  <li key={s.names}>
+                    <p className="lp-source-cards__name">{s.names}</p>
+                    <p>{s.from}</p>
+                    <p className="lp-source-cards__meta">
+                      Synced {s.synced.toLowerCase()}. Closed{" "}
+                      {s.closes.charAt(0).toLowerCase() + s.closes.slice(1)}.
+                    </p>
+                  </li>
+                ))}
+              </ul>
             </div>
+          </div>
+        </section>
+
+        <section
+          className="lp-section lp-section--band"
+          aria-labelledby="questions-head"
+        >
+          <div className="lp-container lp-faq">
+            <h2 id="questions-head" className="lp-h2" data-reveal>
+              Questions
+            </h2>
+            <dl>
+              {QUESTIONS.map((item) => (
+                <div key={item.q} data-reveal>
+                  <dt>{item.q}</dt>
+                  <dd>{item.a}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </section>
       </main>
 
-      <footer className="mast">
-        <div className="container">
-          <div className="mast__top">
-            <p className="mast__word">CareerRadar</p>
-            <Link href={signUpHref} className="btn">
-              Get started
-            </Link>
+      <footer className="lp-footer">
+        <div className="lp-container lp-footer__in">
+          <div>
+            <p className="lp-word lp-word--foot">
+              <LogoMark />
+              CareerRadar
+            </p>
+            <p className="lp-quiet">
+              Ten roles worth applying to, every morning.
+            </p>
           </div>
-          <nav aria-label="Project" className="mast__links">
-            <a href={REPO_URL}>Source</a>
-            <a href={`${REPO_URL}/blob/main/docs/architecture.md`}>
-              Architecture
-            </a>
-            <Link href={`${basePath}/sign-in`}>Sign in</Link>
-            <span className="legal">Open source under the MIT licence</span>
-          </nav>
+          <Link href={signUpHref} className="lp-btn">
+            Get started
+          </Link>
         </div>
+        <nav aria-label="Project" className="lp-container lp-footer__links">
+          <a href={REPO_URL} className="lp-link">
+            Source on GitHub
+          </a>
+          <Link href={signInHref} className="lp-link">
+            Sign in
+          </Link>
+          <span className="lp-quiet">Open source under the MIT licence</span>
+        </nav>
       </footer>
     </div>
   );
 }
 
 /**
- * Puts the landing's theme on <html> while the page is mounted, so the
- * overscroll area and the document's tokens match the page; the app's own
- * screens never see it.
+ * True while the dark walkthrough band sits under the sticky navigation, so
+ * the navigation takes the band's tokens instead of laying light glass over
+ * near-black.
  */
-function useDocumentTheme(theme: string) {
+function useNavOverBand(root: React.RefObject<HTMLElement | null>) {
+  const [over, setOver] = useState(false);
   useEffect(() => {
-    const root = document.documentElement;
-    const before = root.dataset.theme;
-    root.dataset.theme = theme;
-    return () => {
-      if (before === undefined) delete root.dataset.theme;
-      else root.dataset.theme = before;
-    };
-  }, [theme]);
-}
-
-/** The bar slides away while scrolling down and returns on the way up. */
-function useRetractingBar() {
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const y = window.scrollY;
-        setHidden(y > lastY && y > 160);
-        lastY = y;
-        ticking = false;
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  return hidden;
-}
-
-/**
- * Which pinned panel sits in the middle of the screen. The page marks the
- * root with a `js` class here, so without script every panel shows at full
- * strength instead of waiting to be activated.
- */
-function useActivePanel(count: number) {
-  const [active, setActive] = useState(0);
-  const refs = useRef<Array<HTMLLIElement | null>>([]);
-  useEffect(() => {
-    document.documentElement.classList.add("js");
-    if (typeof IntersectionObserver === "undefined") return;
+    const band = root.current?.querySelector(".lp-walk");
+    if (!band || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const i = refs.current.indexOf(entry.target as HTMLLIElement);
-            if (i >= 0) setActive(i);
-          }
-        }
+      ([entry]) => setOver(entry.isIntersecting),
+      // A 1px line just under the 56px navigation.
+      {
+        rootMargin: `-56px 0px -${Math.max(0, window.innerHeight - 57)}px 0px`,
+        threshold: 0,
       },
-      { rootMargin: "-45% 0px -45% 0px" },
     );
-    refs.current.slice(0, count).forEach((el) => el && io.observe(el));
+    io.observe(band);
     return () => io.disconnect();
-  }, [count]);
-  return [active, refs] as const;
+  }, [root]);
+  return over;
 }
 
 /** The CareerRadar mark (public/logo.svg), drawn in the current text colour. */

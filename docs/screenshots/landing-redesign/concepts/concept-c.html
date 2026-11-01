@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Concept C: the window</title>
+    <link rel="stylesheet" href="assets/app.css" />
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      body {
+        margin: 0;
+        background: #fff;
+      }
+      .c-hero {
+        text-align: center;
+        padding: 96px 24px 0;
+      }
+      .c-hero .lead {
+        max-width: 30ch;
+        margin: 20px auto 0;
+      }
+      .hero__act {
+        margin-top: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+      /* The phone-sized product window: true 390px width, real component inside. */
+      .win {
+        width: 390px;
+        height: 760px;
+        border-radius: 44px;
+        border: 1px solid var(--k-rule);
+        box-shadow: var(--k-shadow);
+        overflow: hidden;
+        background: #fff;
+        margin: 72px auto 0;
+        display: block;
+      }
+      .win iframe {
+        width: 390px;
+        height: 100%;
+        border: 0;
+        display: block;
+      }
+      .under {
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      .feat {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 160px 48px 0;
+        display: grid;
+        grid-template-columns: 1fr 390px;
+        gap: 96px;
+        align-items: center;
+      }
+      .feat--flip {
+        grid-template-columns: 390px 1fr;
+      }
+      .feat--flip .feat__text {
+        order: 2;
+      }
+      .feat .win {
+        margin: 0;
+        height: 640px;
+      }
+      .feat h2 {
+        margin-bottom: 20px;
+      }
+      .feat .body {
+        max-width: 40ch;
+        font-size: 19px;
+      }
+      .feat .small {
+        margin-top: 20px;
+        max-width: 44ch;
+      }
+      .end {
+        height: 160px;
+      }
+
+      @media (max-width: 1023px) {
+        .feat,
+        .feat--flip {
+          grid-template-columns: 1fr;
+          gap: 40px;
+          padding: 112px 20px 0;
+        }
+        .feat--flip .feat__text {
+          order: 0;
+        }
+      }
+      @media (max-width: 639px) {
+        .c-hero {
+          padding: 48px 20px 0;
+        }
+        .win {
+          width: calc(100vw - 40px);
+          height: 640px;
+          border-radius: 32px;
+          margin-top: 48px;
+        }
+        .win iframe {
+          width: 100%;
+        }
+        .feat .win {
+          height: 560px;
+        }
+        .feat .body {
+          font-size: 17px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="c">
+      <div id="nav"></div>
+      <section class="c-hero">
+        <h1 class="display">Ten roles worth applying to, every morning.</h1>
+        <p class="lead">
+          A ranked queue of SDE roles for Indian CS freshers, with the reason
+          for every rank.
+        </p>
+        <div class="hero__act">
+          <a class="btn" href="#">Get started</a>
+          <p class="quiet">
+            Free and open source. <a href="#">Read the code on GitHub</a>
+          </p>
+        </div>
+        <div class="win">
+          <iframe
+            src="window.html?state=ranked"
+            title="Today's Queue, illustrative rows"
+            loading="eager"
+          ></iframe>
+        </div>
+        <p class="under">
+          <span class="illus"
+            >Illustrative rows. Scores and reasons come from the real ranking
+            code.</span
+          >
+        </p>
+      </section>
+
+      <section class="feat">
+        <div class="feat__text">
+          <h2 class="h2">Ranked before you wake.</h2>
+          <p class="body">
+            Every open role you can apply to is scored on relevance, deadline,
+            freshness and dream company. The top ten are waiting each morning.
+          </p>
+          <p class="small num">
+            From 4,512 active postings, 2,109 of them open to freshers. Measured
+            16 September 2026.
+          </p>
+        </div>
+        <div class="win">
+          <iframe
+            src="window.html?state=later"
+            title="Ranked queue, illustrative"
+            loading="eager"
+          ></iframe>
+        </div>
+      </section>
+
+      <section class="feat feat--flip">
+        <div class="feat__text">
+          <h2 class="h2">Every rank explains itself.</h2>
+          <p class="body">
+            Each row shows its four scores and a plain reason, including what
+            isn't working. Sources rarely publish deadlines, so that term scores
+            every role the same, and the row says so.
+          </p>
+        </div>
+        <div class="win">
+          <iframe
+            src="window.html?state=reason"
+            title="Why a role ranks first, illustrative"
+            loading="eager"
+          ></iframe>
+        </div>
+      </section>
+
+      <section class="feat">
+        <div class="feat__text">
+          <h2 class="h2">Apply, and it's logged.</h2>
+          <p class="body">
+            Apply opens the employer's own posting and records the application.
+            The row leaves your queue and today's count goes up.
+          </p>
+        </div>
+        <div class="win">
+          <iframe
+            src="window.html?state=applied"
+            title="Queue after one application, illustrative"
+            loading="eager"
+          ></iframe>
+        </div>
+      </section>
+      <div class="end"></div>
+    </div>
+    <script src="radar.js"></script>
+    <script>
+      document.getElementById("nav").outerHTML = navHTML(false);
+      const frames = [...document.querySelectorAll("iframe")];
+      Promise.all(
+        frames.map(
+          (f) =>
+            new Promise((r) =>
+              f.contentDocument?.readyState === "complete"
+                ? r()
+                : f.addEventListener("load", r),
+            ),
+        ),
+      )
+        .then(() => document.fonts.ready)
+        .then(() =>
+          setTimeout(() => (document.body.dataset.ready = "1"), 1200),
+        );
+    </script>
+  </body>
+</html>
