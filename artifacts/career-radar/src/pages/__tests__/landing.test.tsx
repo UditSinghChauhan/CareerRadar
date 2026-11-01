@@ -1,7 +1,10 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { LandingPage, PRIORITY_COMPONENTS, SOURCES } from "../landing";
-import { nextThemeChoice } from "@/components/landing/landing-theme-toggle";
+import {
+  acceptStats,
+  resetPublicStats,
+} from "@/components/landing/use-public-stats";
 import { ILLUSTRATIVE_QUEUE } from "@/components/landing/landing-queue";
 
 describe("LandingPage", () => {
@@ -23,22 +26,20 @@ describe("LandingPage", () => {
     }
   });
 
-  it("offers sign-in and the theme toggle from the header", () => {
+  it("offers sign-in from the header and no theme toggle: the landing is dark only", () => {
     render(<LandingPage />);
     const header = within(screen.getByRole("banner"));
     expect(header.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",
       "/sign-in",
     );
-    expect(
-      header.getByRole("button", { name: /Switch to (dark|light) theme/ }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /theme/i })).toBeNull();
   });
 
   it("names the radar chart with the counts it draws", () => {
     render(<LandingPage />);
     expect(
-      screen.getByRole("img", { name: /Radar chart of 4,512 active postings/ }),
+      screen.getByRole("img", { name: /Radar chart of 4,512 open roles/ }),
     ).toBeInTheDocument();
   });
 
@@ -121,14 +122,63 @@ describe("illustrative queue", () => {
   });
 });
 
-describe("nextThemeChoice", () => {
-  it("pins the opposite theme when it differs from the system", () => {
-    expect(nextThemeChoice("light", false)).toBe("dark");
-    expect(nextThemeChoice("dark", true)).toBe("light");
+describe("live counts", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    resetPublicStats();
   });
 
-  it("returns to following the system when the choice matches it", () => {
-    expect(nextThemeChoice("light", true)).toBe("system");
-    expect(nextThemeChoice("dark", false)).toBe("system");
+  it("shows the live figures and the Live mark when the API answers", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          activePostings: 4600,
+          openToFreshers: 2150,
+          lastSyncedAt: "2026-11-01T00:00:00.000Z",
+        }),
+      ),
+    );
+    resetPublicStats();
+    render(<LandingPage />);
+    expect(await screen.findByText("Live")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("img", {
+        name: /Radar chart of 4,600 open roles/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the committed figures, without Live, when the API fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("", { status: 503 })),
+    );
+    resetPublicStats();
+    render(<LandingPage />);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText("Live")).toBeNull();
+    expect(
+      screen.getByRole("img", { name: /Radar chart of 4,512 open roles/ }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("acceptStats", () => {
+  it("takes plausible live figures and marks them live", () => {
+    expect(
+      acceptStats({
+        activePostings: 4600,
+        openToFreshers: 2150,
+        lastSyncedAt: null,
+      }),
+    ).toEqual({ activePostings: 4600, openToFreshers: 2150, live: true });
+  });
+
+  it("refuses an outage dressed as data, so the committed figures stay", () => {
+    expect(acceptStats({ activePostings: 0, openToFreshers: 0 })).toBeNull();
+    expect(acceptStats({ activePostings: 10, openToFreshers: 20 })).toBeNull();
+    expect(acceptStats({ activePostings: "4512" })).toBeNull();
+    expect(acceptStats(null)).toBeNull();
   });
 });

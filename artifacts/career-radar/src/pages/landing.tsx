@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { Link } from "wouter";
-import { RadarField } from "@/components/landing/radar-field";
-import { LandingThemeToggle } from "@/components/landing/landing-theme-toggle";
-import { useReveal } from "@/components/landing/use-reveal";
+import { HeroRadar } from "@/components/landing/hero-radar";
+import { LandingNav } from "@/components/landing/nav";
+import { LogoMark } from "@/components/landing/logo-mark";
+import { useGrain } from "@/components/landing/use-grain";
+import { usePublicStats } from "@/components/landing/use-public-stats";
 import { Walkthrough } from "@/components/landing/walkthrough";
 import "@/styles/landing.css";
 
@@ -73,8 +75,8 @@ export function LandingPage() {
   const signUpHref = `${basePath}/sign-up`;
   const signInHref = `${basePath}/sign-in`;
   const rootRef = useRef<HTMLDivElement>(null);
-  const overDark = useNavOverBand(rootRef);
-  useReveal(rootRef);
+  const stats = usePublicStats();
+  useGrain(rootRef);
 
   return (
     <div className="lp" ref={rootRef}>
@@ -82,39 +84,19 @@ export function LandingPage() {
         Skip to content
       </a>
 
-      <header
-        className={["lp-nav", overDark && "is-over-dark"]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        <div className="lp-container lp-nav__in">
-          <Link href="/" className="lp-word">
-            <LogoMark />
-            CareerRadar
-          </Link>
-          <nav aria-label="Account" className="lp-nav__r">
-            <Link href={signInHref} className="lp-nav__link">
-              Sign in
-            </Link>
-            <LandingThemeToggle />
-            <Link href={signUpHref} className="lp-btn2">
-              Get started
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <LandingNav signInHref={signInHref} signUpHref={signUpHref} />
 
       <main id="main">
         <section className="lp-hero" aria-labelledby="hero-head">
-          <div className="lp-hero__text">
-            <h1 id="hero-head" className="lp-display" data-enter>
+          <div className="lp-container lp-hero__text">
+            <h1 id="hero-head" className="lp-display" data-enter="0">
               Ten roles worth applying to, every morning.
             </h1>
-            <p className="lp-lead" data-enter>
+            <p className="lp-lead" data-enter="1">
               A ranked queue of SDE roles for Indian CS freshers, with the
               reason for every rank.
             </p>
-            <div className="lp-hero__act" data-enter>
+            <div className="lp-hero__act" data-enter="2">
               <Link href={signUpHref} className="lp-btn">
                 Get started
               </Link>
@@ -126,8 +108,8 @@ export function LandingPage() {
               </p>
             </div>
           </div>
-          <div className="lp-hero__object" data-enter>
-            <RadarField />
+          <div className="lp-hero__object">
+            <HeroRadar stats={stats} />
           </div>
         </section>
 
@@ -264,40 +246,5 @@ export function LandingPage() {
         </nav>
       </footer>
     </div>
-  );
-}
-
-/**
- * True while the dark walkthrough band sits under the sticky navigation, so
- * the navigation takes the band's tokens instead of laying light glass over
- * near-black.
- */
-function useNavOverBand(root: React.RefObject<HTMLElement | null>) {
-  const [over, setOver] = useState(false);
-  useEffect(() => {
-    const band = root.current?.querySelector(".lp-walk");
-    if (!band || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      ([entry]) => setOver(entry.isIntersecting),
-      // A 1px line just under the 56px navigation.
-      {
-        rootMargin: `-56px 0px -${Math.max(0, window.innerHeight - 57)}px 0px`,
-        threshold: 0,
-      },
-    );
-    io.observe(band);
-    return () => io.disconnect();
-  }, [root]);
-  return over;
-}
-
-/** The CareerRadar mark (public/logo.svg), drawn in the current text colour. */
-function LogoMark() {
-  return (
-    <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
-      <path d="M128 24C70.5624 24 24 70.5624 24 128C24 185.438 70.5624 232 128 232C185.438 232 232 185.438 232 128C232 70.5624 185.438 24 128 24ZM128 216C79.4183 216 40 176.582 40 128C40 79.4183 79.4183 40 128 40C176.582 40 216 79.4183 216 128C216 176.582 176.582 216 128 216Z" />
-      <path d="M128 72C97.0721 72 72 97.0721 72 128C72 158.928 97.0721 184 128 184C158.928 184 184 158.928 184 128C184 97.0721 158.928 72 128 72ZM128 168C105.909 168 88 150.091 88 128C88 105.909 105.909 88 128 88C150.091 88 168 105.909 168 128C168 150.091 150.091 168 128 168Z" />
-      <path d="M128 112C119.163 112 112 119.163 112 128C112 136.837 119.163 144 128 144C136.837 144 144 136.837 144 128C144 119.163 136.837 112 128 112Z" />
-    </svg>
   );
 }

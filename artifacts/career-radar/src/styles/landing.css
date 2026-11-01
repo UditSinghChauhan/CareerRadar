@@ -1,5 +1,6 @@
-/* CareerRadar landing. Tokens, scale and sections: DESIGN.md. Everything is
-   scoped to .lp so none of it reaches the app's Tailwind screens. */
+/* CareerRadar landing. Tokens, scale and chapters: DESIGN.md. Everything is
+   scoped to .lp so none of it reaches the app's Tailwind screens. The landing
+   is dark only; the app keeps its own themes. */
 
 @font-face {
   font-family: "Geist";
@@ -25,21 +26,36 @@
   --lp-font:
     "Geist", "Geist Fallback", ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, sans-serif;
-  --lp-bg: oklch(100% 0 0);
-  --lp-surface: oklch(97.2% 0 0);
-  --lp-surface-2: oklch(94.5% 0 0);
-  --lp-ink: oklch(21% 0 0);
-  --lp-ink-2: oklch(38% 0 0);
-  --lp-muted: oklch(50.5% 0 0);
-  --lp-rule: oklch(91% 0 0);
-  --lp-edge: oklch(62% 0 0);
-  --lp-accent: oklch(47% 0.13 138);
-  --lp-accent-on: oklch(100% 0 0);
-  --lp-signal: oklch(52% 0.15 135);
-  --lp-point: oklch(21% 0 0);
-  --lp-disc-glow: oklch(0% 0 0 / 0.045);
-  --lp-shadow:
-    0 1px 2px oklch(0% 0 0 / 0.04), 0 16px 40px -12px oklch(0% 0 0 / 0.14);
+
+  /* The stage. Hex where a canvas reads the token (canvas cannot parse
+     every CSS colour), OKLCH elsewhere. */
+  --lp-stage: oklch(13% 0.004 130);
+  --lp-stage-2: oklch(16.5% 0.005 130);
+  --lp-surface: oklch(19% 0.006 130);
+  --lp-surface-2: oklch(24% 0.007 130);
+  --lp-hairline: oklch(100% 0 0 / 0.09);
+  --lp-highlight: oklch(100% 0 0 / 0.06);
+  --lp-ink: #f5f5f5;
+  --lp-ink-2: oklch(82% 0 0);
+  --lp-muted: oklch(66% 0 0);
+  --lp-signal: #bcf053;
+  --lp-signal-on: oklch(19% 0.04 126);
+  --lp-glow: oklch(89% 0.19 126 / 0.35);
+  --lp-ring: rgba(255, 255, 255, 0.13);
+
+  --lp-raised: inset 0 1px 0 var(--lp-highlight), 0 0 0 1px var(--lp-hairline);
+  --lp-frame-shadow:
+    inset 0 1px 0 var(--lp-highlight), 0 0 0 1px var(--lp-hairline),
+    0 2px 4px oklch(0% 0 0 / 0.3), 0 24px 64px -16px oklch(0% 0 0 / 0.6);
+
+  /* Kept for the sections not yet rebuilt. */
+  --lp-bg: var(--lp-stage);
+  --lp-rule: oklch(28% 0 0);
+  --lp-edge: oklch(55% 0 0);
+  --lp-accent: var(--lp-signal);
+  --lp-accent-on: var(--lp-signal-on);
+  --lp-point: var(--lp-ink);
+  --lp-shadow: none;
 
   --lp-ease: cubic-bezier(0.2, 0, 0, 1);
   --lp-ease-state: cubic-bezier(0.65, 0, 0.35, 1);
@@ -50,10 +66,14 @@
   --lp-reveal: 600ms;
 
   --lp-gutter: 48px;
+  --lp-band: 224px;
   --lp-section: 160px;
+  --lp-nav-h: 64px;
 
-  color-scheme: light;
-  background: var(--lp-bg);
+  position: relative;
+  isolation: isolate;
+  color-scheme: dark;
+  background: var(--lp-stage);
   color: var(--lp-ink);
   font-family: var(--lp-font);
   font-size: 17px;
@@ -61,59 +81,52 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-}
-
-/* Dark theme, the walkthrough band in both themes, and the navigation while
-   it sits over that band. */
-.dark .lp,
-.lp .lp-walk,
-.lp .lp-nav.is-over-dark {
-  --lp-bg: oklch(14.5% 0 0);
-  --lp-surface: oklch(18.5% 0 0);
-  --lp-surface-2: oklch(23% 0 0);
-  --lp-ink: oklch(96.5% 0 0);
-  --lp-ink-2: oklch(83% 0 0);
-  --lp-muted: oklch(68% 0 0);
-  --lp-rule: oklch(28% 0 0);
-  --lp-edge: oklch(55% 0 0);
-  --lp-accent: oklch(89% 0.19 126);
-  --lp-accent-on: oklch(19% 0.04 126);
-  --lp-signal: oklch(89% 0.19 126);
-  --lp-point: oklch(96.5% 0 0);
-  --lp-disc-glow: oklch(100% 0 0 / 0.07);
-  --lp-shadow: none;
-  color-scheme: dark;
+  overflow-x: clip;
 }
 
 @media (prefers-contrast: more) {
-  .lp,
-  .dark .lp,
-  .lp .lp-walk {
+  .lp {
     --lp-muted: var(--lp-ink-2);
-    --lp-edge: var(--lp-ink);
-    --lp-rule: var(--lp-ink-2);
+    --lp-hairline: oklch(100% 0 0 / 0.4);
+    --lp-ring: rgba(255, 255, 255, 0.35);
   }
 }
-
 @media (max-width: 1023px) {
   .lp {
     --lp-gutter: 32px;
+    --lp-band: 160px;
     --lp-section: 128px;
   }
 }
 @media (max-width: 639px) {
   .lp {
     --lp-gutter: 20px;
+    --lp-band: 112px;
     --lp-section: 96px;
+    --lp-nav-h: 56px;
   }
 }
 
-/* The overscroll area and the canvas behind the page match it. */
-:root:has(.lp) body {
-  background: oklch(100% 0 0);
+/* The overscroll area and the canvas behind the page match the stage. */
+:root:has(.lp) {
+  color-scheme: dark;
+  background: oklch(13% 0 0);
 }
-:root.dark:has(.lp) body {
-  background: oklch(14.5% 0 0);
+:root:has(.lp) body {
+  background: oklch(13% 0 0);
+}
+
+/* Film grain at 3%: one 128px noise tile made on a canvas at load (no
+   request). It keeps large dark fields from banding. */
+.lp::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background-image: var(--lp-grain, none);
+  background-size: 128px 128px;
+  opacity: 0.03;
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────── */
@@ -124,37 +137,44 @@
   box-sizing: border-box;
 }
 .lp ::selection {
-  background: color-mix(in oklab, var(--lp-accent) 28%, transparent);
-  color: inherit;
+  background: oklch(89% 0.19 126 / 0.3);
+  color: var(--lp-ink);
+}
+/* A ring for the keyboard, never for a click. */
+.lp :focus {
+  outline: none;
 }
 .lp :focus-visible {
-  outline: 2px solid var(--lp-accent);
+  outline: 2px solid var(--lp-signal);
   outline-offset: 2px;
-  border-radius: 4px;
-}
-.lp h1,
-.lp h2,
-.lp h3 {
-  font-variation-settings: normal;
+  border-radius: 6px;
 }
 .lp .num {
   font-variant-numeric: tabular-nums;
 }
 .lp-container {
   width: 100%;
-  max-width: calc(1120px + 2 * var(--lp-gutter));
+  max-width: calc(1200px + 2 * var(--lp-gutter));
   margin-inline: auto;
   padding-inline: var(--lp-gutter);
 }
-.lp-skip {
+.lp-sr {
   position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.lp-skip {
+  position: fixed;
   left: 12px;
-  top: -48px;
-  z-index: 50;
+  top: -64px;
+  z-index: 60;
   padding: 10px 16px;
   border-radius: 999px;
   background: var(--lp-ink);
-  color: var(--lp-bg);
+  color: var(--lp-stage);
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
@@ -167,42 +187,42 @@
 
 .lp-display {
   margin: 0;
-  font-size: clamp(2.75rem, 1.6rem + 4.6vw, 5rem);
+  font-size: clamp(3rem, 1.2rem + 5.6vw, 6rem);
   font-weight: 600;
-  letter-spacing: -0.035em;
-  line-height: 1.04;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
   text-wrap: balance;
 }
 .lp-h2 {
   margin: 0 0 48px;
-  font-size: clamp(2rem, 1.35rem + 2.6vw, 3.5rem);
+  font-size: clamp(2.25rem, 1.3rem + 3.6vw, 4.5rem);
   font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.08;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
   text-wrap: balance;
 }
 .lp-h3 {
   margin: 0 0 8px;
-  font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+  font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.625rem);
   font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.25;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   text-wrap: balance;
 }
 .lp-lead {
-  margin: 20px auto 0;
-  max-width: 30ch;
+  margin: 0;
   font-size: clamp(1.1875rem, 1.05rem + 0.6vw, 1.5rem);
-  line-height: 1.35;
   letter-spacing: -0.01em;
+  line-height: 1.4;
   color: var(--lp-ink-2);
-  text-wrap: balance;
+  text-wrap: pretty;
+  max-width: 40ch;
 }
 .lp-body {
   margin: 0;
-  max-width: 60ch;
   color: var(--lp-ink-2);
   text-wrap: pretty;
+  max-width: 60ch;
 }
 .lp-quiet {
   margin: 0;
@@ -217,23 +237,31 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 48px;
-  padding: 0 26px;
+  gap: 8px;
+  height: 52px;
+  padding: 0 28px;
   border-radius: 999px;
-  background: var(--lp-accent);
-  color: var(--lp-accent-on);
+  background: var(--lp-signal);
+  color: var(--lp-signal-on);
   font-size: 17px;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
+  box-shadow:
+    0 0 0 1px oklch(89% 0.19 126 / 0.5),
+    0 8px 32px -8px var(--lp-glow);
   transition:
     transform var(--lp-micro) var(--lp-ease),
-    opacity var(--lp-micro) var(--lp-ease);
+    box-shadow var(--lp-short) var(--lp-ease);
 }
-.lp-btn:hover {
-  opacity: 0.9;
+@media (hover: hover) and (pointer: fine) {
+  .lp-btn:hover {
+    box-shadow:
+      0 0 0 1px oklch(89% 0.19 126 / 0.7),
+      0 12px 44px -6px oklch(89% 0.19 126 / 0.55);
+  }
 }
 .lp-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 .lp-btn2 {
   position: relative;
@@ -241,27 +269,32 @@
   align-items: center;
   height: 36px;
   padding: 0 16px;
-  /* A control's boundary (WCAG 1.4.11, 3:1), not a divider. taste-skill-ignore */
-  border: 1px solid var(--lp-edge);
   border-radius: 999px;
   color: var(--lp-ink);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   text-decoration: none;
-  transition: background-color var(--lp-micro) var(--lp-ease);
+  box-shadow: var(--lp-raised);
+  background: oklch(100% 0 0 / 0.04);
+  transition:
+    background var(--lp-micro) var(--lp-ease),
+    transform var(--lp-micro) var(--lp-ease);
 }
 .lp-btn2:hover {
-  background: var(--lp-surface-2);
+  background: oklch(100% 0 0 / 0.1);
 }
+.lp-btn2:active {
+  transform: scale(0.97);
+}
+/* 44px hit areas around the 36px controls. */
 .lp-btn2::after,
 .lp-nav__link::after {
-  /* 44px hit area around a smaller visual. */
   content: "";
   position: absolute;
-  inset: -4px -2px;
+  inset: -4px 0;
 }
 .lp-link {
-  color: var(--lp-accent);
+  color: var(--lp-signal);
   text-decoration: none;
   text-underline-offset: 3px;
 }
@@ -270,70 +303,59 @@
   text-decoration: underline;
 }
 .lp-link-button {
-  appearance: none;
+  padding: 0;
   border: 0;
   background: none;
-  padding: 10px 4px;
+  color: var(--lp-muted);
   font: inherit;
-  color: var(--lp-ink-2);
-  text-decoration: underline;
-  text-decoration-color: var(--lp-edge);
-  text-underline-offset: 3px;
+  font-size: 13px;
   cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: oklch(100% 0 0 / 0.25);
+  text-underline-offset: 3px;
 }
 .lp-link-button:hover {
   color: var(--lp-ink);
-}
-.lp-toggle {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 999px;
-  background: none;
-  color: var(--lp-ink-2);
-  cursor: pointer;
-  transition: background-color var(--lp-micro) var(--lp-ease);
-}
-.lp-toggle:hover {
-  background: var(--lp-surface-2);
-  color: var(--lp-ink);
-}
-.lp-toggle svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.75;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 /* ─── Navigation ─────────────────────────────────────────────────────────── */
 
 .lp-nav {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  inset: 0 0 auto;
   z-index: 40;
-  height: 56px;
-  background: var(--lp-bg);
+  height: var(--lp-nav-h);
 }
-@supports (backdrop-filter: blur(1px)) {
-  .lp-nav {
-    /* The one sticky bar; the brief asks for translucent navigation. taste-skill-ignore */
-    background: color-mix(in oklab, var(--lp-bg) 80%, transparent);
-    backdrop-filter: saturate(180%) blur(20px);
+/* The bar fades in behind the content after 40px of scroll: its colour
+   never flips, it only gains a translucent stage and a hairline. */
+.lp-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: oklch(13% 0.004 130 / 0.72);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: inset 0 -1px 0 var(--lp-hairline);
+  opacity: 0;
+  transition: opacity var(--lp-short) var(--lp-ease);
+}
+.lp-nav.is-scrolled::before {
+  opacity: 1;
+}
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .lp-nav::before {
+    background: var(--lp-stage-2);
   }
 }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .lp-nav {
-    background: var(--lp-bg);
+  .lp-nav::before {
+    background: var(--lp-stage-2);
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
-}
-.lp-nav.is-over-dark {
-  color: var(--lp-ink);
 }
 .lp-nav__in {
   display: flex;
@@ -344,166 +366,227 @@
 .lp-word {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin: 0;
   color: var(--lp-ink);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   text-decoration: none;
 }
 .lp-word svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   color: var(--lp-signal);
 }
 .lp-nav__r {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .lp-nav__link {
   position: relative;
-  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
   color: var(--lp-ink-2);
-  font-size: 14px;
+  font-size: 15px;
   text-decoration: none;
+  border-radius: 999px;
+  transition: color var(--lp-micro) var(--lp-ease);
 }
 .lp-nav__link:hover {
   color: var(--lp-ink);
+}
+@media (max-width: 479px) {
+  .lp-nav__link--wide {
+    display: none;
+  }
 }
 
 /* ─── Hero ───────────────────────────────────────────────────────────────── */
 
 .lp-hero {
-  --disc: min(720px, 132vw);
   position: relative;
-  overflow: hidden;
+  padding-top: calc(var(--lp-nav-h) + clamp(40px, 6vh, 72px));
   text-align: center;
-  padding-top: clamp(40px, 1vw + 32px, 48px);
-  padding-bottom: 56px;
-}
-.lp-hero .lp-display {
-  font-size: clamp(2.75rem, 1.6rem + 4vw, 4.5rem);
-}
-.lp-hero .lp-lead {
-  margin-top: 16px;
 }
 .lp-hero__text {
   position: relative;
-  z-index: 1;
-  padding-inline: var(--lp-gutter);
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 24px;
 }
 .lp-hero__act {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-top: 28px;
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  margin-top: 8px;
 }
+/* The radar: full-bleed to 1200px, lit from behind, its upper edge
+   dissolving under the headline and its lower half fading into the stage. */
 .lp-hero__object {
-  /* The disc is cropped by the hero's lower edge at about 58% of its height. */
+  --disc: min(1200px, max(118vw, 440px));
   position: relative;
-  height: calc(var(--disc) * 0.58);
-  margin-top: 16px;
+  z-index: 1;
+  height: calc(var(--disc) * 0.64);
+  margin-top: calc(var(--disc) * -0.2);
+  pointer-events: none;
 }
-
+.lp-hero__object > * {
+  pointer-events: auto;
+}
 .lp-radar {
   position: relative;
   width: var(--disc);
-  /* Centred even when wider than the viewport (132vw on phones). */
-  margin-inline: calc((100% - var(--disc)) / 2);
+  margin: 0 0 0 calc((100% - var(--disc)) / 2);
+}
+.lp-radar__light {
+  position: absolute;
+  inset: -10% -20%;
+  z-index: -1;
+  background:
+    radial-gradient(
+      closest-side at 50% 52%,
+      oklch(89% 0.19 126 / 0.07),
+      transparent 70%
+    ),
+    radial-gradient(
+      closest-side at 50% 50%,
+      oklch(100% 0 0 / 0.06),
+      transparent 70%
+    );
+  pointer-events: none;
 }
 .lp-radar__disc {
   position: relative;
   aspect-ratio: 1;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 6%,
+    #000 26%,
+    #000 50%,
+    transparent 66%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 6%,
+    #000 26%,
+    #000 50%,
+    transparent 66%
+  );
 }
 .lp-radar__disc canvas {
   display: block;
   width: 100%;
   height: 100%;
 }
+.lp-radar__labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* Each label sits on its ring at --a clockwise from the top: up the right
+   flank on wide screens, at the ring's top on phones. */
+.lp-radar__labels {
+  --a: 52deg;
+}
 .lp-radar__ring {
   position: absolute;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 2px 10px;
+  left: calc(50% + var(--f) * 50% * sin(var(--a)));
+  top: calc(50% - var(--f) * 50% * cos(var(--a)));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  translate: var(--lp-label-x, 0) -50%;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: var(--lp-bg);
+  background: oklch(13% 0.004 130 / 0.8);
+  box-shadow: var(--lp-raised);
   color: var(--lp-muted);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.3;
   white-space: nowrap;
 }
 .lp-radar__ring .num {
   color: var(--lp-ink);
   font-weight: 600;
 }
-.lp-radar__caption {
+.lp-radar__ring--found .num {
+  color: var(--lp-signal);
+}
+.lp-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--lp-signal);
+  font-weight: 500;
+}
+.lp-live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lp-signal);
+  box-shadow: 0 0 0 0 var(--lp-glow);
+  animation: lp-live 2s var(--lp-ease-reveal) infinite;
+}
+@keyframes lp-live {
+  0% {
+    box-shadow: 0 0 0 0 oklch(89% 0.19 126 / 0.6);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 8px oklch(89% 0.19 126 / 0);
+  }
+}
+.lp-radar__hold {
   position: absolute;
   left: 50%;
-  top: calc(var(--disc) * 0.58 + 12px);
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--lp-bg) 85%, transparent);
+  top: 58%;
+  translate: -50% 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
   color: var(--lp-muted);
-  font-size: 14px;
-  white-space: nowrap;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
 }
-/* The disc is cropped at 58% of its height, a horizon; the caption sits
-   under it, clear of the found roles. */
-/* The disc fades into the page through a mask instead of ending at a hard
-   crop, so no edge or band marks where the hero stops. */
-.lp-hero__object .lp-radar__disc {
-  -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 58%);
-  mask-image: linear-gradient(to bottom, #000 30%, transparent 58%);
+.lp-radar__hold:hover {
+  color: var(--lp-ink);
 }
 
-/* Entrance: the hero fades and rises once, on load. */
+@media (max-width: 1023px) {
+  .lp-hero__object {
+    margin-top: 32px;
+  }
+  .lp-radar__labels {
+    --a: 0deg;
+    --lp-label-x: -50%;
+  }
+}
+
+/* Hero entrance: text rises, sharpens and fades in on load. */
 @media (prefers-reduced-motion: no-preference) {
   .lp [data-enter] {
     animation: lp-enter var(--lp-reveal) var(--lp-ease-reveal) both;
   }
-  .lp [data-enter]:nth-child(2) {
-    animation-delay: 60ms;
+  .lp [data-enter="1"] {
+    animation-delay: 70ms;
   }
-  .lp [data-enter]:nth-child(3) {
-    animation-delay: 120ms;
-  }
-  .lp .lp-hero__object[data-enter] {
-    animation-delay: 180ms;
+  .lp [data-enter="2"] {
+    animation-delay: 140ms;
   }
 }
 @keyframes lp-enter {
   from {
     opacity: 0;
-    transform: translateY(16px);
-  }
-}
-
-/* ─── Scroll reveals ─────────────────────────────────────────────────────── */
-
-@media (prefers-reduced-motion: no-preference) {
-  html.js .lp [data-reveal] {
-    opacity: 0;
-    transform: translateY(16px);
-    transition:
-      opacity var(--lp-reveal) var(--lp-ease-reveal),
-      transform var(--lp-reveal) var(--lp-ease-reveal);
-  }
-  html.js .lp [data-reveal].is-in {
-    opacity: 1;
-    transform: none;
-  }
-  html.js .lp-trio > [data-reveal]:nth-child(2),
-  html.js .lp-duo > [data-reveal]:nth-child(2) {
-    transition-delay: 60ms;
-  }
-  html.js .lp-trio > [data-reveal]:nth-child(3) {
-    transition-delay: 120ms;
+    transform: translateY(24px);
+    filter: blur(8px);
   }
 }
 
@@ -826,9 +909,6 @@
 }
 
 @media (max-width: 639px) {
-  .lp-nav__link {
-    display: none;
-  }
   .lp-footer__links .lp-quiet {
     margin-left: 0;
   }

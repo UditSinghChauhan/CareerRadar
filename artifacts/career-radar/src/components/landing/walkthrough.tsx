@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { buildField } from "./radar-field";
+import { buildField } from "./radar-core";
 import { ILLUSTRATIVE_QUEUE, LandingQueue } from "./landing-queue";
 
 /**

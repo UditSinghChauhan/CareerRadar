@@ -1,0 +1,42 @@
+import { useEffect, useState } from "react";
+import { Link } from "wouter";
+import { LogoMark } from "./logo-mark";
+
+/**
+ * Transparent over the hero. After 40px of scroll a translucent stage and a
+ * hairline fade in behind it; its colours never change.
+ */
+export function LandingNav({
+  signInHref,
+  signUpHref,
+}: {
+  signInHref: string;
+  signUpHref: string;
+}) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 40);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+
+  return (
+    <header className={scrolled ? "lp-nav is-scrolled" : "lp-nav"}>
+      <div className="lp-container lp-nav__in">
+        <Link href="/" className="lp-word" aria-label="CareerRadar, home">
+          <LogoMark />
+          CareerRadar
+        </Link>
+        <nav aria-label="Account" className="lp-nav__r">
+          <Link href={signInHref} className="lp-nav__link">
+            Sign in
+          </Link>
+          <Link href={signUpHref} className="lp-btn2">
+            Get started
+          </Link>
+        </nav>
+      </div>
+    </header>
+  );
+}
