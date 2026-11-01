@@ -1,6 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { LandingPage, PRIORITY_COMPONENTS, SOURCES } from "../landing";
+import { QUESTIONS } from "@/components/landing/faq";
+import classifier from "@/components/landing/classifier-demo.json";
 import {
   acceptStats,
   resetPublicStats,
@@ -81,7 +84,7 @@ describe("LandingPage", () => {
     render(<LandingPage />);
     expect(
       screen.getByText(
-        /you get a reminder 72 hours and again 24 hours before it closes/,
+        /When a source publishes a deadline: 72 hours before it closes, and again at 24\./,
       ),
     ).toBeInTheDocument();
   });
@@ -106,14 +109,33 @@ describe("LandingPage", () => {
     }
   });
 
-  it("renders every source both as a table row and as a phone card", () => {
+  it("lists every source in the sync table behind its disclosure", () => {
     const { container } = render(<LandingPage />);
-    expect(container.querySelectorAll(".lp-sources tbody tr")).toHaveLength(
+    expect(container.querySelectorAll(".lp-sync tbody tr")).toHaveLength(
       SOURCES.length,
     );
-    expect(container.querySelectorAll(".lp-source-cards li")).toHaveLength(
-      SOURCES.length,
+    expect(screen.getByText("How each source syncs").tagName).toBe("SUMMARY");
+  });
+
+  it("answers four questions in an accordion, the first open", async () => {
+    render(<LandingPage />);
+    const triggers = QUESTIONS.map((item) =>
+      screen.getByRole("button", { name: item.q }),
     );
+    expect(triggers).toHaveLength(4);
+    expect(triggers[0]).toHaveAttribute("aria-expanded", "true");
+    expect(triggers[1]).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(triggers[1]);
+    expect(triggers[1]).toHaveAttribute("aria-expanded", "true");
+    expect(triggers[0]).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("replaces text-only sections with six working tiles", () => {
+    const { container } = render(<LandingPage />);
+    expect(container.querySelectorAll(".lp-bento > .lp-tile")).toHaveLength(6);
+    expect(
+      screen.getByRole("heading", { name: "No model decides what you see." }),
+    ).toBeInTheDocument();
   });
 
   it("publishes priority weights that add up to 100%", () => {
@@ -131,6 +153,17 @@ describe("illustrative queue", () => {
     expect(ILLUSTRATIVE_QUEUE.items).toHaveLength(10);
     for (const item of ILLUSTRATIVE_QUEUE.items) {
       expect(item.contributions.deadlineUrgency).toBe(3);
+    }
+  });
+});
+
+describe("classifier demo", () => {
+  it("asks only rules that exist, and decides on the last one asked", () => {
+    for (const t of classifier.titles) {
+      expect(t.answers.length).toBeGreaterThan(0);
+      expect(t.answers.length).toBeLessThanOrEqual(classifier.rules.length);
+      expect(t.answers.at(-1)).toBe("yes");
+      expect(t.answers.slice(0, -1).every((a) => a === "no")).toBe(true);
     }
   });
 });

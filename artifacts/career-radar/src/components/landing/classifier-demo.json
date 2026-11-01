@@ -1,0 +1,32 @@
+{
+  "note": "Titles shown in the landing's 'No model decides what you see' tile. Each rule is the classifier's own (api-server/src/relevance/classifier.ts, classifyJob), asked in order; the first decisive answer wins. api-server/src/relevance/classifier-demo.test.ts runs classifyJob on each title and fails if a verdict here is wrong.",
+  "rules": [
+    "Intern, trainee or apprentice in the title?",
+    "Senior, lead, staff or principal in the title?",
+    "Level II or above?",
+    "New-grad, graduate or entry-level marker?"
+  ],
+  "titles": [
+    {
+      "title": "SDE Intern, Payments",
+      "answers": ["yes"],
+      "track": "internship",
+      "isFresherEligible": true,
+      "verdict": "Internship · shown to freshers"
+    },
+    {
+      "title": "Senior Software Engineer",
+      "answers": ["no", "yes"],
+      "track": "not_relevant",
+      "isFresherEligible": false,
+      "verdict": "Not shown · seniority word in the title"
+    },
+    {
+      "title": "Software Engineer, New Grad",
+      "answers": ["no", "no", "no", "yes"],
+      "track": "new_grad",
+      "isFresherEligible": true,
+      "verdict": "New grad · shown to freshers"
+    }
+  ]
+}
