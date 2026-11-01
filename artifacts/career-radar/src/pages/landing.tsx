@@ -9,6 +9,7 @@ import { ApplyChapter } from "@/components/landing/apply-chapter";
 import { Bento } from "@/components/landing/bento";
 import { Chapter } from "@/components/landing/chapter";
 import { Faq } from "@/components/landing/faq";
+import { Showcase } from "@/components/landing/showcase";
 import "@/styles/landing.css";
 
 export { PRIORITY_COMPONENTS } from "@/components/landing/explain-card";
@@ -64,6 +65,7 @@ export function LandingPage() {
 
         <ApplyChapter />
         <Bento />
+        <Showcase />
         <Faq />
       </main>
 

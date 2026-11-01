@@ -138,6 +138,21 @@ describe("LandingPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the real app in five captures, each with alt text and a reserved box", () => {
+    const { container } = render(<LandingPage />);
+    const imgs = [...container.querySelectorAll(".lp-shot img")];
+    expect(imgs).toHaveLength(5);
+    for (const img of imgs) {
+      expect(img.getAttribute("alt")?.length).toBeGreaterThan(20);
+      expect(Number(img.getAttribute("width"))).toBeGreaterThan(0);
+      expect(Number(img.getAttribute("height"))).toBeGreaterThan(0);
+      expect(img.closest("picture")?.querySelector("source")).toHaveAttribute(
+        "type",
+        "image/avif",
+      );
+    }
+  });
+
   it("publishes priority weights that add up to 100%", () => {
     // Mirrors PRIORITY_WEIGHTS in artifacts/api-server/src/queue/priority.ts.
     const total = PRIORITY_COMPONENTS.reduce((sum, c) => sum + c.weight, 0);
