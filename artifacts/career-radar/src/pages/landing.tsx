@@ -2,7 +2,9 @@ import { useRef } from "react";
 import { Link } from "wouter";
 import { HeroRadar } from "@/components/landing/hero-radar";
 import { LandingNav } from "@/components/landing/nav";
-import { LogoMark } from "@/components/landing/logo-mark";
+import { Closing } from "@/components/landing/closing";
+import { LandingFooter } from "@/components/landing/footer";
+import { REPO_URL } from "@/components/landing/links";
 import { useGrain } from "@/components/landing/use-grain";
 import { usePublicStats } from "@/components/landing/use-public-stats";
 import { ApplyChapter } from "@/components/landing/apply-chapter";
@@ -13,8 +15,6 @@ import { Showcase } from "@/components/landing/showcase";
 import "@/styles/landing.css";
 
 export { PRIORITY_COMPONENTS } from "@/components/landing/explain-card";
-
-const REPO_URL = "https://github.com/UditSinghChauhan/CareerRadar";
 
 export { SOURCES } from "@/components/landing/sources";
 
@@ -67,33 +67,10 @@ export function LandingPage() {
         <Bento />
         <Showcase />
         <Faq />
+        <Closing stats={stats} signUpHref={signUpHref} />
       </main>
 
-      <footer className="lp-footer">
-        <div className="lp-container lp-footer__in">
-          <div>
-            <p className="lp-word lp-word--foot">
-              <LogoMark />
-              CareerRadar
-            </p>
-            <p className="lp-quiet">
-              Ten roles worth applying to, every morning.
-            </p>
-          </div>
-          <Link href={signUpHref} className="lp-btn">
-            Get started
-          </Link>
-        </div>
-        <nav aria-label="Project" className="lp-container lp-footer__links">
-          <a href={REPO_URL} className="lp-link">
-            Source on GitHub
-          </a>
-          <Link href={signInHref} className="lp-link">
-            Sign in
-          </Link>
-          <span className="lp-quiet">Open source under the MIT licence</span>
-        </nav>
-      </footer>
+      <LandingFooter signInHref={signInHref} />
     </div>
   );
 }

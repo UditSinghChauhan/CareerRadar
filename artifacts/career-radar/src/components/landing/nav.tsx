@@ -28,7 +28,13 @@ export function LandingNav({
           <LogoMark />
           CareerRadar
         </Link>
-        <nav aria-label="Account" className="lp-nav__r">
+        <nav aria-label="Main" className="lp-nav__r">
+          <Link
+            href="/design-notes"
+            className="lp-nav__link lp-nav__link--wide"
+          >
+            Design notes
+          </Link>
           <Link href={signInHref} className="lp-nav__link">
             Sign in
           </Link>

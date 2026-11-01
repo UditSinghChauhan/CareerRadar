@@ -46,14 +46,46 @@ describe("LandingPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("links to GitHub exactly twice: once in the hero, once in the footer", () => {
+  it("links the code from the hero, the closing and the footer", () => {
+    const { container } = render(<LandingPage />);
+    const repo = [...container.querySelectorAll("a")].filter(
+      (a) =>
+        a.getAttribute("href") ===
+        "https://github.com/UditSinghChauhan/CareerRadar",
+    );
+    expect(repo.map((a) => a.closest("section, footer")?.className)).toEqual([
+      "lp-hero",
+      "lp-closing",
+      "lp-footer",
+    ]);
+  });
+
+  it("credits the designer and links to their GitHub, with no empty portfolio links", () => {
     render(<LandingPage />);
-    const github = screen
-      .getAllByRole("link")
-      .filter((a) => a.getAttribute("href")?.includes("github.com"));
-    expect(github).toHaveLength(2);
-    expect(github[0].closest("section")).toHaveClass("lp-hero");
-    expect(github[1].closest("footer")).not.toBeNull();
+    const footer = within(screen.getByRole("contentinfo"));
+    expect(
+      footer.getByRole("link", { name: "Udit Singh Chauhan" }),
+    ).toHaveAttribute("href", "https://github.com/UditSinghChauhan");
+    expect(footer.getByRole("link", { name: "Design notes" })).toHaveAttribute(
+      "href",
+      "/design-notes",
+    );
+    // PORTFOLIO_URL and LINKEDIN_URL are empty until they exist.
+    expect(footer.queryByRole("link", { name: "Portfolio" })).toBeNull();
+    expect(footer.queryByRole("link", { name: "LinkedIn" })).toBeNull();
+  });
+
+  it("closes on tomorrow's ten with the count and the action", () => {
+    render(<LandingPage />);
+    const closing = screen.getByRole("heading", {
+      name: "Tomorrow’s ten are already being ranked.",
+    });
+    const section = within(closing.closest("section")!);
+    expect(section.getByText("4,512")).toBeInTheDocument();
+    expect(section.getByRole("link", { name: "Get started" })).toHaveAttribute(
+      "href",
+      "/sign-up",
+    );
   });
 
   it("prints no date anywhere on the page", () => {
@@ -202,7 +234,8 @@ describe("live counts", () => {
     );
     resetPublicStats();
     render(<LandingPage />);
-    expect(await screen.findByText("Live")).toBeInTheDocument();
+    // On the hero radar and on the closing count.
+    expect(await screen.findAllByText("Live")).toHaveLength(2);
     expect(
       await screen.findByRole("img", {
         name: /Radar chart of 4,600 open roles/,
