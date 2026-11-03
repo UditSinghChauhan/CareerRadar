@@ -50,7 +50,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Building2,
   Check,
   ExternalLink,
   Flame,
@@ -61,6 +60,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "wouter";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -354,7 +354,7 @@ function QueueRow({
 
 export function TodaysQueue() {
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useGetDailyQueue();
+  const { data, isLoading, isError, refetch, isFetching } = useGetDailyQueue();
   const { mutateAsync: createApplication } = useCreateApplication();
   const { mutateAsync: dismissJob } = useDismissJob();
 
@@ -522,10 +522,21 @@ export function TodaysQueue() {
 
       <CardContent className="pb-4">
         {isError ? (
-          <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-border">
+          <div
+            className="flex min-h-28 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border p-4 text-center"
+            data-testid="queue-error"
+          >
             <p className="text-sm text-muted-foreground">
-              Could not load the queue.
+              Could not load today’s ten. The server did not answer.
             </p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+            >
+              {isFetching ? "Retrying…" : "Retry"}
+            </Button>
           </div>
         ) : isLoading ? (
           <ul className="space-y-2">
@@ -546,14 +557,17 @@ export function TodaysQueue() {
           </ul>
         ) : items.length === 0 ? (
           <div
-            className="flex h-28 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border"
+            className="flex min-h-28 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border p-4 text-center"
             data-testid="queue-empty"
           >
-            <Building2 className="h-5 w-5 text-muted-foreground" />
             <p className="text-sm font-medium">Queue clear</p>
-            <p className="text-xs text-muted-foreground">
-              Nothing left to apply to right now. The next sync will refill it.
+            <p className="text-sm text-muted-foreground">
+              You have acted on every role for today. Tomorrow’s ten arrive in
+              the morning.
             </p>
+            <Button asChild size="sm" className="mt-2">
+              <Link href="/jobs">Browse all jobs</Link>
+            </Button>
           </div>
         ) : (
           <ul className="space-y-2" data-testid="queue-list">

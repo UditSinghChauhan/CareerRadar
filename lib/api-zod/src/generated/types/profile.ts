@@ -5,6 +5,8 @@
  * CareerRadar API — personal placement OS for CS students
  * OpenAPI spec version: 0.2.0
  */
+import type { PreferredLocation } from './preferredLocation';
+import type { RolePreference } from './rolePreference';
 
 export interface Profile {
   id: string;
@@ -28,6 +30,10 @@ export interface Profile {
   linkedinUrl?: string | null;
   /** @nullable */
   githubUrl?: string | null;
+  /** The one onboarding question. Null until the user has answered it, which is how the app knows to show onboarding. */
+  rolePreference?: RolePreference | null;
+  /** Cities the queue puts first. Empty, or containing "anywhere", means no preference. */
+  preferredLocations?: PreferredLocation[];
   createdAt: Date;
   /** @nullable */
   updatedAt?: Date | null;

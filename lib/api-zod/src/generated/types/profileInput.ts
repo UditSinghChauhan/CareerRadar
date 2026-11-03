@@ -5,6 +5,8 @@
  * CareerRadar API — personal placement OS for CS students
  * OpenAPI spec version: 0.2.0
  */
+import type { PreferredLocation } from './preferredLocation';
+import type { RolePreference } from './rolePreference';
 
 export interface ProfileInput {
   name?: string;
@@ -21,4 +23,7 @@ export interface ProfileInput {
   resumeUrl?: string;
   linkedinUrl?: string;
   githubUrl?: string;
+  rolePreference?: RolePreference;
+  /** @maxItems 10 */
+  preferredLocations?: PreferredLocation[];
 }

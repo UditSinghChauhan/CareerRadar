@@ -38,6 +38,50 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AlertCircle, RefreshCw, Save } from "lucide-react";
+import { useGetProfile } from "@workspace/api-client-react";
+import {
+  PreferencesForm,
+  preferencesFrom,
+} from "@/components/onboarding/preferences-form";
+import { useSavePreferences } from "@/components/onboarding/use-save-preferences";
+
+/** The onboarding answer, editable later with the same control. */
+function QueuePreferencesCard() {
+  const { data: profile, isLoading } = useGetProfile();
+  const { save, pending, error } = useSavePreferences();
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Today’s ten</CardTitle>
+        <CardDescription>
+          Which roles and cities the queue puts first.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-44" />
+            <Skeleton className="h-10 w-72 rounded-full" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-10 w-full rounded-full" />
+          </div>
+        ) : (
+          <PreferencesForm
+            // Remount when the saved answer arrives, so the form starts from it.
+            key={profile?.updatedAt ?? "new"}
+            initial={preferencesFrom(profile)}
+            submitLabel="Save"
+            pending={pending}
+            error={error}
+            onSubmit={(value) =>
+              save(value, () => toast.success("Today’s ten will follow this"))
+            }
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 const settingsSchema = z.object({
   emailNotifications: z.boolean(),
@@ -304,6 +348,8 @@ export function SettingsPage() {
           </Form>
         </CardContent>
       </Card>
+
+      <QueuePreferencesCard />
     </div>
   );
 }

@@ -50,6 +50,9 @@ const ProfilePage = lazy(() =>
 const SettingsPage = lazy(() =>
   import("@/pages/settings").then((m) => ({ default: m.SettingsPage })),
 );
+const WelcomePage = lazy(() =>
+  import("@/pages/welcome").then((m) => ({ default: m.WelcomePage })),
+);
 const ToolsCapturePage = lazy(() =>
   import("@/pages/tools-capture").then((m) => ({
     default: m.ToolsCapturePage,
@@ -245,6 +248,26 @@ function ProtectedRoute({
   );
 }
 
+/** Signed in, without the app shell: the onboarding step stands alone. */
+function BareProtectedRoute({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
+  return (
+    <>
+      <Show when="signed-in">
+        <Suspense fallback={null}>
+          <Component />
+        </Suspense>
+      </Show>
+      <Show when="signed-out">
+        <Redirect to="/sign-in" />
+      </Show>
+    </>
+  );
+}
+
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
   const queryClient = useQueryClient();
@@ -277,6 +300,9 @@ function ClerkProviderWithRoutes() {
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
+      // A new account answers one question, then sees its ten.
+      signUpFallbackRedirectUrl={`${basePath}/welcome`}
+      signInFallbackRedirectUrl={`${basePath}/dashboard`}
       localization={{
         signIn: {
           start: {
@@ -300,6 +326,9 @@ function ClerkProviderWithRoutes() {
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/welcome">
+            <BareProtectedRoute component={WelcomePage} />
+          </Route>
           <Route path="/dashboard">
             <ProtectedRoute component={DashboardPage} />
           </Route>
