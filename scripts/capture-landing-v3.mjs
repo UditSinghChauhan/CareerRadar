@@ -67,6 +67,10 @@ async function main() {
       heights[width] = await p.evaluate(
         () => document.documentElement.scrollHeight,
       );
+      // Section shots leave out the fixed bar, which would cover each top.
+      await p.addStyleTag({
+        content: ".lp-nav { visibility: hidden !important; }",
+      });
       const sections = await p.$$(
         "main > section, main > div > section, footer",
       );
@@ -85,7 +89,8 @@ async function main() {
           .split(" ")[0]
           .replace(/[^a-z0-9-]/gi, "");
         await p.evaluate((top) => window.scrollTo(0, top), box.top);
-        await p.waitForTimeout(900);
+        // Long enough for the ten to travel back to the field at the top.
+        await p.waitForTimeout(i === 0 ? 2000 : 900);
         await settle(p);
         const file = `${String(++i).padStart(2, "0")}-${name}-${width}.png`;
         await s.screenshot({ path: join(out, file) });
@@ -93,23 +98,30 @@ async function main() {
       await ctx.close();
     }
     if (dash) {
-      for (const [width, height] of [
-        [1440, 900],
-        [390, 844],
-      ]) {
+      const shots = [
+        [1440, 900, "light"],
+        [390, 844, "light"],
+        ...(phase === "after" ? [[1440, 900, "dark"]] : []),
+      ];
+      for (const [width, height, theme] of shots) {
         const ctx = await browser.newContext({
           viewport: { width, height },
           deviceScaleFactor: 1,
-          colorScheme: "light",
+          colorScheme: theme,
           reducedMotion: "reduce",
         });
-        await ctx.addInitScript(() => localStorage.setItem("theme", "light"));
+        await ctx.addInitScript((t) => localStorage.setItem("theme", t), theme);
         const p = await ctx.newPage();
         await p.goto(dash);
         await p.getByTestId("queue-row").first().waitFor({ timeout: 30000 });
         await p.waitForTimeout(1200);
         await p.screenshot({
-          path: join(out, `dashboard-${width}.png`),
+          path: join(
+            out,
+            theme === "light"
+              ? `dashboard-${width}.png`
+              : `dashboard-${width}-${theme}.png`,
+          ),
           fullPage: true,
         });
         await ctx.close();

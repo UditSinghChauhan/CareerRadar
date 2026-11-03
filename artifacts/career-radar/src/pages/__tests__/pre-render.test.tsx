@@ -13,7 +13,7 @@ import { LandingPage } from "../landing";
 // Vitest runs from the package root, where index.html lives.
 const html = readFileSync(resolve(process.cwd(), "index.html"), "utf8");
 const template = html.match(
-  /<template\s+id="lp-pre"\s*>([\s\S]*?)<\/template>/,
+  /<template\s+id="lp-pre"\s*>([\s\S]*?)<\/template\s*>/,
 )?.[1];
 
 function shape(root: ParentNode) {
@@ -29,9 +29,9 @@ function shape(root: ParentNode) {
     links: [...root.querySelectorAll(".lp-nav a, .lp-hero a")].map((a) =>
       a.getAttribute("href"),
     ),
-    // The radar's own children are drawn by React after it mounts.
+    // The field's cards are placed by React after it mounts.
     classes: [...root.querySelectorAll(".lp-hero *")]
-      .filter((el) => !el.closest(".lp-hero__object > *"))
+      .filter((el) => !el.closest(".lp-field > *"))
       .map((el) => el.getAttribute("class")),
   };
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Photographs the real app for the landing page's "Your whole search, on one
- * screen." section.
+ * Photographs the real app for the landing page's Features section: the
+ * dashboard, in the light theme the landing shows.
  *
  *   node scripts/capture-landing.mjs
  *
@@ -11,8 +11,7 @@
  *   2. Serves the real API router with a fixed demo session
  *      (capture-server.ts) and the real app with Clerk stubbed out
  *      (career-radar/capture/vite.config.ts).
- *   3. Captures the dashboard, the queue, the board, a job's detail drawer
- *      and the phone queue at 2x, in the dark theme.
+ *   3. Captures the top of the dashboard at 2x, in the light theme.
  *   4. Writes AVIF and WebP files to career-radar/public/landing/captures/
  *      and their dimensions and blurred placeholders to
  *      career-radar/src/components/landing/captures.json.
@@ -165,97 +164,30 @@ async function main() {
   const browser = await chromium.launch();
   const shots = {};
   try {
-    const page = async (width, height) => {
-      const ctx = await browser.newContext({
-        viewport: { width, height },
-        deviceScaleFactor: 2,
-        colorScheme: "dark",
-        reducedMotion: "reduce",
-      });
-      // A morning, so the greeting matches the product's promise. The date
-      // line under it is hidden: the landing page prints no dates.
-      await ctx.addInitScript(() => {
-        localStorage.setItem("theme", "dark");
-        localStorage.setItem("careerradar:applications:view", "board");
-      });
-      const p = await ctx.newPage();
-      await p.clock.setFixedTime(new Date(new Date().setUTCHours(3, 30, 0, 0)));
-      // The landing page prints no dates, so the captures hide the app's
-      // date lines (the greeting's date, applied dates on board cards).
-      // Nothing else in the app is changed.
-      p.hideDate = () =>
-        p.addStyleTag({
-          content: [
-            "h1 + p.text-muted-foreground { visibility: hidden; }",
-            '[data-testid="board-card"] > div:last-child { display: none; }',
-          ].join("\n"),
-        });
-      return p;
-    };
-
-    // 1. The dashboard, as the hero of the section.
-    // 1120 wide, shown at up to 1200 in the frame: the app's 12px text
-    // lands at 13px or more on a 1440 screen.
-    let p = await page(1120, 760);
+    const ctx = await browser.newContext({
+      viewport: { width: 1200, height: 620 },
+      deviceScaleFactor: 2,
+      colorScheme: "light",
+      reducedMotion: "reduce",
+    });
+    await ctx.addInitScript(() => localStorage.setItem("theme", "light"));
+    const p = await ctx.newPage();
+    // A morning, so the greeting matches the product's promise. The date
+    // line under it is hidden: the landing page prints no dates.
+    await p.clock.setFixedTime(new Date(new Date().setUTCHours(3, 30, 0, 0)));
     await p.goto(`${base}/dashboard`);
     await p.getByTestId("queue-row").first().waitFor();
-    await p.hideDate();
+    await p.addStyleTag({
+      content: "h1 + p.text-muted-foreground { visibility: hidden; }",
+    });
     await p.waitForTimeout(800);
     await p.screenshot({ path: join(work, "dashboard.png") });
+    await ctx.close();
 
-    // 2. Close-up: the queue's first rows with their scores and reasons.
-    const queue = p.getByTestId("todays-queue");
-    const rows = await p.getByTestId("queue-row").nth(2).boundingBox();
-    const top = await queue.boundingBox();
-    await p.screenshot({
-      path: join(work, "queue.png"),
-      clip: {
-        x: top.x,
-        y: top.y,
-        width: top.width,
-        height: rows.y + rows.height - top.y + 16,
-      },
-    });
-    await p.context().close();
-
-    // 3. The board, and 4. a job's detail drawer opened from it.
-    p = await page(1120, 760);
-    await p.goto(`${base}/applications`);
-    await p.getByTestId("board-card").first().waitFor();
-    await p.hideDate();
-    await p.waitForTimeout(600);
-    await p.screenshot({ path: join(work, "board.png") });
-    // A saved role: its drawer has no applied date yet.
-    await p
-      .getByTestId("board-column-saved")
-      .getByTestId("board-card")
-      .first()
-      .click();
-    const drawer = p.getByRole("dialog");
-    await drawer.waitFor();
-    await p.waitForTimeout(600);
-    await drawer.screenshot({ path: join(work, "detail.png") });
-    await p.context().close();
-
-    // 5. The queue on a phone.
-    p = await page(390, 844);
-    await p.goto(`${base}/dashboard`);
-    await p.getByTestId("queue-row").first().waitFor();
-    await p.hideDate();
-    await p.evaluate(() => {
-      const el = document.querySelector('[data-testid="queue-row"]');
-      window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 150);
-    });
-    await p.waitForTimeout(600);
-    await p.screenshot({ path: join(work, "phone.png") });
-    await p.context().close();
-
-    for (const name of ["dashboard", "queue", "board", "detail", "phone"]) {
-      shots[name] = encode(name, join(work, `${name}.png`));
-      console.log(
-        `captured ${name}: ${shots[name].width}×${shots[name].height}`,
-      );
-    }
+    shots.dashboard = encode("dashboard", join(work, "dashboard.png"));
+    console.log(
+      `captured dashboard: ${shots.dashboard.width}×${shots.dashboard.height}`,
+    );
     writeFileSync(manifest, JSON.stringify(shots, null, 2) + "\n");
   } finally {
     await browser.close();

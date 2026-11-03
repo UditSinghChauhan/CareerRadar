@@ -3,11 +3,10 @@ import { getPublicStats } from "@workspace/api-client-react";
 
 /**
  * The committed figures, shown until (or instead of) the live ones.
- * Measured 2026-09-16 against the production database (README,
- * docs/architecture.md): 4,512 active postings, 2,109 plausibly open to
- * freshers. The page never prints that date.
+ * Read from the production GET /api/public/stats on 2026-11-03: 6,034
+ * active postings, 3,119 open to freshers. The page never prints that date.
  */
-export const COMMITTED_STATS = { activePostings: 4512, openToFreshers: 2109 };
+export const COMMITTED_STATS = { activePostings: 6034, openToFreshers: 3119 };
 
 /** A daily queue is ten roles (DEFAULT_DAILY_TARGET in api-server). */
 export const QUEUE_SIZE = 10;

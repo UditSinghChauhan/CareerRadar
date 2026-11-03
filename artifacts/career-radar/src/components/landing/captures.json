@@ -1,0 +1,9 @@
+{
+  "dashboard": {
+    "width": 1200,
+    "height": 620,
+    "avif": "/landing/captures/dashboard.avif",
+    "webp": "/landing/captures/dashboard.webp",
+    "placeholder": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAAAwAwCdASoYAAwAPu1iqk4ppaQiMAgBMB2JaQAAetFuBSYAAP7wlZ43IUK3dpVUEhA5gqyOraw6igqu0K/8CPspgAA="
+  }
+}

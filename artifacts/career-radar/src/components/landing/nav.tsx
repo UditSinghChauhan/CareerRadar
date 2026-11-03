@@ -2,9 +2,16 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { LogoMark } from "@/components/logo-mark";
 
+/** The page's sections, in reading order. */
+export const NAV_SECTIONS = [
+  { href: "#how", label: "How it works" },
+  { href: "#features", label: "Features" },
+  { href: "#faq", label: "FAQ" },
+] as const;
+
 /**
- * Transparent over the hero. After 40px of scroll a translucent stage and a
- * hairline fade in behind it; its colours never change.
+ * A plain transparent bar. After 24px of scroll it takes the canvas colour
+ * and a bottom hairline.
  */
 export function LandingNav({
   signInHref,
@@ -15,7 +22,7 @@ export function LandingNav({
 }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 40);
+    const on = () => setScrolled(window.scrollY > 24);
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
@@ -29,10 +36,19 @@ export function LandingNav({
           <span translate="no">CareerRadar</span>
         </Link>
         <nav aria-label="Main" className="lp-nav__r">
+          {NAV_SECTIONS.map((s) => (
+            <a
+              key={s.href}
+              href={s.href}
+              className="lp-nav__link lp-nav__link--wide"
+            >
+              {s.label}
+            </a>
+          ))}
           <Link href={signInHref} className="lp-nav__link">
             Sign in
           </Link>
-          <Link href={signUpHref} className="lp-btn2">
+          <Link href={signUpHref} className="lp-btn lp-btn--nav">
             Get started
           </Link>
         </nav>

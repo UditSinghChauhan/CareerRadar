@@ -5,9 +5,9 @@ import { DURATION, EASE_OUT, REVEAL_FROM, REVEAL_TO, STAGGER } from "./tokens";
 type Tag = "div" | "p" | "h2" | "h3" | "li" | "section" | "span" | "figure";
 
 /**
- * Rises 24px, sharpens from an 8px blur and fades in, once, when 20% of it is
- * in view. `index` staggers siblings by 70ms. Under reduced motion it renders
- * in its final state with no transition.
+ * Rises 12px and fades in over 500ms, once, when 20% of it is in view.
+ * `index` staggers siblings by 70ms. Under reduced motion it renders in its
+ * final state with no transition.
  */
 export function Reveal({
   as = "div",

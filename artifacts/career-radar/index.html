@@ -33,11 +33,7 @@
       content="https://careerradar-34ec.onrender.com/opengraph.jpg"
     />
     <meta name="color-scheme" content="light dark" />
-    <meta
-      name="theme-color"
-      content="#070806"
-      media="(prefers-color-scheme: dark)"
-    />
+    <meta name="theme-color" content="#f6f6f3" />
     <!-- Sets the theme before first paint, from the same localStorage key
          next-themes uses, so neither the landing nor the app flashes. -->
     <script>
@@ -52,13 +48,6 @@
       } catch (e) {}
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link
-      rel="preload"
-      href="/fonts/geist-latin-wght.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
   </head>
   <body>
     <div id="root"></div>
@@ -89,31 +78,30 @@
               ><span translate="no">CareerRadar</span></a
             >
             <nav aria-label="Main" class="lp-nav__r">
-              <a href="/sign-in" class="lp-nav__link">Sign in</a
-              ><a href="/sign-up" class="lp-btn2">Get started</a>
+              <a href="#how" class="lp-nav__link lp-nav__link--wide"
+                >How it works</a
+              ><a href="#features" class="lp-nav__link lp-nav__link--wide"
+                >Features</a
+              ><a href="#faq" class="lp-nav__link lp-nav__link--wide">FAQ</a
+              ><a href="/sign-in" class="lp-nav__link">Sign in</a
+              ><a href="/sign-up" class="lp-btn lp-btn--nav">Get started</a>
             </nav>
           </div>
         </header>
         <main id="main">
           <section class="lp-hero" aria-labelledby="hero-head">
+            <div class="lp-field" aria-hidden="true"></div>
             <div class="lp-container lp-hero__text">
-              <h1 id="hero-head" class="lp-display" data-enter="0">
+              <h1 id="hero-head" class="lp-display">
                 Ten roles worth applying to, every morning.
               </h1>
-              <p class="lp-lead" data-enter="1">
-                A ranked queue of SDE roles for Indian CS freshers, with the
-                reason for every rank.
+              <p class="lp-lead">
+                A ranked shortlist of SDE roles for Indian CS freshers, with the
+                reason for each pick.
               </p>
-              <div class="lp-hero__act" data-enter="2">
+              <div class="lp-hero__act">
                 <a href="/sign-up" class="lp-btn">Get started</a>
-                <p class="lp-quiet">
-                  Free and open source.
-                  <a
-                    href="https://github.com/UditSinghChauhan/CareerRadar"
-                    class="lp-link"
-                    >Read the code on GitHub</a
-                  >
-                </p>
+                <p class="lp-quiet">Free and open source</p>
               </div>
             </div>
           </section>

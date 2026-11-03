@@ -25,3 +25,8 @@ export const SOURCES = [
     closes: "At 45 days old, or past its deadline",
   },
 ] as const;
+
+/** Every source by name, in the order above: the landing's list of wordmarks. */
+export const SOURCE_NAMES: string[] = SOURCES.flatMap((s) =>
+  s.names.split(", "),
+);
