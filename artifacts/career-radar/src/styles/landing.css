@@ -2,24 +2,6 @@
    scoped to .lp so none of it reaches the app's Tailwind screens. The landing
    is dark only; the app keeps its own themes. */
 
-@font-face {
-  font-family: "Geist";
-  src: url("/fonts/geist-latin-wght.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-/* Metric-matched fallback, measured against Arial: the swap to Geist does
-   not move a line. */
-@font-face {
-  font-family: "Geist Fallback";
-  src: local("Arial");
-  size-adjust: 101.5%;
-  ascent-override: 99.5%;
-  descent-override: 29.5%;
-  line-gap-override: 0%;
-}
-
 /* ─── Tokens ─────────────────────────────────────────────────────────────── */
 
 .lp {

@@ -29,7 +29,7 @@
  * keeping the highest-priority instance — which is what §"Duplicates" asks
  * for and is also the safe half of the fix: it changes no stored row, so it
  * cannot merge two postings that only look alike. `duplicateCount` comes back
- * with each row so the UI can say "6 identical listings collapsed" instead of
+ * with each row so the UI can say "Listed 6 times, shown once" instead of
  * silently hiding five jobs. Repairing the ingest identity is a separate
  * change with a much larger blast radius and is not part of this phase.
  *
@@ -287,6 +287,7 @@ export async function dailyQueue(
         deadline: row.deadline,
         postedDate: row.postedDate,
         duplicateCount: Number(row.duplicateCount),
+        track: job.relevanceTrack ?? null,
         now: options.now,
       }),
     });

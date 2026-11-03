@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { LogoMark } from "./logo-mark";
+import { LogoMark } from "@/components/logo-mark";
 
 /**
  * Transparent over the hero. After 40px of scroll a translucent stage and a

@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { LogoMark } from "./logo-mark";
+import { LogoMark } from "@/components/logo-mark";
 import {
   AUTHOR_NAME,
   AUTHOR_URL,

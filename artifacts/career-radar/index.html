@@ -52,22 +52,13 @@
       } catch (e) {}
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- The app's face (Geologica). Loaded without blocking the first paint:
-         the landing sets its own self-hosted Geist and never uses it. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Geologica:wght,SHRP@200..700,0..100&display=swap"
-      rel="stylesheet"
-      media="print"
-      onload="this.media = 'all'"
+      rel="preload"
+      href="/fonts/geist-latin-wght.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
-    <noscript>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Geologica:wght,SHRP@200..700,0..100&display=swap"
-        rel="stylesheet"
-      />
-    </noscript>
   </head>
   <body>
     <div id="root"></div>

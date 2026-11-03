@@ -21,6 +21,7 @@ import {
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
+import { LogoMark } from "@/components/logo-mark";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -74,10 +75,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card">
         <div className="flex h-16 items-center px-6 border-b border-border">
-          <div className="flex items-center space-x-2 text-primary font-bold text-xl">
-            <Briefcase className="h-6 w-6" />
-            <span>CareerRadar</span>
-          </div>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground"
+          >
+            <LogoMark className="h-6 w-6" />
+            <span translate="no">CareerRadar</span>
+          </Link>
         </div>
         <div className="flex-1 overflow-auto py-6 px-4">
           <NavLinks />
@@ -97,9 +101,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </SheetTrigger>
               <SheetContent side="left" className="w-64 p-0">
                 <SheetHeader className="h-16 flex items-center justify-center border-b border-border px-6">
-                  <SheetTitle className="flex items-center space-x-2 text-primary font-bold text-xl m-0">
-                    <Briefcase className="h-6 w-6" />
-                    <span>CareerRadar</span>
+                  <SheetTitle className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+                    <LogoMark className="h-6 w-6" />
+                    <span translate="no">CareerRadar</span>
                   </SheetTitle>
                 </SheetHeader>
                 <div className="py-6 px-4">
@@ -107,9 +111,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </SheetContent>
             </Sheet>
-            <div className="flex items-center space-x-2 text-primary font-bold text-lg">
-              <Briefcase className="h-5 w-5" />
-              <span>CareerRadar</span>
+            <div className="flex items-center gap-2 text-base font-semibold tracking-tight text-foreground">
+              <LogoMark className="h-5 w-5" />
+              <span translate="no">CareerRadar</span>
             </div>
           </div>
 

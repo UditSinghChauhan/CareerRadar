@@ -1,0 +1,38 @@
+/* One family for the whole product, app and landing: Geist (OFL), with
+   Geist Mono (OFL) for indices, card meta and stat labels. Both are
+   self-hosted Latin-subset variable woff2 files (public/fonts/), shown with
+   font-display: swap over a metric-adjusted local fallback, so the swap
+   moves no line. DESIGN.md, Type. */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-latin-wght.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+/* Measured against Arial. */
+@font-face {
+  font-family: "Geist Fallback";
+  src: local("Arial");
+  size-adjust: 101.5%;
+  ascent-override: 99.5%;
+  descent-override: 29.5%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono-latin-wght.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+/* Geist Mono advances 0.6em per glyph, the same as Courier New, so only the
+   vertical metrics need matching (hhea 955 / -245 per 1000). */
+@font-face {
+  font-family: "Geist Mono Fallback";
+  src: local("Courier New");
+  size-adjust: 100%;
+  ascent-override: 95.5%;
+  descent-override: 24.5%;
+  line-gap-override: 0%;
+}

@@ -174,7 +174,7 @@ const clerkAppearance = {
   // index.css, so the sign-in card follows light and dark mode with the rest
   // of the app. Only shape and layout are set here.
   variables: {
-    fontFamily: "Geologica, ui-sans-serif, system-ui, sans-serif",
+    fontFamily: "Geist, 'Geist Fallback', ui-sans-serif, system-ui, sans-serif",
     borderRadius: "0.25rem",
   },
   elements: {
