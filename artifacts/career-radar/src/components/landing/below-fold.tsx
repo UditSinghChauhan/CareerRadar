@@ -1,16 +1,18 @@
-import { ApplyChapter } from "./apply-chapter";
-import { Bento } from "./bento";
-import { Chapter } from "./chapter";
-import { Closing } from "./closing";
 import { Faq } from "./faq";
-import { Showcase } from "./showcase";
+import { Features } from "./features";
+import { FinalBand } from "./final-band";
+import { Focus } from "./focus";
+import { HowItWorks } from "./how";
+import { Stats } from "./stats";
 import type { LandingStats } from "./use-public-stats";
 
+export { HeroField } from "./field";
+
 /**
- * Everything after the hero, in its own chunk. The landing paints the hero
- * first and mounts this in a transition, so the first paint does not wait
- * for the motion library or the product frames, and the render that follows
- * yields to input instead of blocking it.
+ * Everything that needs the motion library, in its own chunk: the hero's
+ * field and the six sections after it. The landing paints its static hero
+ * first and mounts this in a transition, so the first paint waits for
+ * neither framer-motion nor the sample cards.
  */
 export default function BelowFold({
   stats,
@@ -21,12 +23,12 @@ export default function BelowFold({
 }) {
   return (
     <>
-      <Chapter stats={stats} />
-      <ApplyChapter />
-      <Bento />
-      <Showcase />
+      <Focus />
+      <Stats stats={stats} />
+      <HowItWorks />
+      <Features />
       <Faq />
-      <Closing stats={stats} signUpHref={signUpHref} />
+      <FinalBand signUpHref={signUpHref} />
     </>
   );
 }

@@ -7,11 +7,8 @@ import {
   useState,
 } from "react";
 import { Link } from "wouter";
-import { HeroRadar } from "@/components/landing/hero-radar";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
-import { REPO_URL } from "@/components/landing/links";
-import { useGrain } from "@/components/landing/use-grain";
 import { usePublicStats } from "@/components/landing/use-public-stats";
 import "@/styles/landing.css";
 
@@ -19,6 +16,9 @@ export { SOURCES } from "@/components/landing/sources";
 
 const loadBelowFold = () => import("@/components/landing/below-fold");
 const BelowFold = lazy(loadBelowFold);
+const HeroField = lazy(() =>
+  loadBelowFold().then((m) => ({ default: m.HeroField })),
+);
 
 /** True one frame after the hero has painted. */
 function useAfterFirstPaint() {
@@ -33,17 +33,23 @@ function useAfterFirstPaint() {
   return ready;
 }
 
+/**
+ * "Field to focus" (DESIGN.md). A light page in seven sections: the hero's
+ * field of sample roles, the ten in focus, the numbers, how it works, the
+ * features, questions, and one dark band with the radar.
+ */
 export function LandingPage() {
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
   const signUpHref = `${basePath}/sign-up`;
   const signInHref = `${basePath}/sign-in`;
-  const rootRef = useRef<HTMLDivElement>(null);
   const stats = usePublicStats();
-  useGrain(rootRef);
   const belowFold = useAfterFirstPaint();
+  const heroRef = useRef<HTMLElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const fieldRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="lp" ref={rootRef}>
+    <div className="lp">
       <a className="lp-skip" href="#main">
         Skip to content
       </a>
@@ -51,29 +57,32 @@ export function LandingPage() {
       <LandingNav signInHref={signInHref} signUpHref={signUpHref} />
 
       <main id="main">
-        <section className="lp-hero" aria-labelledby="hero-head">
-          <div className="lp-container lp-hero__text">
-            <h1 id="hero-head" className="lp-display" data-enter="0">
+        <section className="lp-hero" aria-labelledby="hero-head" ref={heroRef}>
+          <div className="lp-field" aria-hidden="true" ref={fieldRef}>
+            {belowFold && (
+              <Suspense fallback={null}>
+                <HeroField
+                  heroRef={heroRef}
+                  textRef={textRef}
+                  fieldRef={fieldRef}
+                />
+              </Suspense>
+            )}
+          </div>
+          <div className="lp-container lp-hero__text" ref={textRef}>
+            <h1 id="hero-head" className="lp-display">
               Ten roles worth applying to, every morning.
             </h1>
-            <p className="lp-lead" data-enter="1">
-              A ranked queue of SDE roles for Indian CS freshers, with the
-              reason for every rank.
+            <p className="lp-lead">
+              A ranked shortlist of SDE roles for Indian CS freshers, with the
+              reason for each pick.
             </p>
-            <div className="lp-hero__act" data-enter="2">
+            <div className="lp-hero__act">
               <Link href={signUpHref} className="lp-btn">
                 Get started
               </Link>
-              <p className="lp-quiet">
-                Free and open source.{" "}
-                <a href={REPO_URL} className="lp-link">
-                  Read the code on GitHub
-                </a>
-              </p>
+              <p className="lp-quiet">Free and open source</p>
             </div>
-          </div>
-          <div className="lp-hero__object">
-            <HeroRadar stats={stats} />
           </div>
         </section>
 

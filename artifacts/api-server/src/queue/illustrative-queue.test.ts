@@ -3,21 +3,18 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   deadlineUrgency,
+  explainPriority,
   priorityContributions,
   priorityFromComponents,
   type PriorityComponents,
 } from "./priority";
 
 /**
- * The landing page shows an illustrative queue and says its scores "come
- * from the real ranking code". This keeps that sentence true: if the formula
- * changes, regenerate the file with
- * docs/screenshots/landing-redesign/concepts/build/queue-data.ts.
- *
- * The reason lines are product copy written for a student, not the engine's
- * own explanation strings. They are still derived from each row's own data,
- * by `studentReasons` below, so a row can never claim a freshness, match or
- * bookmark its scores do not have.
+ * The landing page shows sample roles and says their ranking comes "from the
+ * real scoring code". This keeps that sentence true: every score and every
+ * reason in the file must be what priority.ts produces for that row. If the
+ * formula or the reasons change, regenerate the file's scores and reasons
+ * with priorityFromComponents and explainPriority.
  */
 const file = fileURLToPath(
   new URL(
@@ -41,36 +38,6 @@ const queue = JSON.parse(readFileSync(file, "utf8")) as {
 };
 const now = new Date(queue.generatedAt);
 
-const DAY = 24 * 60 * 60 * 1000;
-const TRACK: Record<string, string> = {
-  new_grad: "New-grad role",
-  internship: "Internship",
-  early_career: "Early-career role",
-};
-
-/** The two reason lines a row may show, from its own posted date and scores. */
-function studentReasons(item: Item): string[] {
-  const days = Math.floor(
-    (now.getTime() - new Date(item.job.postedDate).getTime()) / DAY,
-  );
-  const posted =
-    days < 1
-      ? "Posted today"
-      : days < 2
-        ? "Posted yesterday"
-        : `Posted ${days} days ago`;
-  const fit =
-    item.components.relevanceScore >= 100 ? "a strong match" : "a close match";
-  const track = TRACK[item.job.relevanceTrack];
-  if (!track) throw new Error(`no label for ${item.job.relevanceTrack}`);
-  return [
-    `${posted} · ${track}, ${fit}`,
-    item.components.dreamCompanyBoost >= 100
-      ? "At a company you bookmarked"
-      : "No closing date listed, so apply early",
-  ];
-}
-
 describe("landing illustrative queue", () => {
   it("is marked illustrative", () => {
     expect(queue.illustrative).toBe(true);
@@ -84,15 +51,22 @@ describe("landing illustrative queue", () => {
       expect(item.contributions).toEqual(
         priorityContributions(item.components),
       );
-      expect(item.reasons).toEqual(studentReasons(item));
+      expect(item.reasons).toEqual(
+        explainPriority(item.components, {
+          deadline: null,
+          postedDate: new Date(item.job.postedDate),
+          duplicateCount: item.duplicateCount,
+          track: item.job.relevanceTrack,
+          now,
+        }),
+      );
     },
   );
 
-  it("keeps every reason line short enough for two lines on a phone", () => {
+  it("gives every row at least one reason and at most three", () => {
     for (const item of queue.items) {
-      expect(item.reasons.length).toBeLessThanOrEqual(2);
-      for (const line of item.reasons)
-        expect(line.length).toBeLessThanOrEqual(56);
+      expect(item.reasons.length).toBeGreaterThan(0);
+      expect(item.reasons.length).toBeLessThanOrEqual(3);
     }
   });
 

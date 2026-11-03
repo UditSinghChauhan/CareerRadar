@@ -194,142 +194,138 @@ describe("the saturated band — what actually separates two score-100 rows", ()
   });
 });
 
-describe("explainPriority", () => {
+describe("explainPriority — short reasons a student reads", () => {
+  const base: PriorityComponents = {
+    relevanceScore: 100,
+    deadlineUrgency: 10,
+    freshness: 100,
+    dreamCompanyBoost: 0,
+  };
   const ctx = {
     deadline: null,
     postedDate: at(-1 * DAY),
     duplicateCount: 1,
+    track: "new_grad",
     now: NOW,
   };
+  /** Words from the engine's own vocabulary that a student should never read. */
+  const ENGINE =
+    /relevance|classifier|\/100|separating|term|component|band|freshness|score/i;
 
-  it("says out loud that the deadline term is not separating anything", () => {
+  it("gives at most three reasons, each short and free of engine terms", () => {
     const reasons = explainPriority(
-      {
-        relevanceScore: 100,
-        deadlineUrgency: 10,
-        freshness: 100,
-        dreamCompanyBoost: 0,
-      },
-      ctx,
+      { ...base, deadlineUrgency: 80, dreamCompanyBoost: 100 },
+      { ...ctx, deadline: at(5 * DAY), duplicateCount: 4 },
     );
-    expect(reasons.join(" ")).toMatch(/No deadline published/i);
-    expect(reasons.join(" ")).toMatch(/not separating anything/i);
+    expect(reasons.length).toBeGreaterThan(0);
+    expect(reasons.length).toBeLessThanOrEqual(3);
+    for (const r of reasons) {
+      expect(r).not.toMatch(ENGINE);
+      expect(r.length).toBeLessThanOrEqual(32);
+    }
   });
 
-  it("names the saturation when relevance is 100", () => {
-    const reasons = explainPriority(
-      {
-        relevanceScore: 100,
-        deadlineUrgency: 10,
-        freshness: 100,
-        dreamCompanyBoost: 0,
-      },
-      ctx,
-    );
-    expect(reasons[0]).toMatch(/shared with hundreds/i);
+  it("reads a typical row as freshness and fit, not as a missing deadline", () => {
+    expect(explainPriority(base, ctx)).toEqual([
+      "Posted yesterday",
+      "Strong match for new grads",
+    ]);
   });
 
-  it("reports the plain score when relevance is below the cap", () => {
-    const reasons = explainPriority(
-      {
-        relevanceScore: 85,
-        deadlineUrgency: 10,
-        freshness: 50,
-        dreamCompanyBoost: 0,
-      },
-      ctx,
-    );
-    expect(reasons[0]).toBe("Relevance 85/100");
+  it("never mentions a deadline the source did not publish", () => {
+    const reasons = explainPriority(base, ctx).join(" ");
+    expect(reasons).not.toMatch(/deadline|closing date/i);
   });
 
-  it("describes a real deadline when one exists", () => {
+  it("puts a real closing date first", () => {
     const reasons = explainPriority(
-      {
-        relevanceScore: 90,
-        deadlineUrgency: 100,
-        freshness: 100,
-        dreamCompanyBoost: 0,
-      },
-      { ...ctx, deadline: at(2 * DAY) },
+      { ...base, deadlineUrgency: 80 },
+      { ...ctx, deadline: at(5 * DAY) },
     );
-    expect(reasons.join(" ")).toMatch(/Closes within 72 hours/);
+    expect(reasons[0]).toBe("Closes in 5 days");
   });
 
-  it("says a deadline has passed rather than calling it urgent", () => {
-    const reasons = explainPriority(
-      {
-        relevanceScore: 90,
-        deadlineUrgency: 10,
-        freshness: 100,
-        dreamCompanyBoost: 0,
-      },
-      { ...ctx, deadline: at(-2 * DAY) },
-    );
-    expect(reasons.join(" ")).toMatch(/already passed/);
+  it("says tomorrow and today rather than 1 or 0 days", () => {
+    expect(
+      explainPriority(
+        { ...base, deadlineUrgency: 100 },
+        { ...ctx, deadline: at(30 * HOUR) },
+      )[0],
+    ).toBe("Closes tomorrow");
+    expect(
+      explainPriority(
+        { ...base, deadlineUrgency: 100 },
+        { ...ctx, deadline: at(5 * HOUR) },
+      )[0],
+    ).toBe("Closes today");
   });
 
-  it("reports the posting age and the freshness it earned", () => {
-    const reasons = explainPriority(
-      {
-        relevanceScore: 100,
-        deadlineUrgency: 10,
-        freshness: 50,
-        dreamCompanyBoost: 0,
-      },
-      { ...ctx, postedDate: at(-16 * DAY) },
-    );
-    expect(reasons.join(" ")).toMatch(
-      /Posted 16 days ago \(freshness 50\/100\)/,
+  it("says nothing about a deadline that has passed or is far away", () => {
+    for (const deadline of [at(-2 * DAY), at(60 * DAY)]) {
+      const reasons = explainPriority(base, { ...ctx, deadline }).join(" ");
+      expect(reasons).not.toMatch(/close/i);
+    }
+  });
+
+  it("names a dream company only when the boost fired", () => {
+    expect(explainPriority(base, ctx)).not.toContain("Dream company");
+    expect(explainPriority({ ...base, dreamCompanyBoost: 100 }, ctx)).toContain(
+      "Dream company",
     );
   });
 
-  it("mentions the bookmark only when the boost fired", () => {
-    const without = explainPriority(
-      {
-        relevanceScore: 100,
-        deadlineUrgency: 10,
-        freshness: 100,
-        dreamCompanyBoost: 0,
-      },
-      ctx,
-    );
-    const withBoost = explainPriority(
-      {
-        relevanceScore: 100,
-        deadlineUrgency: 10,
-        freshness: 100,
-        dreamCompanyBoost: 100,
-      },
-      ctx,
-    );
-    expect(without.join(" ")).not.toMatch(/bookmarked/);
-    expect(withBoost.join(" ")).toMatch(/bookmarked a role at this company/);
+  it("says how long ago a role was posted, in days", () => {
+    expect(
+      explainPriority(base, { ...ctx, postedDate: at(-3 * HOUR) })[0],
+    ).toBe("Posted today");
+    expect(
+      explainPriority(
+        { ...base, freshness: 50 },
+        { ...ctx, postedDate: at(-16 * DAY) },
+      )[0],
+    ).toBe("Posted 16 days ago");
   });
 
-  it("reports how many duplicates were collapsed, rather than hiding them", () => {
+  it("leaves the age out when the source gave no posted date", () => {
     const reasons = explainPriority(
-      {
-        relevanceScore: 100,
-        deadlineUrgency: 10,
-        freshness: 100,
-        dreamCompanyBoost: 0,
-      },
-      { ...ctx, duplicateCount: 6 },
+      { ...base, freshness: 0 },
+      { ...ctx, postedDate: null },
     );
-    expect(reasons.join(" ")).toMatch(/6 identical listings/);
+    expect(reasons.join(" ")).not.toMatch(/posted/i);
   });
 
-  it("never mentions collapsing for a unique listing", () => {
-    const reasons = explainPriority(
-      {
-        relevanceScore: 100,
-        deadlineUrgency: 10,
-        freshness: 100,
-        dreamCompanyBoost: 0,
-      },
-      ctx,
+  it("describes the fit for each track, and softens it below the cap", () => {
+    expect(explainPriority(base, { ...ctx, track: "internship" })).toContain(
+      "Strong match for interns",
     );
-    expect(reasons.join(" ")).not.toMatch(/collapsed/);
+    expect(
+      explainPriority(
+        { ...base, relevanceScore: 85 },
+        { ...ctx, track: "early_career" },
+      ),
+    ).toContain("Good match for freshers");
+    expect(
+      explainPriority({ ...base, relevanceScore: 40 }, ctx).join(" "),
+    ).not.toMatch(/match/);
+  });
+
+  it("says a role was posted more than once, shown once", () => {
+    expect(explainPriority(base, { ...ctx, duplicateCount: 6 })).toContain(
+      "Listed 6 times, shown once",
+    );
+    expect(explainPriority(base, ctx).join(" ")).not.toMatch(/Listed/);
+  });
+
+  it("keeps the most useful three when more apply", () => {
+    const reasons = explainPriority(
+      { ...base, deadlineUrgency: 80, dreamCompanyBoost: 100 },
+      { ...ctx, deadline: at(5 * DAY), duplicateCount: 4 },
+    );
+    expect(reasons).toEqual([
+      "Closes in 5 days",
+      "Dream company",
+      "Posted yesterday",
+    ]);
   });
 });
 

@@ -146,11 +146,10 @@ base.describe("README screenshots", () => {
     await shot(page, "dashboard");
     await shot(page, "dashboard-full", true);
 
-    // The per-row "why is this ranked here" breakdown. Same tooltip rule as
-    // above: hover the info icon inside the first queue row to render it.
-    const firstRow = page.getByTestId("queue-row").first();
-    await firstRow.locator("svg.lucide-info").first().hover();
-    await expect(page.getByTestId("queue-rank-reasons").first()).toBeVisible();
+    // How the queue is ranked, in plain words, behind the header's info
+    // button.
+    await page.getByRole("button", { name: "How is this ranked?" }).click();
+    await expect(page.getByTestId("queue-ranking-note")).toBeVisible();
     await shot(page, "daily-queue-reasons");
 
     // ── Applications tracker ──

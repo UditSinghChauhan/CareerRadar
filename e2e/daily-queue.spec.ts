@@ -400,7 +400,7 @@ test.describe("Today's Queue on the dashboard (§3.3)", () => {
     expect(queueBox!.y).toBeLessThan(statsBox!.y);
   });
 
-  test("every row shows its rank reason and all four weighted components", async ({
+  test("every row shows short reasons, a whole-number score and its four parts", async ({
     appPage: page,
   }) => {
     await page.goto("/dashboard");
@@ -412,18 +412,24 @@ test.describe("Today's Queue on the dashboard (§3.3)", () => {
     for (let i = 0; i < count; i += 1) {
       const row = rows.nth(i);
       // §3.3: "Each row displays a plain-language reason for its rank."
-      await expect(row.getByTestId("queue-reason")).not.toBeEmpty();
-      const breakdown = row.getByTestId("priority-breakdown");
-      for (const key of [
-        "relevanceScore",
-        "deadlineUrgency",
-        "freshness",
-        "dreamCompanyBoost",
-      ]) {
-        await expect(
-          breakdown.locator(`[data-component="${key}"]`),
-        ).toBeVisible();
-      }
+      const reasons = row.getByTestId("queue-reason");
+      expect(await reasons.count()).toBeGreaterThan(0);
+      expect(await reasons.count()).toBeLessThanOrEqual(3);
+      await expect(row.getByTestId("queue-priority")).toHaveText(/^\d+$/);
+    }
+
+    // The four weighted parts sit behind the score.
+    await rows.first().getByTestId("queue-priority").hover();
+    const breakdown = page.getByTestId("priority-breakdown").first();
+    for (const key of [
+      "relevanceScore",
+      "deadlineUrgency",
+      "freshness",
+      "dreamCompanyBoost",
+    ]) {
+      await expect(
+        breakdown.locator(`[data-component="${key}"]`),
+      ).toBeVisible();
     }
   });
 

@@ -12,14 +12,13 @@
  * `priority`, `contributions` and `reasons` off the response and lays them
  * out. The order rows arrive in is the order they are shown.
  *
- * WHY THE BREAKDOWN IS VISIBLE RATHER THAN ON HOVER ONLY
- * On the live data three of the four components are currently constant:
- * relevance saturates at 100, no posting carries a deadline, and the dream
- * boost is 0 until something is bookmarked. A single opaque "priority 63"
- * would read as a precise judgement when it is mostly a tie. Showing the four
- * weighted contributions inline — and the server's own sentence saying the
- * deadline term is not separating anything — is the difference between a
- * ranking the user can trust and one they have to take on faith.
+ * WHAT A ROW SAYS
+ * A student reads up to three short reasons per row ("Posted yesterday",
+ * "Strong match for new grads"), built by api-server/src/queue/priority.ts.
+ * The score is a whole number; hovering it shows its four parts. How the
+ * score is made, including that most sources publish no closing date, is
+ * one plain-language note behind "How is this ranked?" in the header,
+ * rather than engine text repeated on every row.
  */
 
 import { useCallback, useMemo, useState } from "react";
@@ -45,6 +44,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Building2,
   Check,
@@ -73,13 +77,52 @@ const workModeLabels: Record<string, string> = {
   onsite: "On-site",
 };
 
-/** The four components, in the weight order §3.1 lists them. */
+/** The four parts of a score, in the weight order §3.1 lists them. */
 const COMPONENT_ORDER = [
-  { key: "relevanceScore", label: "Relevance", weight: "×0.40" },
-  { key: "deadlineUrgency", label: "Deadline", weight: "×0.30" },
-  { key: "freshness", label: "Freshness", weight: "×0.20" },
-  { key: "dreamCompanyBoost", label: "Dream co.", weight: "×0.10" },
+  { key: "relevanceScore", label: "Fit" },
+  { key: "deadlineUrgency", label: "Closing soon" },
+  { key: "freshness", label: "Freshness" },
+  { key: "dreamCompanyBoost", label: "Dream company" },
 ] as const;
+
+/** Scores read as whole numbers everywhere: in the app and on the landing. */
+export const formatScore = (n: number) => String(Math.round(n));
+
+/** The ranking in plain words, behind "How is this ranked?". */
+function RankingNote() {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 h-7 gap-1 px-2 text-xs text-muted-foreground"
+        >
+          <Info className="h-3.5 w-3.5" aria-hidden="true" />
+          How is this ranked?
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-80 space-y-2 text-sm leading-relaxed"
+        data-testid="queue-ranking-note"
+      >
+        <p className="font-medium">How is this ranked?</p>
+        <p className="text-muted-foreground">
+          Every morning each role you can apply to gets a score out of 100, from
+          four things: how well the role fits a fresher (40%), how soon it
+          closes (30%), how recently it was posted (20%) and whether it is at
+          one of the companies you starred (10%). The ten highest come first.
+        </p>
+        <p className="text-muted-foreground">
+          Most sources do not publish a closing date, so that part is often the
+          same for every role. Roles with the same score take turns from day to
+          day, so new ones get a chance.
+        </p>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function initials(name: string): string {
   return name
@@ -165,11 +208,29 @@ function QueueRow({
               className="cursor-default text-[11px] font-semibold tabular-nums text-muted-foreground"
               data-testid="queue-priority"
             >
-              {item.priority.toFixed(1)}
+              {formatScore(item.priority)}
             </span>
           </TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">
-            Priority {item.priority.toFixed(2)} / 100
+          <TooltipContent
+            side="right"
+            className="text-xs"
+            data-testid="priority-breakdown"
+          >
+            <p className="mb-1 font-semibold">
+              Score {formatScore(item.priority)} of 100
+            </p>
+            <ul className="space-y-0.5">
+              {COMPONENT_ORDER.map(({ key, label }) => (
+                <li
+                  key={key}
+                  data-component={key}
+                  className="flex justify-between gap-4 tabular-nums"
+                >
+                  <span>{label}</span>
+                  <span>+{formatScore(contributions[key])}</span>
+                </li>
+              ))}
+            </ul>
           </TooltipContent>
         </Tooltip>
       </div>
@@ -233,79 +294,21 @@ function QueueRow({
           )}
         </div>
 
-        {/* The ranking, broken out — all four weighted contributions. */}
-        <div
-          className="flex flex-wrap items-center gap-x-3 gap-y-1"
-          data-testid="priority-breakdown"
-        >
-          {COMPONENT_ORDER.map(({ key, label, weight }) => {
-            const raw = item.components[key];
-            const contribution = contributions[key];
-            const idle = contribution === 0;
-            return (
-              <Tooltip key={key}>
-                <TooltipTrigger asChild>
-                  <span
-                    data-component={key}
-                    data-contribution={contribution}
-                    className={`cursor-default text-[11px] tabular-nums ${
-                      idle
-                        ? "text-muted-foreground/50"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {label}{" "}
-                    <span className="font-semibold text-foreground">
-                      {contribution.toFixed(1)}
-                    </span>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  {label} {Math.round(raw)}/100 {weight} ={" "}
-                  {contribution.toFixed(2)}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-3 w-3 shrink-0 text-muted-foreground/60" />
-            </TooltipTrigger>
-            <TooltipContent
-              side="bottom"
-              align="start"
-              className="max-w-sm text-xs"
-              data-testid="queue-rank-reasons"
-            >
-              <p className="mb-1 font-semibold">
-                Why this ranks {rank}
-                {rank === 1
-                  ? "st"
-                  : rank === 2
-                    ? "nd"
-                    : rank === 3
-                      ? "rd"
-                      : "th"}
-              </p>
-              <ul className="list-disc space-y-0.5 pl-3">
-                {item.reasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
-                ))}
-              </ul>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-
         {/* §3.3: "Each row displays a plain-language reason for its rank."
-            The leading reason is on the row itself, not only on hover — a
-            reason you have to go looking for is not displayed. */}
-        <p
-          className="text-[11px] leading-snug text-muted-foreground"
-          data-testid="queue-reason"
-        >
-          {item.reasons[0]}
-          {item.reasons[1] ? ` · ${item.reasons[1]}` : ""}
-        </p>
+            Up to three short reasons from the server, on the row itself. */}
+        {item.reasons.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5" aria-label="Why it is here">
+            {item.reasons.map((reason) => (
+              <li
+                key={reason}
+                data-testid="queue-reason"
+                className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+              >
+                {reason}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Actions */}
@@ -464,7 +467,7 @@ export function TodaysQueue() {
   );
 
   return (
-    <Card data-testid="todays-queue" className="border-primary/20">
+    <Card data-testid="todays-queue">
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-0.5">
@@ -474,12 +477,10 @@ export function TodaysQueue() {
             </CardTitle>
             <p className="text-xs text-muted-foreground">
               {data
-                ? `${data.distinctCount} distinct roles to choose from, ranked. ` +
-                  (data.eligibleCount > data.distinctCount
-                    ? `${data.eligibleCount - data.distinctCount} duplicate listings collapsed.`
-                    : "No duplicates today.")
-                : "Ranked by relevance, deadline, freshness and your bookmarks."}
+                ? `Ranked from ${data.eligibleCount.toLocaleString("en-IN")} roles open to you today`
+                : "Ten roles, ranked for you each morning"}
             </p>
+            <RankingNote />
           </div>
 
           {/* §3.3 target counter + streak */}

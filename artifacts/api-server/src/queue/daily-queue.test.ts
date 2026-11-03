@@ -440,7 +440,7 @@ describe("dailyQueue — duplicate collapse", () => {
     expect(distinctCount).toBe(1);
     expect(items).toHaveLength(1);
     expect(items[0]!.duplicateCount).toBe(6);
-    expect(items[0]!.reasons.join(" ")).toMatch(/6 identical listings/);
+    expect(items[0]!.reasons).toContain("Listed 6 times, shown once");
   });
 
   it("collapses across punctuation and case, not just exact strings", async () => {

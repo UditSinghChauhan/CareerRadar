@@ -50,7 +50,6 @@ const ProfilePage = lazy(() =>
 const SettingsPage = lazy(() =>
   import("@/pages/settings").then((m) => ({ default: m.SettingsPage })),
 );
-const DesignNotesPage = lazy(() => import("@/pages/design-notes"));
 const ToolsCapturePage = lazy(() =>
   import("@/pages/tools-capture").then((m) => ({
     default: m.ToolsCapturePage,
@@ -174,7 +173,7 @@ const clerkAppearance = {
   // index.css, so the sign-in card follows light and dark mode with the rest
   // of the app. Only shape and layout are set here.
   variables: {
-    fontFamily: "Geologica, ui-sans-serif, system-ui, sans-serif",
+    fontFamily: "Geist, 'Geist Fallback', ui-sans-serif, system-ui, sans-serif",
     borderRadius: "0.25rem",
   },
   elements: {
@@ -299,11 +298,6 @@ function ClerkProviderWithRoutes() {
         <ClerkQueryClientCacheInvalidator />
         <Switch>
           <Route path="/" component={HomeRedirect} />
-          <Route path="/design-notes">
-            <Suspense fallback={null}>
-              <DesignNotesPage />
-            </Suspense>
-          </Route>
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
           <Route path="/dashboard">

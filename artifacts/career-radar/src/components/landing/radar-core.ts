@@ -1,12 +1,10 @@
 /**
- * The radar, shared by the hero, the pinned chapter and the closing screen.
+ * The radar, drawn once on the page: in the closing dark band.
  *
- * One point per active posting at the committed scale (4,512, of which 2,109
- * were plausibly open to a fresher; README, measured 2026-09-16). Eligible
- * postings sit nearer the centre, the rest drift to the edge, and the ten
- * roles of a day's queue are lit. Positions come from a fixed seed, so every
- * visitor sees the same field; only the counts are data. The labels beside
- * the radar show the live figures when the API has them.
+ * One point per active posting at the committed scale (COMMITTED_STATS in
+ * use-public-stats.ts). Eligible postings sit nearer the centre, the rest
+ * drift to the edge, and the ten roles of a day's queue are lit. Positions
+ * come from a fixed seed, so every visitor sees the same field.
  */
 import { COMMITTED_STATS, QUEUE_SIZE } from "./use-public-stats";
 

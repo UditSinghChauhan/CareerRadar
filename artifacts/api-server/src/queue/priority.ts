@@ -34,9 +34,9 @@
  *     the 1,549 eligible ones, because the ATS and aggregator APIs in use
  *     simply do not publish application deadlines. Every queue row therefore
  *     scores the spec's "10 if none" and contributes a constant 3.0. The
- *     component is kept, weighted as specified, and every row's reason string
- *     names the absence — a component that looks like it is working but is
- *     not is worse than one that is visibly idle. It starts doing real work
+ *     component is kept, weighted as specified, and the app's "How is this
+ *     ranked?" note says in plain words that it is usually the same for every
+ *     role, rather than each row repeating it. It starts doing real work
  *     the moment a provider with deadlines (or Phase 4 manual capture) lands.
  *
  *   · freshness is the ONLY component that separates inside the saturated
@@ -132,7 +132,7 @@ export interface PriorityComponents {
   dreamCompanyBoost: number;
 }
 
-/** Everything the plain-language reason needs that the numbers do not carry. */
+/** Everything the plain-language reasons need that the numbers do not carry. */
 export interface PriorityContext {
   /** Null when the posting published no deadline — the common case. */
   deadline: Date | null;
@@ -140,6 +140,8 @@ export interface PriorityContext {
   postedDate: Date | null;
   /** How many rows collapsed into this one by (company, normalised title). */
   duplicateCount: number;
+  /** The classifier's fresher track (new_grad, internship, early_career), if any. */
+  track?: string | null;
   now: Date;
 }
 
@@ -223,14 +225,27 @@ export function priorityContributions(
   };
 }
 
+/** How the fit reads for each fresher track. */
+const TRACK_AUDIENCE: Record<string, string> = {
+  new_grad: "new grads",
+  internship: "interns",
+  early_career: "freshers",
+};
+
+/** The most reasons a row shows. More than three is a paragraph, not a reason. */
+export const MAX_REASONS = 3;
+
 /**
- * One sentence per component, in weight order, saying what it contributed and
- * why — §3.3's "plain-language reason for its rank". Computed here, never in
- * the frontend, so the explanation and the ordering come from the same code.
+ * Up to three short reasons a student reads beside a row, most useful first:
+ * a real closing date, a dream company, how recently it was posted, how well
+ * it fits, and a role listed more than once. Computed here, never in the
+ * frontend, so the reasons and the ordering come from the same data.
  *
- * Components that did nothing still get a line. "No deadline published" is
- * the single most important thing this list says on today's data: without it
- * the user would read a 3.0 deadline contribution as a real signal.
+ * Only signals that are present become reasons. A missing deadline (the
+ * common case: sources rarely publish one) says nothing here; the app's
+ * "How is this ranked?" note explains in plain words that the closing-date
+ * part of the score is usually the same for every role. Scores, weights and
+ * the classifier's vocabulary stay out of these strings.
  */
 export function explainPriority(
   c: PriorityComponents,
@@ -238,58 +253,44 @@ export function explainPriority(
 ): string[] {
   const reasons: string[] = [];
 
-  reasons.push(
-    c.relevanceScore >= 100
-      ? "Relevance 100/100 — top of the classifier's band, shared with hundreds of others, so the terms below decide the order"
-      : `Relevance ${c.relevanceScore}/100`,
-  );
-
-  if (!ctx.deadline) {
+  if (ctx.deadline && c.deadlineUrgency !== DEADLINE_URGENCY.none) {
+    const daysLeft = Math.floor(daysUntil(ctx.deadline, ctx.now));
     reasons.push(
-      "No deadline published by the source — every row scores the same 10 here, so this term is not separating anything",
-    );
-  } else if (c.deadlineUrgency === DEADLINE_URGENCY.none) {
-    const past = ctx.deadline.getTime() < ctx.now.getTime();
-    reasons.push(
-      past
-        ? "Deadline has already passed"
-        : "Deadline is more than 30 days out",
-    );
-  } else {
-    const daysLeft = Math.max(0, Math.ceil(daysUntil(ctx.deadline, ctx.now)));
-    reasons.push(
-      c.deadlineUrgency === DEADLINE_URGENCY.within72h
-        ? "Closes within 72 hours"
-        : c.deadlineUrgency === DEADLINE_URGENCY.within7d
-          ? `Closes in ${daysLeft} days`
-          : `Closes in about ${daysLeft} days`,
+      daysLeft < 1
+        ? "Closes today"
+        : daysLeft < 2
+          ? "Closes tomorrow"
+          : `Closes in ${daysLeft} days`,
     );
   }
 
-  if (!ctx.postedDate) {
-    reasons.push("No posted date from the source — scored as not fresh");
-  } else {
-    const age = ageDays(ctx.postedDate, ctx.now);
-    reasons.push(
-      age <= FRESHNESS.plateauDays
-        ? "Posted in the last 48 hours"
-        : age >= FRESHNESS.zeroDays
-          ? `Posted ${Math.round(age)} days ago — past the 30-day freshness window`
-          : `Posted ${Math.round(age)} days ago (freshness ${Math.round(c.freshness)}/100)`,
-    );
+  if (c.dreamCompanyBoost > 0) reasons.push("Dream company");
+
+  if (ctx.postedDate) {
+    const days = Math.max(0, Math.floor(ageDays(ctx.postedDate, ctx.now)));
+    if (days < FRESHNESS.zeroDays) {
+      reasons.push(
+        days < 1
+          ? "Posted today"
+          : days < 2
+            ? "Posted yesterday"
+            : `Posted ${days} days ago`,
+      );
+    }
   }
 
-  if (c.dreamCompanyBoost > 0) {
-    reasons.push("You have bookmarked a role at this company");
+  const audience = ctx.track ? TRACK_AUDIENCE[ctx.track] : undefined;
+  if (audience && c.relevanceScore >= 90) {
+    reasons.push(`Strong match for ${audience}`);
+  } else if (audience && c.relevanceScore >= 70) {
+    reasons.push(`Good match for ${audience}`);
   }
 
   if (ctx.duplicateCount > 1) {
-    reasons.push(
-      `${ctx.duplicateCount} identical listings from this company collapsed into one`,
-    );
+    reasons.push(`Listed ${ctx.duplicateCount} times, shown once`);
   }
 
-  return reasons;
+  return reasons.slice(0, MAX_REASONS);
 }
 
 // ─── The SQL side of the same formula ────────────────────────────────────────

@@ -17,11 +17,11 @@ Every morning, CareerRadar picks ten SDE roles worth applying to, from every ope
 
 ## Positioning
 
-The ranking can be explained and checked. Classification and ranking are deterministic rules in the repository; no language model decides what a user sees. Every rank carries a plain-language reason, including when a term is not working, for example "No deadline published by the source". Postings come from employers' own ATS boards and from free job-board APIs, never from scraping sites whose terms forbid it.
+The ranking can be explained and checked. Classification and ranking are deterministic rules in the repository; no language model decides what a user sees. Every rank carries up to three short reasons a student reads, such as "Posted yesterday" or "Strong match for new grads"; the queue's "How is this ranked?" note explains the score, including that most sources publish no closing date. Postings come from employers' own ATS boards and from free job-board APIs, never from scraping sites whose terms forbid it.
 
 ## Operating Context
 
-- The daily queue has ten rows. Each row shows priority, its four weighted components (relevance 40%, deadline 30%, freshness 20%, dream company 10%) and its reason lines, with Apply and Dismiss.
+- The daily queue has ten rows. Each row shows its score as a whole number (its four weighted parts, fit 40%, closing soon 30%, freshness 20%, dream company 10%, in the score's tooltip) and up to three reasons, with Apply and Dismiss.
 - Apply opens the employer's posting in a new tab, logs the application, removes the row and counts toward a daily target with a streak.
 - Applications move through applied, online assessment, interview and offer, with referrals and follow-ups.
 - Deadline reminders are sent 72 and 24 hours before a saved role closes, when the source publishes a deadline.

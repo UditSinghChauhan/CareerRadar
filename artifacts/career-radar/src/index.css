@@ -1,5 +1,7 @@
 @layer theme, base, clerk, components, utilities;
 
+@import "./styles/fonts.css";
+
 @import "tailwindcss";
 @import "@clerk/themes/shadcn.css";
 @import "tw-animate-css";
@@ -49,15 +51,16 @@
   --font-sans: var(--app-font-sans);
   --font-mono: var(--app-font-mono);
 
-  /* DESIGN.md "Shape": hairline frames at 4px; pills stay rounded-full. */
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
-  --radius-2xl: 6px;
+  /* DESIGN.md "Shape": cards at 14px like the landing's, rows at 10px,
+     controls at 8px; pills stay rounded-full. */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 14px;
 
   /* DESIGN.md "Depth": flat. Frames are hairlines, never shadows. */
-  --shadow-card: none;
+  --shadow-card: var(--card-shadow);
 
   /* DESIGN.md "Motion". */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -65,39 +68,45 @@
   --default-transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Colour tokens from DESIGN.md (Vantage, steel colourway). The named roles
-   come first; the shadcn and Clerk variables below only point at them. Dark
-   is the Vantage night; light is its steel-on-paper counterpart, with the
-   accent darkened so it can carry text on light surfaces. */
+/* Colour tokens. The named roles come first; the shadcn and Clerk variables
+   below only point at them. Light shares the landing's tokens (DESIGN.md,
+   Colour); dark is the Vantage night. */
 :root {
-  --app-font-sans: "Geologica", ui-sans-serif, system-ui, sans-serif;
-  --app-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --app-font-sans:
+    "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --app-font-mono:
+    "Geist Mono", "Geist Mono Fallback", ui-monospace, Menlo, monospace;
 
-  --paper: oklch(98.5% 0.003 230);
-  --paper-2: oklch(96.5% 0.005 230);
-  --paper-3: oklch(93.5% 0.007 230);
-  --ink: oklch(22% 0.015 235);
-  --ink-2: oklch(36% 0.015 235);
-  --ink-muted: oklch(50% 0.016 235);
-  --rule: oklch(89% 0.007 230);
-  --rule-2: oklch(80% 0.01 230);
-  --field-edge: oklch(62% 0.012 230);
-  --accent-text: oklch(48% 0.14 135);
-  --accent-on: oklch(98.5% 0.01 126);
+  /* Light is the landing's canvas (DESIGN.md, Colour): a cool off-white
+     ground, white cards on a hairline, near-black ink and a deep green that
+     carries text and focus. */
+  --paper: #f6f6f3;
+  --paper-0: #ffffff;
+  --paper-2: #fafaf8;
+  --paper-3: #efefea;
+  --ink: #111111;
+  --ink-2: #3a3a37;
+  --ink-muted: #6b6b66;
+  --rule: #e4e4df;
+  --rule-2: #d4d4ce;
+  --field-edge: #8a8a85;
+  --accent-text: #316b17;
+  --accent-on: #ffffff;
   --signal: oklch(89% 0.19 126);
   --signal-ink: oklch(19% 0.04 126);
   --error: oklch(52% 0.18 27);
   --error-on: oklch(98.5% 0.01 27);
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 16px 40px -20px rgb(0 0 0 / 14%);
 
   --background: var(--paper);
   --foreground: var(--ink);
   --surface: var(--paper-2);
 
-  --card: var(--paper);
+  --card: var(--paper-0);
   --card-foreground: var(--ink);
   --card-border: var(--rule);
 
-  --popover: var(--paper);
+  --popover: var(--paper-0);
   --popover-foreground: var(--ink);
   --popover-border: var(--rule);
 
@@ -129,7 +138,7 @@
   --button-outline: var(--rule-2);
   --badge-outline: var(--rule-2);
 
-  --sidebar: var(--paper);
+  --sidebar: var(--paper-0);
   --sidebar-foreground: var(--ink);
   --sidebar-border: var(--rule);
   --sidebar-primary: var(--accent-text);
@@ -143,6 +152,7 @@
 
 .dark {
   --paper: oklch(13.5% 0.012 235);
+  --paper-0: oklch(13.5% 0.012 235);
   --paper-2: oklch(17% 0.014 235);
   --paper-3: oklch(21% 0.016 235);
   --ink: oklch(95% 0.006 230);
@@ -155,6 +165,7 @@
   --accent-on: oklch(19% 0.04 126);
   --error: oklch(72% 0.15 27);
   --error-on: oklch(19% 0.04 27);
+  --card-shadow: none;
 
   --card: var(--paper-2);
   --popover: var(--paper-2);
@@ -168,12 +179,6 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
-  }
-  /* Geologica's sharpened corners are the display voice; body stays soft. */
-  h1,
-  h2,
-  h3 {
-    font-variation-settings: "SHRP" 100;
   }
   ::selection {
     background: color-mix(in oklab, var(--signal) 30%, transparent);
