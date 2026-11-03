@@ -1,12 +1,26 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { LandingPage, PRIORITY_COMPONENTS, SOURCES } from "../landing";
-import { nextThemeChoice } from "@/components/landing/landing-theme-toggle";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { LandingPage, SOURCES } from "../landing";
+import { PRIORITY_COMPONENTS } from "@/components/landing/explain-card";
+import { QUESTIONS } from "@/components/landing/faq";
+import classifier from "@/components/landing/classifier-demo.json";
+import {
+  acceptStats,
+  resetPublicStats,
+} from "@/components/landing/use-public-stats";
 import { ILLUSTRATIVE_QUEUE } from "@/components/landing/landing-queue";
 
+/** Renders the landing and waits for the chapters it mounts after the hero. */
+async function renderLanding() {
+  const utils = render(<LandingPage />);
+  await screen.findByRole("heading", { name: "Questions" });
+  return utils;
+}
+
 describe("LandingPage", () => {
-  it("has exactly one h1, stating the outcome", () => {
-    render(<LandingPage />);
+  it("has exactly one h1, stating the outcome", async () => {
+    await renderLanding();
     const headings = screen.getAllByRole("heading", { level: 1 });
     expect(headings).toHaveLength(1);
     expect(headings[0]).toHaveTextContent(
@@ -14,8 +28,8 @@ describe("LandingPage", () => {
     );
   });
 
-  it("sends every Get started action to sign-up", () => {
-    render(<LandingPage />);
+  it("sends every Get started action to sign-up", async () => {
+    await renderLanding();
     const links = screen.getAllByRole("link", { name: "Get started" });
     expect(links.length).toBeGreaterThan(0);
     for (const link of links) {
@@ -23,72 +37,163 @@ describe("LandingPage", () => {
     }
   });
 
-  it("offers sign-in and the theme toggle from the header", () => {
-    render(<LandingPage />);
+  it("offers sign-in from the header and no theme toggle: the landing is dark only", async () => {
+    await renderLanding();
     const header = within(screen.getByRole("banner"));
     expect(header.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",
       "/sign-in",
     );
+    expect(screen.queryByRole("button", { name: /theme/i })).toBeNull();
+  });
+
+  it("names the radar chart with the counts it draws", async () => {
+    await renderLanding();
     expect(
-      header.getByRole("button", { name: /Switch to (dark|light) theme/ }),
+      screen.getByRole("img", { name: /Radar chart of 4,512 open roles/ }),
     ).toBeInTheDocument();
   });
 
-  it("names the radar chart with the counts it draws", () => {
-    render(<LandingPage />);
+  it("links the code from the hero, the closing and the footer", async () => {
+    const { container } = await renderLanding();
+    const repo = [...container.querySelectorAll("a")].filter(
+      (a) =>
+        a.getAttribute("href") ===
+        "https://github.com/UditSinghChauhan/CareerRadar",
+    );
+    expect(repo.map((a) => a.closest("section, footer")?.className)).toEqual([
+      "lp-hero",
+      "lp-closing",
+      "lp-footer",
+    ]);
+  });
+
+  it("credits the designer and links to their GitHub, with no empty portfolio links", async () => {
+    await renderLanding();
+    const footer = within(screen.getByRole("contentinfo"));
     expect(
-      screen.getByRole("img", { name: /Radar chart of 4,512 active postings/ }),
-    ).toBeInTheDocument();
+      footer.getByRole("link", { name: "Udit Singh Chauhan" }),
+    ).toHaveAttribute("href", "https://github.com/UditSinghChauhan");
+    expect(footer.getByRole("link", { name: "Design notes" })).toHaveAttribute(
+      "href",
+      "/design-notes",
+    );
+    // PORTFOLIO_URL and LINKEDIN_URL are empty until they exist.
+    expect(footer.queryByRole("link", { name: "Portfolio" })).toBeNull();
+    expect(footer.queryByRole("link", { name: "LinkedIn" })).toBeNull();
   });
 
-  it("links to GitHub exactly twice: once in the hero, once in the footer", () => {
-    render(<LandingPage />);
-    const github = screen
-      .getAllByRole("link")
-      .filter((a) => a.getAttribute("href")?.includes("github.com"));
-    expect(github).toHaveLength(2);
-    expect(github[0].closest("section")).toHaveClass("lp-hero");
-    expect(github[1].closest("footer")).not.toBeNull();
+  it("closes on tomorrow's ten with the count and the action", async () => {
+    await renderLanding();
+    const closing = screen.getByRole("heading", {
+      name: "Tomorrow’s ten are already being ranked.",
+    });
+    const section = within(closing.closest("section")!);
+    expect(section.getByText("4,512")).toBeInTheDocument();
+    expect(section.getByRole("link", { name: "Get started" })).toHaveAttribute(
+      "href",
+      "/sign-up",
+    );
   });
 
-  it("states the deadline caveat the README measures, not a working signal", () => {
-    // Before this change the page listed "Deadline 30%: how soon applications
-    // close" with no caveat, while the README measures a deadline on 13 of
-    // 4,995 rows and none of the fresher-eligible ones.
-    render(<LandingPage />);
-    expect(screen.getByText(/13 of 4,995 rows/)).toBeInTheDocument();
-    expect(screen.queryByText("How soon applications close")).toBeNull();
+  it("prints no date anywhere on the page", async () => {
+    // The page claims to be live; "Measured 16 September 2026." and
+    // "Counted on 31 October 2026" contradicted that.
+    const { container } = await renderLanding();
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(
+      /\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/,
+    );
+    expect(text).not.toMatch(/\b20\d\d\b/);
+    for (const el of container.querySelectorAll("[aria-label]")) {
+      expect(el.getAttribute("aria-label")).not.toMatch(/\b20\d\d\b/);
+    }
   });
 
-  it("says the reminder hours as a sentence, not as bare figures", () => {
-    render(<LandingPage />);
+  it("says the deadline term is not separating rows, rather than implying it works", async () => {
+    // Sources rarely publish deadlines, so every row scores the same there.
+    await renderLanding();
+    expect(
+      screen.getAllByText(
+        /No closing date listed, so every row scores the same/,
+      ).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("says the reminder hours as a sentence, not as bare figures", async () => {
+    await renderLanding();
     expect(
       screen.getByText(
-        /you get a reminder 72 hours and again 24 hours before it closes/,
+        /When a source publishes a deadline: 72 hours before it closes, and again at 24\./,
       ),
     ).toBeInTheDocument();
   });
 
-  it("labels the walkthrough rows as illustrative and keeps the demo inert", () => {
-    const { container } = render(<LandingPage />);
+  it("labels the queue rows as illustrative and keeps every product frame inert", async () => {
+    const { container } = await renderLanding();
     expect(screen.getByText(/Illustrative rows\./)).toBeInTheDocument();
-    const stages = container.querySelectorAll(".lp-stage");
-    expect(stages.length).toBeGreaterThan(0);
-    stages.forEach((stage) => expect(stage).toHaveAttribute("inert"));
+    const frames = container.querySelectorAll(".lp-qframe");
+    expect(frames.length).toBeGreaterThan(0);
+    frames.forEach((frame) => expect(frame).toHaveAttribute("inert"));
   });
 
-  it("renders every source both as a table row and as a phone card", () => {
-    const { container } = render(<LandingPage />);
-    expect(container.querySelectorAll(".lp-sources tbody tr")).toHaveLength(
-      SOURCES.length,
-    );
-    expect(container.querySelectorAll(".lp-source-cards li")).toHaveLength(
-      SOURCES.length,
-    );
+  it("walks from every open role to ten, in four beats", async () => {
+    await renderLanding();
+    for (const line of [
+      "4,512 open roles.",
+      "2,109 you can actually apply to.",
+      "Ten worth your morning.",
+      "Each one tells you why.",
+    ]) {
+      expect(screen.getByText(line)).toBeInTheDocument();
+    }
   });
 
-  it("publishes priority weights that add up to 100%", () => {
+  it("lists every source in the sync table behind its disclosure", async () => {
+    const { container } = await renderLanding();
+    expect(container.querySelectorAll(".lp-sync tbody tr")).toHaveLength(
+      SOURCES.length,
+    );
+    expect(screen.getByText("How each source syncs").tagName).toBe("SUMMARY");
+  });
+
+  it("answers four questions in an accordion, the first open", async () => {
+    await renderLanding();
+    const triggers = QUESTIONS.map((item) =>
+      screen.getByRole("button", { name: item.q }),
+    );
+    expect(triggers).toHaveLength(4);
+    expect(triggers[0]).toHaveAttribute("aria-expanded", "true");
+    expect(triggers[1]).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(triggers[1]);
+    expect(triggers[1]).toHaveAttribute("aria-expanded", "true");
+    expect(triggers[0]).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("replaces text-only sections with six working tiles", async () => {
+    const { container } = await renderLanding();
+    expect(container.querySelectorAll(".lp-bento > .lp-tile")).toHaveLength(6);
+    expect(
+      screen.getByRole("heading", { name: "No model decides what you see." }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the real app in five captures, each with alt text and a reserved box", async () => {
+    const { container } = await renderLanding();
+    const imgs = [...container.querySelectorAll(".lp-shot img")];
+    expect(imgs).toHaveLength(5);
+    for (const img of imgs) {
+      expect(img.getAttribute("alt")?.length).toBeGreaterThan(20);
+      expect(Number(img.getAttribute("width"))).toBeGreaterThan(0);
+      expect(Number(img.getAttribute("height"))).toBeGreaterThan(0);
+      expect(img.closest("picture")?.querySelector("source")).toHaveAttribute(
+        "type",
+        "image/avif",
+      );
+    }
+  });
+
+  it("publishes priority weights that add up to 100%", async () => {
     // Mirrors PRIORITY_WEIGHTS in artifacts/api-server/src/queue/priority.ts.
     const total = PRIORITY_COMPONENTS.reduce((sum, c) => sum + c.weight, 0);
     expect(total).toBe(100);
@@ -96,7 +201,7 @@ describe("LandingPage", () => {
 });
 
 describe("illustrative queue", () => {
-  it("records its source and date and carries no deadline", () => {
+  it("records its source and date and carries no deadline", async () => {
     expect(ILLUSTRATIVE_QUEUE.illustrative).toBe(true);
     expect(ILLUSTRATIVE_QUEUE.source).toMatch(/^Illustrative\./);
     expect(ILLUSTRATIVE_QUEUE.date).toBe("2026-09-16");
@@ -107,14 +212,75 @@ describe("illustrative queue", () => {
   });
 });
 
-describe("nextThemeChoice", () => {
-  it("pins the opposite theme when it differs from the system", () => {
-    expect(nextThemeChoice("light", false)).toBe("dark");
-    expect(nextThemeChoice("dark", true)).toBe("light");
+describe("classifier demo", () => {
+  it("asks only rules that exist, and decides on the last one asked", async () => {
+    for (const t of classifier.titles) {
+      expect(t.answers.length).toBeGreaterThan(0);
+      expect(t.answers.length).toBeLessThanOrEqual(classifier.rules.length);
+      expect(t.answers.at(-1)).toBe("yes");
+      expect(t.answers.slice(0, -1).every((a) => a === "no")).toBe(true);
+    }
+  });
+});
+
+describe("live counts", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    resetPublicStats();
   });
 
-  it("returns to following the system when the choice matches it", () => {
-    expect(nextThemeChoice("light", true)).toBe("system");
-    expect(nextThemeChoice("dark", false)).toBe("system");
+  it("shows the live figures and the Live mark when the API answers", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          activePostings: 4600,
+          openToFreshers: 2150,
+          lastSyncedAt: "2026-11-01T00:00:00.000Z",
+        }),
+      ),
+    );
+    resetPublicStats();
+    await renderLanding();
+    // On the hero radar and on the closing count.
+    expect(await screen.findAllByText("Live")).toHaveLength(2);
+    expect(
+      await screen.findByRole("img", {
+        name: /Radar chart of 4,600 open roles/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the committed figures, without Live, when the API fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("", { status: 503 })),
+    );
+    resetPublicStats();
+    await renderLanding();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText("Live")).toBeNull();
+    expect(
+      screen.getByRole("img", { name: /Radar chart of 4,512 open roles/ }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("acceptStats", () => {
+  it("takes plausible live figures and marks them live", async () => {
+    expect(
+      acceptStats({
+        activePostings: 4600,
+        openToFreshers: 2150,
+        lastSyncedAt: null,
+      }),
+    ).toEqual({ activePostings: 4600, openToFreshers: 2150, live: true });
+  });
+
+  it("refuses an outage dressed as data, so the committed figures stay", async () => {
+    expect(acceptStats({ activePostings: 0, openToFreshers: 0 })).toBeNull();
+    expect(acceptStats({ activePostings: 10, openToFreshers: 20 })).toBeNull();
+    expect(acceptStats({ activePostings: "4512" })).toBeNull();
+    expect(acceptStats(null)).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
+import publicStatsRouter from "./public-stats";
 import profileRouter from "./profile";
 import settingsRouter from "./settings";
 import dashboardRouter from "./dashboard";
@@ -23,6 +24,7 @@ router.get("/", (_req, res) => {
 });
 
 router.use(healthRouter);
+router.use(publicStatsRouter);
 router.use(profileRouter);
 router.use(settingsRouter);
 router.use(dashboardRouter);

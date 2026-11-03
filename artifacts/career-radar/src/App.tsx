@@ -1,5 +1,12 @@
-import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
+import { lazy, Suspense, useEffect, useRef } from "react";
+import {
+  ClerkProvider,
+  SignIn,
+  SignUp,
+  Show,
+  useAuth,
+  useClerk,
+} from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
 import {
@@ -19,14 +26,36 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { LandingPage } from "@/pages/landing";
-import { DashboardPage } from "@/pages/dashboard";
-import { JobsPage } from "@/pages/jobs";
-import { ApplicationsPage } from "@/pages/applications";
-import { ProfilePage } from "@/pages/profile";
-import { SettingsPage } from "@/pages/settings";
-import { ToolsCapturePage } from "@/pages/tools-capture";
 import NotFound from "@/pages/not-found";
-import { AppLayout } from "@/components/layout";
+
+// The signed-in app is split from the landing: a first-time visitor downloads
+// the landing alone, and the app's pages load when they are opened.
+const AppLayout = lazy(() =>
+  import("@/components/layout").then((m) => ({ default: m.AppLayout })),
+);
+const DashboardPage = lazy(() =>
+  import("@/pages/dashboard").then((m) => ({ default: m.DashboardPage })),
+);
+const JobsPage = lazy(() =>
+  import("@/pages/jobs").then((m) => ({ default: m.JobsPage })),
+);
+const ApplicationsPage = lazy(() =>
+  import("@/pages/applications").then((m) => ({
+    default: m.ApplicationsPage,
+  })),
+);
+const ProfilePage = lazy(() =>
+  import("@/pages/profile").then((m) => ({ default: m.ProfilePage })),
+);
+const SettingsPage = lazy(() =>
+  import("@/pages/settings").then((m) => ({ default: m.SettingsPage })),
+);
+const DesignNotesPage = lazy(() => import("@/pages/design-notes"));
+const ToolsCapturePage = lazy(() =>
+  import("@/pages/tools-capture").then((m) => ({
+    default: m.ToolsCapturePage,
+  })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -185,17 +214,15 @@ function SignUpPage() {
   );
 }
 
+/**
+ * The landing paints at once, without waiting for Clerk's script: waiting
+ * held a first-time visitor on a blank page until clerk-js had loaded. A
+ * signed-in visitor is sent to the dashboard as soon as Clerk knows.
+ */
 function HomeRedirect() {
-  return (
-    <>
-      <Show when="signed-in">
-        <Redirect to="/dashboard" />
-      </Show>
-      <Show when="signed-out">
-        <LandingPage />
-      </Show>
-    </>
-  );
+  const { isLoaded, isSignedIn } = useAuth();
+  if (isLoaded && isSignedIn) return <Redirect to="/dashboard" />;
+  return <LandingPage />;
 }
 
 function ProtectedRoute({
@@ -206,9 +233,11 @@ function ProtectedRoute({
   return (
     <>
       <Show when="signed-in">
-        <AppLayout>
-          <Component />
-        </AppLayout>
+        <Suspense fallback={null}>
+          <AppLayout>
+            <Component />
+          </AppLayout>
+        </Suspense>
       </Show>
       <Show when="signed-out">
         <Redirect to="/sign-in" />
@@ -270,6 +299,11 @@ function ClerkProviderWithRoutes() {
         <ClerkQueryClientCacheInvalidator />
         <Switch>
           <Route path="/" component={HomeRedirect} />
+          <Route path="/design-notes">
+            <Suspense fallback={null}>
+              <DesignNotesPage />
+            </Suspense>
+          </Route>
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
           <Route path="/dashboard">

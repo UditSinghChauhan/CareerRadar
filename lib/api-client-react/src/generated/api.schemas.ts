@@ -5,6 +5,18 @@
  * CareerRadar API — personal placement OS for CS students
  * OpenAPI spec version: 0.2.0
  */
+export interface PublicStats {
+  /** Rows in `jobs` with status `active`. */
+  activePostings: number;
+  /** Active rows the fresher classifier marked eligible. */
+  openToFreshers: number;
+  /**
+     * Most recent successful provider sync, or null if none is logged.
+     * @nullable
+     */
+  lastSyncedAt: string | null;
+}
+
 export interface AIStatus {
   available: boolean;
   /** The Gemini model this deployment calls. */

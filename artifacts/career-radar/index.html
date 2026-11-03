@@ -33,6 +33,11 @@
       content="https://careerradar-34ec.onrender.com/opengraph.jpg"
     />
     <meta name="color-scheme" content="light dark" />
+    <meta
+      name="theme-color"
+      content="#070806"
+      media="(prefers-color-scheme: dark)"
+    />
     <!-- Sets the theme before first paint, from the same localStorage key
          next-themes uses, so neither the landing nor the app flashes. -->
     <script>
@@ -49,13 +54,93 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- The app's face (Geologica). Loaded without blocking the first paint:
+         the landing sets its own self-hosted Geist and never uses it. -->
     <link
       href="https://fonts.googleapis.com/css2?family=Geologica:wght,SHRP@200..700,0..100&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media = 'all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Geologica:wght,SHRP@200..700,0..100&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>
+    <!-- The landing's navigation and hero as static markup, the same markup
+         React renders (src/pages/landing.tsx; pre-render.test.ts keeps them
+         in step). Shown only on "/", so the headline paints with the HTML
+         instead of after the JavaScript; React then replaces it in place. -->
+    <template id="lp-pre"
+      ><div class="lp">
+        <a class="lp-skip" href="#main">Skip to content</a>
+        <header class="lp-nav">
+          <div class="lp-container lp-nav__in">
+            <a aria-label="CareerRadar, home" href="/" class="lp-word"
+              ><svg
+                viewBox="0 0 256 256"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  d="M128 24C70.5624 24 24 70.5624 24 128C24 185.438 70.5624 232 128 232C185.438 232 232 185.438 232 128C232 70.5624 185.438 24 128 24ZM128 216C79.4183 216 40 176.582 40 128C40 79.4183 79.4183 40 128 40C176.582 40 216 79.4183 216 128C216 176.582 176.582 216 128 216Z"
+                ></path>
+                <path
+                  d="M128 72C97.0721 72 72 97.0721 72 128C72 158.928 97.0721 184 128 184C158.928 184 184 158.928 184 128C184 97.0721 158.928 72 128 72ZM128 168C105.909 168 88 150.091 88 128C88 105.909 105.909 88 128 88C150.091 88 168 105.909 168 128C168 150.091 150.091 168 128 168Z"
+                ></path>
+                <path
+                  d="M128 112C119.163 112 112 119.163 112 128C112 136.837 119.163 144 128 144C136.837 144 144 136.837 144 128C144 119.163 136.837 112 128 112Z"
+                ></path></svg
+              ><span translate="no">CareerRadar</span></a
+            >
+            <nav aria-label="Main" class="lp-nav__r">
+              <a href="/design-notes" class="lp-nav__link lp-nav__link--wide"
+                >Design notes</a
+              ><a href="/sign-in" class="lp-nav__link">Sign in</a
+              ><a href="/sign-up" class="lp-btn2">Get started</a>
+            </nav>
+          </div>
+        </header>
+        <main id="main">
+          <section class="lp-hero" aria-labelledby="hero-head">
+            <div class="lp-container lp-hero__text">
+              <h1 id="hero-head" class="lp-display" data-enter="0">
+                Ten roles worth applying to, every morning.
+              </h1>
+              <p class="lp-lead" data-enter="1">
+                A ranked queue of SDE roles for Indian CS freshers, with the
+                reason for every rank.
+              </p>
+              <div class="lp-hero__act" data-enter="2">
+                <a href="/sign-up" class="lp-btn">Get started</a>
+                <p class="lp-quiet">
+                  Free and open source.
+                  <a
+                    href="https://github.com/UditSinghChauhan/CareerRadar"
+                    class="lp-link"
+                    >Read the code on GitHub</a
+                  >
+                </p>
+              </div>
+            </div>
+            <div class="lp-hero__object"></div>
+          </section>
+        </main></div
+    ></template>
+    <script>
+      if (location.pathname === "/") {
+        document.documentElement.classList.add("lp-pre");
+        document
+          .getElementById("root")
+          .appendChild(
+            document.getElementById("lp-pre").content.cloneNode(true),
+          );
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

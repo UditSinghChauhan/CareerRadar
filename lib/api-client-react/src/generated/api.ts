@@ -59,6 +59,7 @@ import type {
   NotificationsReadResult,
   Profile,
   ProfileInput,
+  PublicStats,
   SavedSearch,
   SavedSearchInput,
   Settings,
@@ -164,6 +165,84 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getHealthCheckQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPublicStatsUrl = () => {
+
+
+
+
+  return `/api/public/stats`
+}
+
+/**
+ * No session needed. Counts active postings and the fresher-eligible subset, plus the most recent successful provider sync. Cached in process for ten minutes, so a busy landing page costs one pair of count queries per instance per ten minutes.
+ * @summary Live posting counts for the landing page
+ */
+export const getPublicStats = async ( options?: RequestInit): Promise<PublicStats> => {
+
+  return customFetch<PublicStats>(getGetPublicStatsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicStatsQueryKey = () => {
+    return [
+    `/api/public/stats`
+    ] as const;
+    }
+
+
+export const getGetPublicStatsQueryOptions = <TData = Awaited<ReturnType<typeof getPublicStats>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicStatsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicStats>>> = ({ signal }) => getPublicStats({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicStats>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicStats>>>
+export type GetPublicStatsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Live posting counts for the landing page
+ */
+
+export function useGetPublicStats<TData = Awaited<ReturnType<typeof getPublicStats>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicStatsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
