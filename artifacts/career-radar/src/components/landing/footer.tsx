@@ -25,9 +25,6 @@ export function LandingFooter({ signInHref }: { signInHref: string }) {
           </p>
         </div>
         <nav aria-label="Project" className="lp-footer__links">
-          <Link href="/design-notes" className="lp-footer__link">
-            Design notes
-          </Link>
           <a href={REPO_URL} className="lp-footer__link">
             Source on GitHub
           </a>

@@ -1,18 +1,8 @@
-import {
-  lazy,
-  startTransition,
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { lazy, startTransition, Suspense, useEffect, useState } from "react";
 import { Link } from "wouter";
-import { HeroRadar } from "@/components/landing/hero-radar";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { REPO_URL } from "@/components/landing/links";
-import { useGrain } from "@/components/landing/use-grain";
-import { usePublicStats } from "@/components/landing/use-public-stats";
 import "@/styles/landing.css";
 
 export { SOURCES } from "@/components/landing/sources";
@@ -37,13 +27,10 @@ export function LandingPage() {
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
   const signUpHref = `${basePath}/sign-up`;
   const signInHref = `${basePath}/sign-in`;
-  const rootRef = useRef<HTMLDivElement>(null);
-  const stats = usePublicStats();
-  useGrain(rootRef);
   const belowFold = useAfterFirstPaint();
 
   return (
-    <div className="lp" ref={rootRef}>
+    <div className="lp">
       <a className="lp-skip" href="#main">
         Skip to content
       </a>
@@ -72,14 +59,11 @@ export function LandingPage() {
               </p>
             </div>
           </div>
-          <div className="lp-hero__object">
-            <HeroRadar stats={stats} />
-          </div>
         </section>
 
         {belowFold ? (
           <Suspense fallback={<div className="lp-pending" />}>
-            <BelowFold stats={stats} signUpHref={signUpHref} />
+            <BelowFold />
           </Suspense>
         ) : (
           <div className="lp-pending" />
