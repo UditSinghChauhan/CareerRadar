@@ -147,6 +147,34 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
+export type RolePreference = typeof RolePreference[keyof typeof RolePreference];
+
+
+export const RolePreference = {
+  internship: 'internship',
+  new_grad: 'new_grad',
+  both: 'both',
+} as const;
+
+/**
+ * "anywhere" and "remote", or a metro as the location normaliser writes it to jobs.location_metro (NCR is Delhi NCR, MMR is Mumbai).
+ */
+export type PreferredLocation = typeof PreferredLocation[keyof typeof PreferredLocation];
+
+
+export const PreferredLocation = {
+  anywhere: 'anywhere',
+  remote: 'remote',
+  Bengaluru: 'Bengaluru',
+  Hyderabad: 'Hyderabad',
+  Pune: 'Pune',
+  Chennai: 'Chennai',
+  NCR: 'NCR',
+  MMR: 'MMR',
+  Kolkata: 'Kolkata',
+  Ahmedabad: 'Ahmedabad',
+} as const;
+
 export interface Profile {
   id: string;
   clerkId: string;
@@ -169,6 +197,10 @@ export interface Profile {
   linkedinUrl?: string | null;
   /** @nullable */
   githubUrl?: string | null;
+  /** The one onboarding question. Null until the user has answered it, which is how the app knows to show onboarding. */
+  rolePreference?: RolePreference | null;
+  /** Cities the queue puts first. Empty, or containing "anywhere", means no preference. */
+  preferredLocations?: PreferredLocation[];
   createdAt: string;
   /** @nullable */
   updatedAt?: string | null;
@@ -189,6 +221,9 @@ export interface ProfileInput {
   resumeUrl?: string;
   linkedinUrl?: string;
   githubUrl?: string;
+  rolePreference?: RolePreference;
+  /** @maxItems 10 */
+  preferredLocations?: PreferredLocation[];
 }
 
 export type SettingsTheme = typeof SettingsTheme[keyof typeof SettingsTheme];

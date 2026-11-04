@@ -1,9 +1,16 @@
 {
-  "dashboard": {
-    "width": 1200,
-    "height": 620,
-    "avif": "/landing/captures/dashboard.avif",
-    "webp": "/landing/captures/dashboard.webp",
-    "placeholder": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAAAwAwCdASoYAAwAPu1iqk4ppaQiMAgBMB2JaQAAetFuBSYAAP7wlZ43IUK3dpVUEhA5gqyOraw6igqu0K/8CPspgAA="
+  "queue": {
+    "width": 740,
+    "height": 520,
+    "avif": "/landing/captures/queue.avif",
+    "webp": "/landing/captures/queue.webp",
+    "placeholder": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAAAQBACdASoYABEAPu1kp04ppaMiMBgMATAdiWkAACnSFT8DzkNBtP6ngAD+7+LrIuXoktroggmTJT8hLw+iJ3DXb89coAF6lZ4nN3szz0kFT/FruyzSNPyGTF8S8HXzIAAAAA=="
+  },
+  "queue-sm": {
+    "width": 298,
+    "height": 560,
+    "avif": "/landing/captures/queue-sm.avif",
+    "webp": "/landing/captures/queue-sm.webp",
+    "placeholder": "data:image/webp;base64,UklGRqwAAABXRUJQVlA4IKAAAACwBQCdASoYAC0APu1mqlCppSOisBVYATAdiWkAAH22ja5fPuR99BcmxpuXUIrSwf1Mpi/NCgAA/vPIjKZ7RhCotjFUutXqVGWneTN1FCK7HkgSmrH/+G4MbJndJeTL86YNeQ4zZhTNZHLmFrZ6BkFhE0X3KN8k58MFM5d/fFX+wc0FnCZ2hcXDUxbm4J+DX3L3r5X95asxL49N+QjWAAAA"
   }
 }

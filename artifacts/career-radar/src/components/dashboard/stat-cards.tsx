@@ -18,7 +18,7 @@ function StatCard({ label, value, highlight, sub }: StatCard) {
   return (
     <Card className="relative overflow-hidden">
       <CardContent className="p-4 sm:p-5">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+        <p className="text-sm font-medium text-muted-foreground mb-1">
           {label}
         </p>
         <p
@@ -53,7 +53,7 @@ export function StatCards({ summary, isLoading }: StatCardsProps) {
 
   const stats: StatCard[] = [
     {
-      label: "Jobs Found",
+      label: "Jobs found",
       value: summary?.activeJobsCount,
       sub: "Active listings",
     },

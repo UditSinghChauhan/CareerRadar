@@ -355,10 +355,12 @@ export function ApplicationsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight">Applications</h1>
-          <p className="text-sm text-muted-foreground">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-[28px] font-medium leading-[1.15] tracking-[-0.03em] text-balance">
+            Applications
+          </h1>
+          <p className="max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground text-pretty">
             Every role you have saved or applied to, from first click to offer.
           </p>
         </div>
@@ -415,7 +417,7 @@ export function ApplicationsPage() {
 
       {/* Bulk action bar — table view only */}
       {view === "table" && selectedIds.size > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
           <span className="text-xs font-medium text-foreground">
             {selectedIds.size} selected
           </span>

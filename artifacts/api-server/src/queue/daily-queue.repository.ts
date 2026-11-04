@@ -62,6 +62,11 @@ import {
   tieBreakSql,
   type PriorityComponents,
 } from "./priority";
+import {
+  preferenceMatchSql,
+  preferenceMiss,
+  type QueuePreferences,
+} from "./preferences";
 
 export type JobWithCompany = Job & { company: Company };
 
@@ -93,6 +98,11 @@ export interface DailyQueueOptions {
    * made this necessary.
    */
   queueDay: string;
+  /**
+   * The onboarding answer. Matching roles rank first; the rest only fill
+   * rows the matches leave empty. See preferences.ts.
+   */
+  preferences?: QueuePreferences | null;
 }
 
 export interface DailyQueueResult {
@@ -148,6 +158,9 @@ export function rankedQuery(options: DailyQueueOptions, dreamIds: string[]) {
   // `priority DESC` and the original `posted_date DESC, id`, so it can never
   // reorder two rows that differ in priority.
   const tieKey = tieBreakSql(sql`${jobsTable.id}`, options.queueDay);
+  // A constant when there is no preference, so the order is exactly the
+  // priority order it always was.
+  const prefMatch = preferenceMatchSql(options.preferences) ?? sql`1`;
 
   const eligible = db
     .select({
@@ -158,6 +171,7 @@ export function rankedQuery(options: DailyQueueOptions, dreamIds: string[]) {
       postedDate: jobsTable.postedDate,
       dedupeKey: dedupeKey.as("dedupe_key"),
       tieKey: tieKey.as("tie_key"),
+      prefMatch: sql<number>`${prefMatch}`.as("pref_match"),
       relevanceScore: components.relevanceScore.as("c_relevance"),
       deadlineUrgency: components.deadlineUrgency.as("c_deadline"),
       freshness: components.freshness.as("c_freshness"),
@@ -199,6 +213,7 @@ export function rankedQuery(options: DailyQueueOptions, dreamIds: string[]) {
       deadline: eligible.deadline,
       postedDate: eligible.postedDate,
       tieKey: eligible.tieKey,
+      prefMatch: eligible.prefMatch,
       relevanceScore: eligible.relevanceScore,
       deadlineUrgency: eligible.deadlineUrgency,
       freshness: eligible.freshness,
@@ -206,7 +221,7 @@ export function rankedQuery(options: DailyQueueOptions, dreamIds: string[]) {
       priority: eligible.priority,
       dupRank: sql<number>`row_number() over (
         partition by ${eligible.companyId}, ${eligible.dedupeKey}
-        order by ${eligible.priority} desc, ${eligible.postedDate} desc nulls last, ${eligible.id}
+        order by ${eligible.prefMatch} desc, ${eligible.priority} desc, ${eligible.postedDate} desc nulls last, ${eligible.id}
       )`.as("dup_rank"),
       duplicateCount: sql<number>`count(*) over (
         partition by ${eligible.companyId}, ${eligible.dedupeKey}
@@ -236,6 +251,8 @@ export function rankedQuery(options: DailyQueueOptions, dreamIds: string[]) {
     .from(ranked)
     .where(eq(ranked.dupRank, 1))
     .orderBy(
+      // Roles that match the onboarding answer first; see preferences.ts.
+      sql`${ranked.prefMatch} desc`,
       sql`${ranked.priority} desc`,
       // The day-seeded rotation. Only reachable for rows whose priority is
       // byte-identical, so the spec's ordering is untouched.
@@ -283,13 +300,16 @@ export async function dailyQueue(
       components,
       contributions: priorityContributions(components),
       duplicateCount: Number(row.duplicateCount),
-      reasons: explainPriority(components, {
-        deadline: row.deadline,
-        postedDate: row.postedDate,
-        duplicateCount: Number(row.duplicateCount),
-        track: job.relevanceTrack ?? null,
-        now: options.now,
-      }),
+      reasons: withPreference(
+        explainPriority(components, {
+          deadline: row.deadline,
+          postedDate: row.postedDate,
+          duplicateCount: Number(row.duplicateCount),
+          track: job.relevanceTrack ?? null,
+          now: options.now,
+        }),
+        preferenceMiss(job, options.preferences),
+      ),
     });
   }
 
@@ -299,6 +319,11 @@ export async function dailyQueue(
     distinctCount: rows.length > 0 ? Number(rows[0]!.distinctCount) : 0,
     queryMs,
   };
+}
+
+/** A row outside the user's preferences says so, after the usual reasons. */
+function withPreference(reasons: string[], miss: string | null): string[] {
+  return miss ? [...reasons, miss] : reasons;
 }
 
 /** The full joined payload for the winners, in the shape /api/jobs returns. */

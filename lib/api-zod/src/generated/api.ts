@@ -79,6 +79,8 @@ export const GetProfileResponse = zod.object({
   "resumeUrl": zod.string().nullish(),
   "linkedinUrl": zod.string().nullish(),
   "githubUrl": zod.string().nullish(),
+  "rolePreference": zod.union([zod.enum(['internship', 'new_grad', 'both']),zod.null()]).optional().describe('The one onboarding question. Null until the user has answered it, which is how the app knows to show onboarding.'),
+  "preferredLocations": zod.array(zod.enum(['anywhere', 'remote', 'Bengaluru', 'Hyderabad', 'Pune', 'Chennai', 'NCR', 'MMR', 'Kolkata', 'Ahmedabad']).describe('\"anywhere\" and \"remote\", or a metro as the location normaliser writes it to jobs.location_metro (NCR is Delhi NCR, MMR is Mumbai).')).optional().describe('Cities the queue puts first. Empty, or containing \"anywhere\", means no preference.'),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().nullish()
 })
@@ -87,6 +89,10 @@ export const GetProfileResponse = zod.object({
 /**
  * @summary Update current user's profile
  */
+export const updateProfileBodyPreferredLocationsMax = 10;
+
+
+
 export const UpdateProfileBody = zod.object({
   "name": zod.string().optional(),
   "college": zod.string().optional(),
@@ -97,7 +103,9 @@ export const UpdateProfileBody = zod.object({
   "skills": zod.array(zod.string()).optional(),
   "resumeUrl": zod.string().optional(),
   "linkedinUrl": zod.string().optional(),
-  "githubUrl": zod.string().optional()
+  "githubUrl": zod.string().optional(),
+  "rolePreference": zod.enum(['internship', 'new_grad', 'both']).optional(),
+  "preferredLocations": zod.array(zod.enum(['anywhere', 'remote', 'Bengaluru', 'Hyderabad', 'Pune', 'Chennai', 'NCR', 'MMR', 'Kolkata', 'Ahmedabad']).describe('\"anywhere\" and \"remote\", or a metro as the location normaliser writes it to jobs.location_metro (NCR is Delhi NCR, MMR is Mumbai).')).max(updateProfileBodyPreferredLocationsMax).optional()
 })
 
 export const UpdateProfileResponse = zod.object({
@@ -114,6 +122,8 @@ export const UpdateProfileResponse = zod.object({
   "resumeUrl": zod.string().nullish(),
   "linkedinUrl": zod.string().nullish(),
   "githubUrl": zod.string().nullish(),
+  "rolePreference": zod.union([zod.enum(['internship', 'new_grad', 'both']),zod.null()]).optional().describe('The one onboarding question. Null until the user has answered it, which is how the app knows to show onboarding.'),
+  "preferredLocations": zod.array(zod.enum(['anywhere', 'remote', 'Bengaluru', 'Hyderabad', 'Pune', 'Chennai', 'NCR', 'MMR', 'Kolkata', 'Ahmedabad']).describe('\"anywhere\" and \"remote\", or a metro as the location normaliser writes it to jobs.location_metro (NCR is Delhi NCR, MMR is Mumbai).')).optional().describe('Cities the queue puts first. Empty, or containing \"anywhere\", means no preference.'),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().nullish()
 })

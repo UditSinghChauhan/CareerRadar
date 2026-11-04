@@ -246,9 +246,7 @@ function FilterSection({
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </p>
+      <p className="text-sm font-medium text-foreground">{title}</p>
       {children}
     </div>
   );
@@ -289,7 +287,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
           <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-semibold">Filters</span>
           {activeCount > 0 && (
-            <Badge className="h-4 px-1.5 text-[10px] bg-primary/10 text-primary border-0">
+            <Badge className="h-4 px-1.5 text-[10px] bg-secondary text-foreground border-0">
               {activeCount}
             </Badge>
           )}
@@ -363,14 +361,14 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
               }
               className={`flex items-center gap-2 text-sm rounded px-2 py-1 transition-colors w-full text-left ${
                 filters.jobType === value
-                  ? "bg-primary/10 text-primary font-medium"
+                  ? "bg-secondary text-foreground font-medium"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
               <span
                 className={`inline-block w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${
                   filters.jobType === value
-                    ? "border-primary bg-primary"
+                    ? "border-foreground bg-foreground"
                     : "border-muted-foreground/40"
                 }`}
               />
@@ -418,7 +416,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
           >
             Show dismissed
             <span className="block text-[10px] text-muted-foreground/70">
-              Jobs you dismissed from Today&apos;s Queue
+              Jobs you dismissed from Today&apos;s ten
             </span>
           </Label>
         </div>
@@ -434,7 +432,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
                 onClick={() => toggleArray("tracks", key, filters.tracks)}
                 className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
                   active
-                    ? "bg-primary text-primary-foreground border-primary"
+                    ? "bg-foreground text-background border-foreground"
                     : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
                 }`}
               >
@@ -498,7 +496,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
                 onClick={() => toggleArray("locations", key, filters.locations)}
                 className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
                   active
-                    ? "bg-primary text-primary-foreground border-primary"
+                    ? "bg-foreground text-background border-foreground"
                     : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
                 }`}
               >
@@ -581,7 +579,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
               onClick={() => toggleArray("batches", yr, filters.batches)}
               className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
                 filters.batches.includes(yr)
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? "bg-foreground text-background border-foreground"
                   : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
               }`}
             >
@@ -602,7 +600,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
               onClick={() => toggleArray("branches", branch, filters.branches)}
               className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
                 filters.branches.includes(branch)
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? "bg-foreground text-background border-foreground"
                   : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
               }`}
             >
@@ -633,7 +631,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
                 onClick={() => set("deadlineBefore", active ? "" : dateStr)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
                   active
-                    ? "bg-primary text-primary-foreground border-primary"
+                    ? "bg-foreground text-background border-foreground"
                     : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
                 }`}
               >

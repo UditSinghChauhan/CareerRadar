@@ -19,10 +19,13 @@ export function Monogram({
   );
 }
 
-/** The rank of one of the day's ten: lime with ink, the only lime on the light page. */
+/** The rank of one of the day's ten: ink on pale lime; full lime on rank 1 only. */
 export function RankTag({ rank }: { rank: number }) {
   return (
-    <span className="lp-rank" aria-label={`Rank ${rank}`}>
+    <span
+      className={rank === 1 ? "lp-rank lp-rank--top" : "lp-rank"}
+      aria-label={`Rank ${rank}`}
+    >
       {rank}
     </span>
   );
@@ -36,7 +39,8 @@ export function RoleCard({ role }: { role: SampleRole }) {
       <div className="lp-rolecard__text">
         <p className="lp-rolecard__title">{role.title}</p>
         <p className="lp-rolecard__meta">
-          {role.company} · {role.city}
+          {role.company}
+          <span className="lp-rolecard__city"> · {role.city}</span>
         </p>
       </div>
       {role.rank > 0 && <RankTag rank={role.rank} />}

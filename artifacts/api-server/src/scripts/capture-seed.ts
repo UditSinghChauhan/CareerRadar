@@ -8,6 +8,11 @@
  *
  *   DATABASE_URL=postgres://…@localhost:5432/careerradar_capture \
  *     pnpm --filter @workspace/api-server exec tsx src/scripts/capture-seed.ts
+ *
+ * CAPTURE_NEW_USER=1 seeds the same jobs but leaves the demo account as it
+ * is a minute after sign-up: a name and an email, no onboarding answer, no
+ * applications, bookmarks or notifications. scripts/record-walkthrough.mjs
+ * records the first-run journey from there.
  */
 import { sql } from "drizzle-orm";
 import {
@@ -175,8 +180,22 @@ async function main() {
     eligible: jobsTable.isFresherEligible,
   });
 
+  if (process.env.CAPTURE_NEW_USER === "1") {
+    await db.insert(profilesTable).values({
+      clerkId: CAPTURE_CLERK_ID,
+      name: "Demo Student",
+      email: "demo@example.test",
+      skills: [],
+    });
+    console.log(`seeded ${inserted.length} jobs and a brand-new account`);
+    await pool.end();
+    return;
+  }
+
   await db.insert(profilesTable).values({
     clerkId: CAPTURE_CLERK_ID,
+    rolePreference: "both",
+    preferredLocations: ["anywhere"],
     name: "Demo Student",
     email: "demo@example.test",
     college: "Example Institute of Technology",

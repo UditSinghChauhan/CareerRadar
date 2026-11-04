@@ -57,7 +57,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div
               className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors cursor-pointer ${
                 isActive
-                  ? "bg-primary/10 text-primary font-medium"
+                  ? "bg-secondary text-foreground font-medium"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
@@ -141,7 +141,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="flex-1 overflow-auto p-4 md:p-8">
-          <div className="mx-auto max-w-5xl">{children}</div>
+          {/* A 200ms fade on every page change; opacity only, so nothing
+              moves. */}
+          <div
+            key={location}
+            className="mx-auto max-w-5xl animate-in fade-in-0 duration-200 motion-reduce:animate-none"
+          >
+            {children}
+          </div>
         </main>
       </div>
     </div>

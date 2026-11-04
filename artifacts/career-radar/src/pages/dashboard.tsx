@@ -3,9 +3,8 @@ import {
   useGetProfile,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, RefreshCw, UserCircle } from "lucide-react";
-import { Link } from "wouter";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Redirect } from "wouter";
 
 import { Greeting } from "@/components/dashboard/greeting";
 import { TodaysQueue } from "@/components/dashboard/todays-queue";
@@ -27,6 +26,12 @@ export function DashboardPage() {
   } = useGetDashboardSummary();
   const { data: profile } = useGetProfile();
 
+  // An account that has not answered the onboarding question yet: an older
+  // account, or one that left /welcome. The answer is one click away.
+  if (profile && profile.rolePreference == null) {
+    return <Redirect to="/welcome" replace />;
+  }
+
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
@@ -45,46 +50,10 @@ export function DashboardPage() {
     );
   }
 
-  const showProfilePrompt =
-    profile &&
-    summary &&
-    summary.profileCompleteness !== undefined &&
-    summary.profileCompleteness < 80;
-
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6">
       {/* ── Greeting ─────────────────────────────────────────────── */}
       <Greeting />
-
-      {/* ── Profile completion prompt ─────────────────────────────── */}
-      {showProfilePrompt && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <UserCircle className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-primary">
-                  Profile {summary.profileCompleteness}% complete
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Complete your profile to improve job recommendations.
-                </p>
-              </div>
-            </div>
-            <Link href="/profile">
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-primary/30 text-primary hover:bg-primary/10 shrink-0"
-              >
-                Complete Profile
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
 
       {/* ── Today's Queue ─────────────────────────────────────────────
           Phase 3.3 puts this first, above the stat cards and the charts: the

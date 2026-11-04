@@ -11,7 +11,9 @@
  *   2. Serves the real API router with a fixed demo session
  *      (capture-server.ts) and the real app with Clerk stubbed out
  *      (career-radar/capture/vite.config.ts).
- *   3. Captures the top of the dashboard at 2x, in the light theme.
+ *   3. Captures a crop of Today's queue at 2x, in the light theme: one at
+ *      a width the landing shows 1.19x larger (so the app's 12px meta text
+ *      reads at 14px), and one for phones.
  *   4. Writes AVIF and WebP files to career-radar/public/landing/captures/
  *      and their dimensions and blurred placeholders to
  *      career-radar/src/components/landing/captures.json.
@@ -164,30 +166,39 @@ async function main() {
   const browser = await chromium.launch();
   const shots = {};
   try {
-    const ctx = await browser.newContext({
-      viewport: { width: 1200, height: 620 },
-      deviceScaleFactor: 2,
-      colorScheme: "light",
-      reducedMotion: "reduce",
-    });
-    await ctx.addInitScript(() => localStorage.setItem("theme", "light"));
-    const p = await ctx.newPage();
-    // A morning, so the greeting matches the product's promise. The date
-    // line under it is hidden: the landing page prints no dates.
-    await p.clock.setFixedTime(new Date(new Date().setUTCHours(3, 30, 0, 0)));
-    await p.goto(`${base}/dashboard`);
-    await p.getByTestId("queue-row").first().waitFor();
-    await p.addStyleTag({
-      content: "h1 + p.text-muted-foreground { visibility: hidden; }",
-    });
-    await p.waitForTimeout(800);
-    await p.screenshot({ path: join(work, "dashboard.png") });
-    await ctx.close();
-
-    shots.dashboard = encode("dashboard", join(work, "dashboard.png"));
-    console.log(
-      `captured dashboard: ${shots.dashboard.width}×${shots.dashboard.height}`,
-    );
+    // The landing shows the desktop crop 880px wide and the phone crop
+    // about 350px wide; each is captured 1.19x narrower than that, so the
+    // app's smallest text (12px) lands at 14px.
+    const crops = [
+      { name: "queue", viewport: { width: 1060, height: 900 }, height: 520 },
+      { name: "queue-sm", viewport: { width: 330, height: 900 }, height: 560 },
+    ];
+    for (const crop of crops) {
+      const ctx = await browser.newContext({
+        viewport: crop.viewport,
+        deviceScaleFactor: 2,
+        colorScheme: "light",
+        reducedMotion: "reduce",
+      });
+      await ctx.addInitScript(() => localStorage.setItem("theme", "light"));
+      const p = await ctx.newPage();
+      // A morning, so the queue reads as the day's.
+      await p.clock.setFixedTime(new Date(new Date().setUTCHours(3, 30, 0, 0)));
+      await p.goto(`${base}/dashboard`);
+      const card = p.getByTestId("todays-queue");
+      await p.getByTestId("queue-row").first().waitFor();
+      await p.waitForTimeout(800);
+      const box = await card.boundingBox();
+      await p.screenshot({
+        path: join(work, `${crop.name}.png`),
+        clip: { x: box.x, y: box.y, width: box.width, height: crop.height },
+      });
+      await ctx.close();
+      shots[crop.name] = encode(crop.name, join(work, `${crop.name}.png`));
+      console.log(
+        `captured ${crop.name}: ${shots[crop.name].width}×${shots[crop.name].height}`,
+      );
+    }
     writeFileSync(manifest, JSON.stringify(shots, null, 2) + "\n");
   } finally {
     await browser.close();

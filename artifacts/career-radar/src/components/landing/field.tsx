@@ -8,20 +8,26 @@ import {
 } from "framer-motion";
 import { RoleCard } from "./role-card";
 import { FIELD_ROLES, RANKED, type SampleRole } from "./sample-roles";
-import { useFocused } from "./focus-store";
 
 /**
  * The hero's field: faint concentric rings (the radar, as layout) with small
  * white sample job cards placed on them at three depths. Far cards are
- * smaller, softer and paler; near cards are sharp, and the ten of the day
- * carry a rank tag. No card ever sits under the headline: the layout is
- * measured from the hero's text block and every card that would overlap it,
- * the navigation, or another card is moved to the next free spot on a ring.
+ * smaller, softer and paler; near cards are sharp. At most eight cards are
+ * sharp on a wide screen and six on a phone: the first eight (or six) of the
+ * day's ten, which carry a rank tag. The other ranked cards sit, blurred, in
+ * the middle layer with the rest of the field.
+ *
+ * No card comes within 48px of the headline, the lead, the button or "Free
+ * and open source": the layout is measured from the hero's text block and
+ * every spot that would break that, overlap the navigation or another card
+ * is skipped. Rank 1 sits just below the button and the others follow it
+ * round the rings and outward, so the ranks read in order.
  *
  * Motion is transform and opacity only. Each layer moves with the scroll at
  * its own rate (parallax), far and mid drift outward and fade as the hero
- * leaves, and every card idles on a slow CSS loop of a few pixels. The blur
- * is a fixed property of each depth layer and never animates.
+ * leaves, and every card idles on a slow CSS loop of a few pixels with its
+ * own period and phase. The blur is a fixed property of each depth layer and
+ * never animates. The ten leave the field in flight.tsx.
  */
 
 type Depth = "far" | "mid" | "near";
@@ -29,6 +35,14 @@ type Placed = { role: SampleRole; depth: Depth; x: number; y: number };
 type Layout = { cx: number; cy: number; rings: number[]; cards: Placed[] };
 
 const DEPTH_SCALE: Record<Depth, number> = { far: 0.8, mid: 0.9, near: 1 };
+
+/** The clear zone around the hero's text block. DESIGN.md, Sections. */
+export const CLEAR_ZONE = 48;
+
+/** Card size per breakpoint. Two lines of title fit without an ellipsis. */
+export function cardSize(W: number) {
+  return W < 640 ? { w: 176, h: 58 } : { w: 248, h: 68 };
+}
 
 /** mulberry32, so every visitor sees the same field. */
 function seeded(seed: number) {
@@ -41,7 +55,7 @@ function seeded(seed: number) {
   };
 }
 
-type Rect = { l: number; t: number; r: number; b: number };
+export type Rect = { l: number; t: number; r: number; b: number };
 const overlaps = (a: Rect, b: Rect) =>
   a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
 
@@ -57,19 +71,17 @@ export function layoutField(
   const counts: Record<Depth, number> = phone
     ? { near: 6, mid: 6, far: 0 }
     : tablet
-      ? { near: 10, mid: 8, far: 6 }
-      : { near: 10, mid: 12, far: 12 };
-  const cardW = phone ? 172 : 244;
-  const cardH = phone ? 52 : 60;
-  const gap = phone ? 10 : 16;
-  const margin = phone ? 14 : 28;
+      ? { near: 8, mid: 6, far: 4 }
+      : { near: 8, mid: 8, far: 8 };
+  const { w: cardW, h: cardH } = cardSize(W);
+  const gap = phone ? 8 : 16;
   const cx = (zone.l + zone.r) / 2;
   const cy = (zone.t + zone.b) / 2;
   const clear: Rect = {
-    l: zone.l - margin,
-    t: zone.t - margin,
-    r: zone.r + margin,
-    b: zone.b + margin,
+    l: zone.l - CLEAR_ZONE,
+    t: zone.t - CLEAR_ZONE,
+    r: zone.r + CLEAR_ZONE,
+    b: zone.b + CLEAR_ZONE,
   };
 
   // Rings from just outside the text block to past the corners.
@@ -79,58 +91,85 @@ export function layoutField(
   const rings: number[] = [];
   for (let r = r0; r < reach + step; r += step) rings.push(r);
 
+  type Spot = { x: number; y: number; ring: number; k: number; t: number };
   const rand = seeded(20261103 + Math.round(W / 40));
-  const candidates: Array<{ x: number; y: number; ring: number; k: number }> =
-    [];
+  const candidates: Spot[] = [];
+  // Rank 1's spot: centred, just below the clear zone, under the button.
+  const anchor = { x: cx, y: clear.b + cardH / 2 + 4 };
+  // Position along a sweep that starts below the text and turns clockwise,
+  // drifting outward a little per ring, like the radar's own sweep: the
+  // order the ranks are read in.
+  const spiral = (x: number, y: number, ring: number) => {
+    const a = Math.atan2(y - cy, x - cx);
+    const turn =
+      (((a - Math.PI / 2) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    return turn / (Math.PI * 2) + ring * 0.1;
+  };
+  candidates.push({ ...anchor, ring: -1, k: 0, t: -1 });
   rings.forEach((r, ring) => {
     const n = Math.max(8, Math.round((Math.PI * 2 * r) / (phone ? 70 : 110)));
     const offset = rand() * Math.PI * 2;
     for (let i = 0; i < n; i++) {
       const a = offset + (i / n) * Math.PI * 2;
-      candidates.push({
-        x: cx + Math.cos(a) * r,
-        y: cy + Math.sin(a) * r,
-        ring,
-        k: rand(),
-      });
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
+      candidates.push({ x, y, ring, k: rand(), t: spiral(x, y, ring) });
     }
   });
 
-  // A phone has room only above and below the text, so the cards sit in
-  // staggered rows there, still drawn over the same rings.
-  if (phone) {
+  // When the text spans most of the width (phones, tablets) there is room
+  // only above and below it, so the cards sit in staggered rows there,
+  // still drawn over the same rings. Ranks are read outward from the
+  // button: below first, then above.
+  if (zone.r - zone.l > W * 0.7) {
+    const cols = phone ? [0.26, 0.74] : [0.3, 0.7];
     candidates.length = 0;
-    const rowsIn = (from: number, to: number) => {
+    candidates.push({ ...anchor, ring: -1, k: 0, t: -1 });
+    const rowsIn = (from: number, to: number, below: boolean) => {
       for (let y = from + cardH / 2; y + cardH / 2 <= to; y += cardH + gap) {
         const k = Math.round(y / (cardH + gap)) % 2 ? 1 : -1;
-        for (const fx of [0.27, 0.73]) {
+        for (const fx of cols) {
+          const x = W * fx + k * 10;
+          const d = Math.abs(y - anchor.y) + Math.abs(x - anchor.x) * 0.2;
           candidates.push({
-            x: W * fx + k * 14,
+            x,
             y,
             ring: fx < 0.5 ? 0 : 1,
             k: rand(),
+            t: (below ? 0 : 1000) + d,
           });
         }
       }
     };
-    rowsIn(navH, clear.t);
-    rowsIn(clear.b, H - 8);
+    rowsIn(anchor.y + cardH / 2 + gap + 4, H - 8, true);
+    rowsIn(navH, clear.t, false);
   }
 
   const placed: Placed[] = [];
   const boxes: Rect[] = [];
-  const roles = { near: [...RANKED], field: [...FIELD_ROLES] };
+  const nearCount = counts.near;
+  const roles = {
+    near: RANKED.slice(0, nearCount),
+    // The ranked cards that are not sharp go first into the middle layer.
+    mid: [...RANKED.slice(nearCount), ...FIELD_ROLES],
+  };
   const order: Depth[] = ["near", "mid", "far"];
   for (const depth of order) {
     const s = DEPTH_SCALE[depth];
     const w = cardW * s;
     const h = cardH * s;
-    // Near cards hug the headline; far cards sit on the outer rings.
-    const pref = (ring: number) =>
-      depth === "near" ? ring : depth === "mid" ? Math.abs(ring - 2) : -ring;
-    const sorted = [...candidates].sort(
-      (a, b) => pref(a.ring) - pref(b.ring) || a.k - b.k,
-    );
+    // Near cards follow the spiral; mid cards prefer the second ring; far
+    // cards sit on the outer rings.
+    const sorted =
+      depth === "near"
+        ? [...candidates].sort((a, b) => a.t - b.t)
+        : [...candidates]
+            .filter((c) => c.ring >= 0)
+            .sort((a, b) => {
+              const pref = (ring: number) =>
+                depth === "mid" ? Math.abs(ring - 2) : -ring;
+              return pref(a.ring) - pref(b.ring) || a.k - b.k;
+            });
     // Near and mid cards stay whole on screen; far ones may crop at the edge.
     const spill = depth === "far" ? w * 0.4 : depth === "mid" ? w * 0.15 : 0;
     let left = counts[depth];
@@ -152,8 +191,17 @@ export function layoutField(
         b: box.b + gap,
       };
       if (boxes.some((b) => overlaps(pad, b))) continue;
-      const role = depth === "near" ? roles.near.shift() : roles.field.shift();
+      const role =
+        depth === "near"
+          ? roles.near.shift()
+          : // Far cards are only ever unranked.
+            depth === "far"
+            ? roles.mid.find(
+                (r) => r.rank === 0 && !placed.some((p) => p.role === r),
+              )
+            : roles.mid.shift();
       if (!role) break;
+      if (depth === "far") roles.mid.splice(roles.mid.indexOf(role), 1);
       boxes.push(box);
       placed.push({ role, depth, x: c.x, y: c.y });
       left--;
@@ -212,13 +260,11 @@ function Layer({
   layout,
   progress,
   reduced,
-  focused,
 }: {
   depth: Depth;
   layout: Layout;
   progress: MotionValue<number>;
   reduced: boolean;
-  focused: boolean;
 }) {
   const rate = { far: 140, mid: 70, near: -40 }[depth];
   const spread = { far: 0.35, mid: 0.2, near: 0 }[depth];
@@ -241,37 +287,30 @@ function Layer({
       }}
     >
       {cards.map((c, i) => {
-        // The ten leave for the "Today's ten" card when it comes into view.
-        if (focused && c.role.rank > 0 && !reduced) return null;
+        // A slow breath: 14 to 22 seconds a cycle, a few pixels, each card
+        // with its own period and phase so no two move together.
+        const seed = i * 7 + c.role.title.length;
         const style = {
           left: c.x,
           top: c.y,
-          "--d": `${8 + ((i * 7 + c.role.title.length) % 7)}s`,
-          "--dl": `${-((i * 13) % 9)}s`,
-          "--dx": `${((i % 3) - 1) * 3}px`,
-          "--dy": `${i % 2 ? 6 : -5}px`,
+          "--d": `${14 + (seed % 9)}s`,
+          "--dl": `${-((seed * 1.7) % 14).toFixed(2)}s`,
+          "--dx": `${((i % 3) - 1) * 2}px`,
+          "--dy": `${i % 2 ? 4 : -4}px`,
           "--in": `${120 + i * 45}ms`,
         } as React.CSSProperties;
         return (
-          <div key={c.role.id} className="lp-slot" style={style}>
-            {c.role.rank > 0 && !reduced ? (
-              <motion.div
-                layoutId={`role-${c.role.rank}`}
-                transition={{ type: "spring", duration: 0.9, bounce: 0.12 }}
-              >
-                <div className="lp-drift">
-                  <div className="lp-enter">
-                    <RoleCard role={c.role} />
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <div className="lp-drift">
-                <div className="lp-enter">
-                  <RoleCard role={c.role} />
-                </div>
+          <div
+            key={c.role.id}
+            className="lp-slot"
+            style={style}
+            data-fly-src={c.role.rank > 0 ? c.role.rank : undefined}
+          >
+            <div className="lp-drift">
+              <div className="lp-enter">
+                <RoleCard role={c.role} />
               </div>
-            )}
+            </div>
           </div>
         );
       })}
@@ -290,7 +329,6 @@ export function HeroField({
 }) {
   const layout = useLayout(fieldRef, textRef);
   const reduced = Boolean(useReducedMotion());
-  const focused = useFocused();
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
@@ -299,33 +337,40 @@ export function HeroField({
   if (!layout) return null;
   return (
     <div className="lp-field__in">
-      <motion.svg
-        className="lp-rings"
-        style={{ y: ringY }}
-        aria-hidden="true"
-        width="100%"
-        height="100%"
-      >
-        {layout.rings.map((r, i) => (
-          <circle
-            key={r}
-            cx={layout.cx}
-            cy={layout.cy}
-            r={r}
-            style={{ opacity: Math.max(0.25, 1 - i * 0.16) }}
+      <div className="lp-field__deep">
+        <motion.svg
+          className="lp-rings"
+          style={{ y: ringY }}
+          aria-hidden="true"
+          width="100%"
+          height="100%"
+        >
+          {layout.rings.map((r, i) => (
+            <circle
+              key={r}
+              cx={layout.cx}
+              cy={layout.cy}
+              r={r}
+              style={{ opacity: Math.max(0.25, 1 - i * 0.16) }}
+            />
+          ))}
+        </motion.svg>
+        {(["far", "mid"] as const).map((d) => (
+          <Layer
+            key={d}
+            depth={d}
+            layout={layout}
+            progress={scrollYProgress}
+            reduced={reduced}
           />
         ))}
-      </motion.svg>
-      {(["far", "mid", "near"] as const).map((d) => (
-        <Layer
-          key={d}
-          depth={d}
-          layout={layout}
-          progress={scrollYProgress}
-          reduced={reduced}
-          focused={focused}
-        />
-      ))}
+      </div>
+      <Layer
+        depth="near"
+        layout={layout}
+        progress={scrollYProgress}
+        reduced={reduced}
+      />
     </div>
   );
 }

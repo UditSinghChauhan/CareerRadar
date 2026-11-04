@@ -8,7 +8,6 @@ import {
 import { applicationsRepository } from "../repositories/applications.repository";
 import { bookmarksRepository } from "../repositories/bookmarks.repository";
 import { jobsRepository } from "../repositories/jobs.repository";
-import { resolveProfileId } from "../repositories/jobDismissals.repository";
 import { dailyQueue } from "../queue/daily-queue.repository";
 import { dailyProgress, DEFAULT_DAILY_TARGET } from "../queue/daily-target";
 import { dailyQueueDay, PRIORITY_WEIGHTS } from "../queue/priority";
@@ -113,8 +112,18 @@ router.get("/dashboard/today", requireAuth, async (req, res) => {
     // One instant for the whole request: scoring some rows against a clock
     // that moved mid-query would make the order non-deterministic.
     const now = new Date();
-    const [profileId, progress] = await Promise.all([
-      resolveProfileId(clerkUserId),
+    const [profile, progress] = await Promise.all([
+      // The id (for dismissals) and the onboarding answer, in one probe of
+      // the unique index on clerk_id.
+      db
+        .select({
+          id: profilesTable.id,
+          rolePreference: profilesTable.rolePreference,
+          preferredLocations: profilesTable.preferredLocations,
+        })
+        .from(profilesTable)
+        .where(eq(profilesTable.clerkId, clerkUserId))
+        .then((r) => r[0] ?? null),
       // Read first, not in parallel with the queue: its `timezone` is what
       // decides which day's tie rotation the queue uses, and a queue scored
       // against a different day than the counter displays would be confusing
@@ -125,10 +134,11 @@ router.get("/dashboard/today", requireAuth, async (req, res) => {
 
     const queue = await dailyQueue({
       clerkId: clerkUserId,
-      profileId,
+      profileId: profile?.id ?? null,
       limit,
       now,
       queueDay,
+      preferences: profile,
     });
 
     res.json({

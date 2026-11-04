@@ -483,6 +483,26 @@ pnpm run build
 pnpm run test:e2e         # 10 Playwright specs, needs a local DB + Clerk dev keys
 ```
 
+### The walkthrough film
+
+`docs/showcase/walkthrough.mp4` (and `.webm`, with `walkthrough-cover.jpg` as
+its 1600×1000 still) is a 60 to 90 second, 1440×900 recording of the first-run
+journey: landing, sign-up, onboarding, Today's ten, "How is this ranked?",
+Apply, the board and a deadline reminder. Every company, role and person in it
+is invented. To record it again after a UI change:
+
+```bash
+# A throwaway local database; the script refuses any non-local host.
+createdb careerradar_capture
+DATABASE_URL=postgres://localhost:5432/careerradar_capture \
+  node scripts/record-walkthrough.mjs
+```
+
+It needs ffmpeg (libx264 and libvpx) and Playwright's Chromium, and no Clerk
+keys: Clerk is stubbed, so the sign-up step shows a local stand-in card in the
+place of Clerk's, and every screen after it is the real app against the real
+API code. It prints the time each step was reached.
+
 ---
 
 ## A note on what this does not do

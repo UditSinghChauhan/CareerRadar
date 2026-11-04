@@ -50,10 +50,11 @@ function Ranked() {
                   transition={{
                     duration: 0.8,
                     ease: EASE_OUT,
-                    delay: 0.1 + i * 0.12,
+                    delay: 0.1 + i * 0.06,
                   }}
                 />
               </span>
+              <span className="lp-bars__v">{ROW.components[p.key]}</span>
             </li>
           );
         })}

@@ -30,7 +30,8 @@ Techniques are borrowed from lightspark.com (canvas, depth field, two-tone state
 | grey | #6B6B66 | any grey text under 24px |
 | grey-lg | #8A8A85 | grey text 24px and larger only (statements' second tone, source wordmarks) |
 | green | #316B17 | links, focus ring, the app's primary action |
-| lime | #BCF053 | only: the "Live" dot, the rank tag on the ten, and inside the dark band |
+| lime | #BCF053 | only: the "Live" dot, rank 1's tag, and inside the dark band |
+| lime-tint | #EEF8D8 | the rank tag of ranks 2 to 10, with ink text |
 | band | #0C0D0B | the dark band |
 | band-ink | #F5F5F3 | text in the dark band |
 
@@ -44,7 +45,8 @@ Measured with `node docs/screenshots/landing-v3/contrast.mjs` (WCAG 2.x):
 | ink-2 on wash | 4.5 | 9.89 |
 | green on canvas | 4.5 | 5.97 |
 | white on ink (button) | 4.5 | 18.88 |
-| ink on lime (rank tag, band button) | 4.5 | 14.14 |
+| ink on lime (rank 1, band button) | 4.5 | 14.14 |
+| ink on lime-tint (ranks 2 to 10) | 4.5 | 17.13 |
 | band-ink on band | 4.5 | 17.85 |
 | monogram ink on its tint (sky, sand, rose) | 4.5 | 7.82, 6.42, 7.21 |
 
@@ -55,7 +57,7 @@ Measured with `node docs/screenshots/landing-v3/contrast.mjs` (WCAG 2.x):
 
 Two families, both OFL, self-hosted as Latin-subset variable woff2 files in `public/fonts/`, declared once in `src/styles/fonts.css` with `font-display: swap` and a metric-adjusted local fallback, so the swap moves no line:
 
-- **Geist** (29.4 KB): everything. Fallback "Geist Fallback" on Arial with `size-adjust: 101.5%`.
+- **Geist** (29.4 KB): everything. Preloaded from `index.html` and shown with `font-display: optional`, so it is used only if ready for the first paint and never swapped in later: the local fallback differs by platform (Arial, Liberation Sans, DejaVu Sans), so no metric override could make a swap shift-free, and the swap was the landing's CLS (0.069 in Lighthouse). Changed 2026-11-04.
 - **Geist Mono** (30.2 KB): indices (01, 02), card meta such as scores, stat labels and captions, in sentence case. Fallback "Geist Mono Fallback" on Courier New, which shares its 0.6em advance; only the vertical metrics are overridden. Added 2026-11-03; before that this file said monospace was not used.
 
 The app uses the same two families (`--app-font-sans`, `--app-font-mono` in `src/index.css`). Geologica is gone.
@@ -94,17 +96,21 @@ Built with framer-motion. Native scroll only, no scroll-jacking.
 
 | Token | Duration | Easing | Use |
 |---|---|---|---|
-| micro | 150ms | ease or the reveal curve | hover, press (`scale(0.97)`) |
+| micro | 150ms | ease or the reveal curve | hover, press (`scale(0.98)`) |
 | short | 250ms | ease | nav background, accordion icon |
 | reveal | 500ms | `cubic-bezier(0.16, 1, 0.3, 1)` | content entering: opacity 0 to 1, y 12 to 0, once, siblings 70ms apart |
 | travel | spring, 0.9s, bounce 0.12 | | the ten moving between the field and the card |
 | count | 900ms | the reveal curve | stat numbers, once |
-| drift | 8 to 14s per card, alternate | ease-in-out | the field's idle loop, translate up to 6px |
+| drift | 14 to 22s per card, alternate, each with its own phase | ease-in-out | the field's idle loop, translate up to 4px |
+| flight | scrubbed by scroll, at most 120vh | ease-in-out per card, 0.02 stagger | the ten from the field into their rows |
+| lift | 200ms | the reveal curve | section cards rise 2px on hover with a deeper shadow; the moving board card lifts |
 
 - **The field** moves by transform only: each depth layer translates with scroll at its own rate (far +140px, mid +70px, near -40px over the hero), far and mid scale outward and fade as the hero leaves. Blur is a fixed CSS filter per layer (far 6px, mid 2px), never animated. Cards never sit under the headline: `layoutField()` measures the hero's text block and skips any spot that would overlap it, the nav, or another card.
-- **The focus** is a shared layout animation (`layoutId`): the ten leave the field for "Today's ten" when 30% of the card is in view, and go back when the card is below the fold again, read from its position on every scroll (`focusFor()`). On 1024px and wider the section holds for 15vh of sticky; under 1024 it does not stick.
+- **The field** has at most eight sharp cards on wide screens and six on phones: ranks 1 to 8 (1 to 6). Ranks 9 and 10 (7 to 10) rest blurred in the middle layer with the rest. No card comes within 48px of the hero's text block (`CLEAR_ZONE`). Rank 1 sits centred just below the button; the others follow a clockwise sweep from there, outward, so the ranks read in order. Titles are whole, up to two lines, never an ellipsis. The rings and the two far layers fade out toward the hero's foot through a mask, so nothing is cut by its edge.
+- **The focus** is scrubbed by the scroll (`flight.tsx`): a fixed overlay holds a copy of each of the ten and places it, every frame, between its slot in the field and its row in "Today's ten", by transform only, then hands over to the row by opacity. It spans at most 120vh and runs backward when scrolling up. On 1024px and wider the section holds for 15vh of sticky, with the statement centred beside the list; under 1024 it does not stick.
 - Vignettes in How it works and Features play once, when half in view.
-- The radar sweeps at 30fps only while on screen and not paused, with an icon-only pause button labelled "Pause the radar sweep".
+- The dark band fades in over 900ms when a third of it is in view; the radar sweeps at 30fps only after that, while on screen and not paused. The icon-only pause button ("Pause the radar sweep") sits in the band's bottom-right corner, outside the radar.
+- Anchor links scroll natively and smoothly (off under reduced motion), and each section stops 24px under the nav.
 - **Reduced motion:** no parallax, drift, travel, sweep or counting. The field is static, the ten are already in the card, every vignette shows its end state.
 
 ## Navigation
@@ -113,13 +119,13 @@ A plain transparent bar, 64px tall: the logo, "How it works", "Features", "FAQ" 
 
 ## Sections
 
-1. **Hero, "Field to focus."** Centred h1 "Ten roles worth applying to, every morning.", a one-line lead, Get started, "Free and open source". Around it, rings and sample cards: 34 at 1440 in three depths (10 near with rank tags, 12 mid, 12 far), 24 at 768, 12 at 390 in two depths (6 near, 6 mid).
-2. **Focus.** The statement "Ten, not ten thousand. Ranked by fit, how soon it closes, how fresh it is and the companies you care about.", the caption "Sample roles. Ranking from the real scoring code.", and the "Today's ten" card: four full rows with reasons and an Apply on row 1, six one-line rows.
+1. **Hero, "Field to focus."** Centred h1 "Ten roles worth applying to, every morning.", a one-line lead, Get started, "Free and open source". Around it, rings and sample cards: 24 at 1440 in three depths (8 near, 8 mid, 8 far), 18 at 768 (8, 6, 4), 12 at 390 in two depths (6 near, 6 mid). On phones and tablets the text spans the width, so the cards sit in rows above and below it; the hero is at least 1080px tall at 640 to 1023 and 920px on phones to fit all ten.
+2. **Focus.** The statement "Ten, not ten thousand. Ranked by fit, how soon it closes, how fresh it is and the companies you care about.", the caption "Sample roles. Ranking from the real scoring code.", and the "Today's ten" card: four full rows (16px padding top and bottom) with reasons and an Apply on row 1, six one-line rows.
 3. **Stats.** Three columns 344px tall with a hairline left rule: "Tracked" {activePostings} open roles, "Open to you" {openToFreshers} open to freshers, "Your queue" 10 ranked each morning; mono index 01 to 03; a lime "Live" dot on the first. Rows with a top rule under 768px.
-4. **How it works.** A statement, then Ranked (four labelled bars), Explained (reason chips), Tracked (Apply, check, onto the Applied column).
-5. **Features.** The board (Saved, Applied, Online assessment, Interview, Offer) with one card moving; deadline reminders (a reminder as the app writes it); dream companies (a bookmark lifts a row by ten points); the real dashboard in a light browser frame with no window dots, tilting from 6deg to flat; the sources as wordmarks.
-6. **Questions.** Five, a left-aligned accordion of hairline rows with a height animation.
-7. **The dark band.** The lit radar, "Tomorrow's ten are already being ranked.", Get started in lime. Then the footer on the canvas: logo, one line, Sign in, Source on GitHub, MIT licence, "Designed and built by Udit Singh Chauhan".
+4. **How it works.** A statement, then Ranked (four 4px bars: ink at 85% on a hairline track, rounded, values in tabular figures, filling once 60ms apart), Explained (reason chips), Tracked (Apply, check, onto the Applied column).
+5. **Features.** The board (Saved, Applied, Online assessment, Interview, Offer) with one card gliding from Applied to Online assessment under a lift shadow, a referral chip on one card and an interview day on another; deadline reminders (a reminder as the app writes it); dream companies (a bookmark lifts a row by ten points); a crop of the real app's Today's ten, 880px wide at most, captured so its smallest text shows at 14px or more, in a light browser frame with no window dots, tilting from 6deg to flat; the sources as wordmarks.
+6. **Questions.** Five, in an accordion of hairline rows with a height animation. At 1024px and wider, two columns: "Questions" and "Something else? Read the code on GitHub" on the left, sticky; the accordion on the right.
+7. **The dark band.** The lit radar centred above "Tomorrow's ten are already being ranked.", Get started in lime. Then the footer on the canvas: logo, one line, Sign in, Source on GitHub, MIT licence, "Designed and built by Udit Singh Chauhan".
 
 ## Content
 
@@ -141,6 +147,13 @@ A plain transparent bar, 64px tall: the logo, "How it works", "Features", "FAQ" 
 ## App
 
 The app's light theme uses the landing's tokens (canvas, white cards, hairline, ink, grey #6B6B66, green #316B17) and card shape. Dark keeps the Vantage night. The logo is the radar mark everywhere: sidebar, mobile header, favicon, OG image.
+
+- **One primary button everywhere: the ink pill** (`--action`, the Button's default variant): Apply, Browse jobs, Show my ten, Save, Add job, Clerk's Continue. Hover 150ms, press `scale(0.98)`, the green focus ring. In dark, the pill inverts (light ink, dark label). Green is for links, focus, progress and success only; selected filter chips, the active nav item, checkboxes and tooltips are ink or neutral.
+- **One page header** (`components/page-header.tsx`): the title at 28px, weight 500, -0.03em, one 15px line under it, actions on the right.
+- Card titles in sentence case; no tracked capitals. The queue's rank tags match the landing's (ink on lime-tint, full lime on rank 1), and the card is titled "Today's ten".
+- Pages fade in over 200ms on navigation (opacity only); while a page's code loads, a skeleton of the page stands in inside the shell. Loading is skeletons, never a spinner for content.
+- **Onboarding** (`/welcome`): one step after sign-up, two questions with complete defaults, the ink pill "Show my ten", then the dashboard. The same control is in Settings.
+- **Clerk** (sign-in, sign-up): Geist, the 14px card with the landing's shadow on the canvas, the ink pill, "Continue with Google" first as a full-width block button, subtitle "Ten roles worth applying to, every morning."
 
 ## Decisions
 

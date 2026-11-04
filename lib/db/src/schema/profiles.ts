@@ -23,6 +23,16 @@ export const profilesTable = pgTable("profiles", {
   resumeUrl: text("resume_url"),
   linkedinUrl: text("linkedin_url"),
   githubUrl: text("github_url"),
+  /**
+   * The onboarding answer: 'internship', 'new_grad' or 'both'. Null until the
+   * user has answered, which is what sends a new account to onboarding.
+   * Additive, lib/db/sql/2026-11-03-onboarding-preferences.sql.
+   */
+  rolePreference: text("role_preference", {
+    enum: ["internship", "new_grad", "both"],
+  }),
+  /** Metros the queue puts first, plus "anywhere" and "remote". */
+  preferredLocations: text("preferred_locations").array().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -47,6 +57,8 @@ export const updateProfileSchema = createSelectSchema(profilesTable)
     resumeUrl: true,
     linkedinUrl: true,
     githubUrl: true,
+    rolePreference: true,
+    preferredLocations: true,
   })
   .partial();
 

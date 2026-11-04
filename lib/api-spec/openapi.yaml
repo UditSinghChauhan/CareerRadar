@@ -1536,12 +1536,49 @@ components:
           type: ["string", "null"]
         githubUrl:
           type: ["string", "null"]
+        rolePreference:
+          description: >-
+            The one onboarding question. Null until the user has answered it,
+            which is how the app knows to show onboarding.
+          oneOf:
+            - $ref: "#/components/schemas/RolePreference"
+            - type: "null"
+        preferredLocations:
+          description: >-
+            Cities the queue puts first. Empty, or containing "anywhere", means
+            no preference.
+          type: array
+          items:
+            $ref: "#/components/schemas/PreferredLocation"
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: ["string", "null"]
           format: date-time
+
+    RolePreference:
+      type: string
+      enum: [internship, new_grad, both]
+
+    PreferredLocation:
+      description: >-
+        "anywhere" and "remote", or a metro as the location normaliser writes
+        it to jobs.location_metro (NCR is Delhi NCR, MMR is Mumbai).
+      type: string
+      enum:
+        [
+          anywhere,
+          remote,
+          Bengaluru,
+          Hyderabad,
+          Pune,
+          Chennai,
+          NCR,
+          MMR,
+          Kolkata,
+          Ahmedabad,
+        ]
 
     ProfileInput:
       type: object
@@ -1569,6 +1606,13 @@ components:
           type: string
         githubUrl:
           type: string
+        rolePreference:
+          $ref: "#/components/schemas/RolePreference"
+        preferredLocations:
+          type: array
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/PreferredLocation"
 
     Settings:
       type: object

@@ -1,14 +1,9 @@
-import { useEffect, useRef } from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { Monogram, RankTag } from "./role-card";
 import { RANKED, type SampleRole } from "./sample-roles";
-import { focusFor, setFocused, useFocused } from "./focus-store";
 import { Statement } from "./statement";
 
 /** Rows shown in full; the rest of the ten sit below as one-line rows. */
 const FULL_ROWS = 4;
-
-const travel = { type: "spring", duration: 0.9, bounce: 0.12 } as const;
 
 function FullRow({ role }: { role: SampleRole }) {
   return (
@@ -59,39 +54,14 @@ function CompactRow({ role }: { role: SampleRole }) {
 }
 
 /**
- * Section 2, "Focus". As the hero scrolls away the ten ranked cards leave
- * the field and land, by shared layout animation, in one "Today's ten" card.
- * On wide screens the section holds still for a short stretch (under 120vh
- * of sticky); on phones it does not stick. Under reduced motion the ten are
- * already in the card.
+ * Section 2, "Focus". As the hero scrolls away the ten ranked cards fly out
+ * of the field into this card's rows, scrubbed by the scroll (flight.tsx).
+ * On wide screens the section holds still while they land, with the
+ * statement centred beside the list; on phones it does not stick. Every row
+ * is always in the page, so without the flight (reduced motion, or no
+ * script for it) the list is simply there.
  */
 export function Focus() {
-  const slotRef = useRef<HTMLDivElement>(null);
-  const reduced = Boolean(useReducedMotion());
-  const focused = useFocused();
-  const shown = focused || reduced;
-
-  useEffect(() => {
-    const el = slotRef.current;
-    if (!el || reduced) return;
-    let frame = 0;
-    const check = () => {
-      frame = 0;
-      setFocused(focusFor(el.getBoundingClientRect(), window.innerHeight));
-    };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(check);
-    };
-    check();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, [reduced]);
-
   return (
     <section className="lp-focus" aria-labelledby="focus-head">
       <div className="lp-focus__stick">
@@ -108,7 +78,7 @@ export function Focus() {
               Sample roles. Ranking from the real scoring code.
             </p>
           </div>
-          <div ref={slotRef} className="lp-card lp-queue" inert>
+          <div className="lp-card lp-queue" inert>
             <div className="lp-queue__head">
               <p className="lp-queue__title">Today’s ten</p>
               <p className="lp-mono">0 of 10 applied</p>
@@ -121,28 +91,13 @@ export function Focus() {
                     i < FULL_ROWS ? "lp-qslot" : "lp-qslot lp-qslot--compact"
                   }
                 >
-                  {shown &&
-                    (reduced ? (
-                      i < FULL_ROWS ? (
-                        <FullRow role={role} />
-                      ) : (
-                        <CompactRow role={role} />
-                      )
+                  <div className="lp-qslot__in" data-fly-dst={role.rank}>
+                    {i < FULL_ROWS ? (
+                      <FullRow role={role} />
                     ) : (
-                      <motion.div
-                        layoutId={`role-${role.rank}`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ ...travel, delay: i * 0.03 }}
-                        className="lp-qslot__in"
-                      >
-                        {i < FULL_ROWS ? (
-                          <FullRow role={role} />
-                        ) : (
-                          <CompactRow role={role} />
-                        )}
-                      </motion.div>
-                    ))}
+                      <CompactRow role={role} />
+                    )}
+                  </div>
                 </li>
               ))}
             </ol>

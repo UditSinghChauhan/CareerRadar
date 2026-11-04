@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { Pause, Play } from "lucide-react";
-import { useReducedMotion } from "framer-motion";
+import { useInView, useReducedMotion } from "framer-motion";
 import {
   RING_FRACTIONS,
   TAU,
@@ -11,23 +11,23 @@ import {
   foundInRank,
   readPalette,
 } from "./radar-core";
-import { Reveal } from "./motion/reveal";
 import { useActive } from "./motion/use-active";
 
 const SWEEP_SECONDS = 7;
 /** Where the still frame stops the sweep: mid-scene. */
 const STILL = Math.PI * 1.15;
+/** The band's slow entrance, in ms. Matches .lp-band in landing.css. */
+const FADE_MS = 900;
 
 /**
  * The radar, lit: one point per posting at the committed scale, the ten of
  * the day in lime, and a sweep that turns only while it is on screen and
  * not paused. The page's only dark band, and the radar's only appearance.
  */
-function Radar() {
+function Radar({ paused, entered }: { paused: boolean; entered: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const active = useActive(ref);
   const reduced = Boolean(useReducedMotion());
-  const [paused, setPaused] = useState(false);
   const sweep = useRef(STILL);
 
   useEffect(() => {
@@ -66,7 +66,8 @@ function Radar() {
       frame = requestAnimationFrame(tick);
     };
     paint();
-    if (active && !reduced && !paused) {
+    // The sweep starts only once the band has faded in.
+    if (active && entered && !reduced && !paused) {
       last = performance.now();
       frame = requestAnimationFrame(tick);
     }
@@ -79,7 +80,7 @@ function Radar() {
       cancelAnimationFrame(frame);
       ro.disconnect();
     };
-  }, [active, reduced, paused]);
+  }, [active, entered, reduced, paused]);
 
   return (
     <div className="lp-band__radar">
@@ -88,6 +89,43 @@ function Radar() {
         role="img"
         aria-label="Radar of every open role, one point each; the ten roles of a day's queue are lit."
       />
+    </div>
+  );
+}
+
+/**
+ * Section 7: the only dark band. The radar is centred above the headline.
+ * The band fades in slowly when it comes into view, and the sweep starts
+ * once it has. The pause control sits in the band's bottom-right corner,
+ * clear of the radar's circle.
+ */
+export function FinalBand({ signUpHref }: { signUpHref: string }) {
+  const ref = useRef<HTMLElement>(null);
+  const reduced = Boolean(useReducedMotion());
+  const seen = useInView(ref, { once: true, amount: 0.35 });
+  const [entered, setEntered] = useState(reduced);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    if (!seen || reduced) return;
+    const id = window.setTimeout(() => setEntered(true), FADE_MS);
+    return () => window.clearTimeout(id);
+  }, [seen, reduced]);
+
+  return (
+    <section
+      ref={ref}
+      className={seen || reduced ? "lp-band is-in" : "lp-band"}
+      aria-labelledby="band-head"
+    >
+      <div className="lp-container lp-band__in">
+        <Radar paused={paused} entered={entered} />
+        <h2 id="band-head" className="lp-h2 lp-band__h">
+          Tomorrow’s ten are already being ranked.
+        </h2>
+        <Link href={signUpHref} className="lp-btn lp-btn--lime">
+          Get started
+        </Link>
+      </div>
       {!reduced && (
         <button
           type="button"
@@ -99,29 +137,6 @@ function Radar() {
           {paused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
         </button>
       )}
-    </div>
-  );
-}
-
-/** Section 7: the only dark band. */
-export function FinalBand({ signUpHref }: { signUpHref: string }) {
-  return (
-    <section className="lp-band" aria-labelledby="band-head">
-      <div className="lp-container lp-band__in">
-        <Reveal>
-          <Radar />
-        </Reveal>
-        <div className="lp-band__text">
-          <Reveal as="h2" id="band-head" className="lp-h2 lp-band__h">
-            Tomorrow’s ten are already being ranked.
-          </Reveal>
-          <Reveal index={1}>
-            <Link href={signUpHref} className="lp-btn lp-btn--lime">
-              Get started
-            </Link>
-          </Reveal>
-        </div>
-      </div>
     </section>
   );
 }

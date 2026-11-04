@@ -87,7 +87,7 @@ export function ClosingSoon() {
     <Card className="flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Closing Soon</CardTitle>
+          <CardTitle className="text-sm font-semibold">Closing soon</CardTitle>
           {jobs && jobs.length > 0 && (
             <Badge variant="destructive" className="text-[10px] h-4 px-1.5">
               {jobs.length}
