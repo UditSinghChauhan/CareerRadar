@@ -174,7 +174,7 @@ export function ApplicationTable({
                 data-applied-date={app.appliedDate ?? ""}
                 onClick={() => onOpen(app)}
                 className={`cursor-pointer border-t border-border transition-colors hover:bg-muted/30 ${
-                  selected ? "bg-primary/5" : ""
+                  selected ? "bg-secondary/70" : ""
                 }`}
               >
                 <td

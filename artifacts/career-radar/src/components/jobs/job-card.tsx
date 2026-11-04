@@ -234,7 +234,7 @@ function JobCardImpl({
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="w-10 h-10 rounded-lg bg-primary/10 border border-border flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-secondary border border-border flex items-center justify-center">
               <span className="text-xs font-bold text-primary">
                 {getInitials(company?.name ?? job.title)}
               </span>
@@ -333,7 +333,7 @@ function JobCardImpl({
         {/* Top-right actions */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {jobIsNewToday && (
-            <Badge className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-0 font-semibold">
+            <Badge className="text-[10px] px-1.5 py-0 h-4 bg-secondary text-foreground border-0 font-semibold">
               New Today
             </Badge>
           )}

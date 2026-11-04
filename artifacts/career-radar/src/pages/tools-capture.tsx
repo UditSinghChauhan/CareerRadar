@@ -62,7 +62,7 @@ function Step({
 }) {
   return (
     <li className="flex gap-3">
-      <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+      <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground">
         {n}
       </span>
       <div className="flex flex-col gap-1.5 pt-0.5">
@@ -100,11 +100,11 @@ export function ToolsCapturePage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 max-w-3xl">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-bold tracking-tight">
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-[28px] font-medium leading-[1.15] tracking-[-0.03em] text-balance">
           Capture from anywhere
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground text-pretty">
           LinkedIn, Naukri, Internshala, Unstop and Wellfound do not allow
           automated collection, so CareerRadar never visits them. This
           bookmarklet copies the posting out of the tab you already have open

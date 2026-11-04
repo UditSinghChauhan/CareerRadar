@@ -128,7 +128,7 @@ function JobCardSkeleton() {
 }
 
 /**
- * What "Recommended for You" asks the server for.
+ * What "Recommended for you" asks the server for.
  *
  * `isFresherEligible` is the line that matters. Without it the card asked only
  * for active rows in the user's batch, which on a 277-row local snapshot
@@ -148,7 +148,7 @@ function JobCardSkeleton() {
  * filtered card still opened with a score-45 row and a score-65 "Junior
  * Payroll Assistant" above a score-100 "Backend Engineering Intern" — six
  * eligible rows in date order rather than the six best. A heading reading
- * "Recommended for You" has to mean recommended. `relevance` orders by
+ * "Recommended for you" has to mean recommended. `relevance` orders by
  * `relevance_score DESC NULLS LAST` server-side, so the six shown are the six
  * best of the whole matching set, not the six most recent of it.
  *
@@ -181,7 +181,7 @@ export function RecommendedJobs() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">
-            Recommended for You
+            Recommended for you
           </CardTitle>
           {data?.meta && (
             <span className="text-xs text-muted-foreground">

@@ -109,7 +109,7 @@ export function MatchInsights({ jobId }: { jobId: string | null | undefined }) {
 
       {/* The point of the section. First, and given the most room. */}
       <div className="flex flex-col gap-1.5">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-medium text-muted-foreground">
           Skills to prepare
         </p>
         {missing.length > 0 ? (
@@ -134,7 +134,7 @@ export function MatchInsights({ jobId }: { jobId: string | null | undefined }) {
 
       {matching.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
             Already covered
           </p>
           <div className="flex flex-wrap gap-1" data-testid="matching-skills">

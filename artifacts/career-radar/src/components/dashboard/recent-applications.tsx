@@ -106,7 +106,7 @@ export function RecentApplications() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">
-            Recent Applications
+            Recent applications
           </CardTitle>
           {data?.meta && data.meta.total > 0 && (
             <span className="text-xs text-muted-foreground">

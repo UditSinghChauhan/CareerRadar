@@ -148,6 +148,13 @@ A plain transparent bar, 64px tall: the logo, "How it works", "Features", "FAQ" 
 
 The app's light theme uses the landing's tokens (canvas, white cards, hairline, ink, grey #6B6B66, green #316B17) and card shape. Dark keeps the Vantage night. The logo is the radar mark everywhere: sidebar, mobile header, favicon, OG image.
 
+- **One primary button everywhere: the ink pill** (`--action`, the Button's default variant): Apply, Browse jobs, Show my ten, Save, Add job, Clerk's Continue. Hover 150ms, press `scale(0.98)`, the green focus ring. In dark, the pill inverts (light ink, dark label). Green is for links, focus, progress and success only; selected filter chips, the active nav item, checkboxes and tooltips are ink or neutral.
+- **One page header** (`components/page-header.tsx`): the title at 28px, weight 500, -0.03em, one 15px line under it, actions on the right.
+- Card titles in sentence case; no tracked capitals. The queue's rank tags match the landing's (ink on lime-tint, full lime on rank 1), and the card is titled "Today's ten".
+- Pages fade in over 200ms on navigation (opacity only); while a page's code loads, a skeleton of the page stands in inside the shell. Loading is skeletons, never a spinner for content.
+- **Onboarding** (`/welcome`): one step after sign-up, two questions with complete defaults, the ink pill "Show my ten", then the dashboard. The same control is in Settings.
+- **Clerk** (sign-in, sign-up): Geist, the 14px card with the landing's shadow on the canvas, the ink pill, "Continue with Google" first as a full-width block button, subtitle "Ten roles worth applying to, every morning."
+
 ## Decisions
 
 - **2026-11-03: light, "Field to focus."** The dark page was about 12,200px long at 1440, showed the radar full-size twice, ran a 3,600px pinned chapter, put lime glow on everything so nothing stood out, spoke in engine terms, and did not match the app (briefcase logo, Geologica, engine reasons in the real queue). Kept: Geist, the radar mark, lime as a signal, the real scoring code, live counts, the honesty rules. Changed: light canvas with one dark band; lime restricted to three uses; one field of cards instead of a canvas of points; a seven-section page under 6,500px; Geist Mono for labels; the app brought onto the same brand. Study and measurements: `docs/LANDING_V3.md`.

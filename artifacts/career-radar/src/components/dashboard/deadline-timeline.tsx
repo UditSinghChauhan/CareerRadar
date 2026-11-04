@@ -95,7 +95,7 @@ export function DeadlineTimeline() {
     <Card className="flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold">
-          Upcoming Deadlines
+          Upcoming deadlines
         </CardTitle>
         <p className="text-xs text-muted-foreground">Next 21 days</p>
       </CardHeader>

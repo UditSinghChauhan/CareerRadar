@@ -47,6 +47,11 @@
   --color-surface: var(--surface);
   --color-signal: var(--signal);
   --color-signal-ink: var(--signal-ink);
+  /* The primary action: the ink pill, as on the landing. Green is kept for
+     links, focus and success. */
+  --color-action: var(--action);
+  --color-action-foreground: var(--action-foreground);
+  --color-signal-tint: var(--signal-tint);
 
   --font-sans: var(--app-font-sans);
   --font-mono: var(--app-font-mono);
@@ -97,6 +102,10 @@
   --error: oklch(52% 0.18 27);
   --error-on: oklch(98.5% 0.01 27);
   --card-shadow: 0 1px 2px rgb(0 0 0 / 4%), 0 16px 40px -20px rgb(0 0 0 / 14%);
+  --action: var(--ink);
+  --action-foreground: var(--paper-0);
+  /* The rank tag's pale lime, as on the landing. */
+  --signal-tint: #eef8d8;
 
   --background: var(--paper);
   --foreground: var(--ink);
@@ -166,6 +175,9 @@
   --error: oklch(72% 0.15 27);
   --error-on: oklch(19% 0.04 27);
   --card-shadow: none;
+  --action: var(--ink);
+  --action-foreground: oklch(13.5% 0.012 235);
+  --signal-tint: oklch(30% 0.06 126);
 
   --card: var(--paper-2);
   --popover: var(--paper-2);

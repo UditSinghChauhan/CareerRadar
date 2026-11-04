@@ -28,7 +28,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { AlertCircle, RefreshCw, Save } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -188,17 +188,20 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-3xl">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your academic details and external links.
+    <div className="space-y-6 max-w-3xl">
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-[28px] font-medium leading-[1.15] tracking-[-0.03em] text-balance">
+          Profile
+        </h1>
+        <p className="max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground text-pretty">
+          Optional. Your graduation year sharpens which roles count as open to
+          you; the rest is for your own records and the AI match, when it is on.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Personal Information</CardTitle>
+          <CardTitle>Personal information</CardTitle>
           <CardDescription>
             Update your academic records and resume. These will be used to track
             your completeness.
@@ -413,12 +416,7 @@ export function ProfilePage() {
 
               <div className="flex justify-end">
                 <Button type="submit" disabled={updateProfile.isPending}>
-                  {updateProfile.isPending ? (
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="mr-2 h-4 w-4" />
-                  )}
-                  Save Changes
+                  {updateProfile.isPending ? "Saving…" : "Save profile"}
                 </Button>
               </div>
             </form>

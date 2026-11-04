@@ -30,6 +30,7 @@ import {
   getListApplicationsQueryKey,
   getListMatchScoresQueryKey,
 } from "@workspace/api-client-react";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -603,13 +604,10 @@ export function JobsPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Page header */}
-      <div className="flex flex-col gap-1 mb-6">
-        <h1 className="text-xl font-bold tracking-tight">Jobs Explorer</h1>
-        <p className="text-sm text-muted-foreground">
-          Browse and filter active opportunities. All data is sourced from
-          official provider APIs.
-        </p>
-      </div>
+      <PageHeader
+        title="Jobs"
+        description="Every open role from the sources, filtered for freshers. Search, filter, save or apply."
+      />
 
       <div className="flex gap-6 min-h-0 flex-1">
         {/* Desktop filter sidebar */}
@@ -687,7 +685,7 @@ export function JobsPage() {
                 <SlidersHorizontal className="h-4 w-4" />
                 Filters
                 {activeFilterCount > 0 && (
-                  <Badge className="h-4 px-1.5 text-[10px] bg-primary/10 text-primary border-0">
+                  <Badge className="h-4 px-1.5 text-[10px] bg-secondary text-foreground border-0">
                     {activeFilterCount}
                   </Badge>
                 )}
@@ -719,7 +717,7 @@ export function JobsPage() {
                   onClick={() => setFilters((f) => ({ ...f, jobType: value }))}
                   className={`px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors ${
                     filters.jobType === value
-                      ? "bg-primary text-primary-foreground border-primary"
+                      ? "bg-foreground text-background border-foreground"
                       : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
                   }`}
                 >

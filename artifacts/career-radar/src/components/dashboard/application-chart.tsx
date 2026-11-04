@@ -70,7 +70,7 @@ export function ApplicationChart({
     <Card className="flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold">
-          Application Funnel
+          Application funnel
         </CardTitle>
         <p className="text-xs text-muted-foreground">
           {totalApplications} total tracked

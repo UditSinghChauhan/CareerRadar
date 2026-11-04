@@ -105,7 +105,7 @@ export function DreamCompanies() {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold">
-          {hasBookmarks ? "Dream Companies" : "Top Companies Hiring"}
+          {hasBookmarks ? "Dream companies" : "Top Companies Hiring"}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
           {hasBookmarks

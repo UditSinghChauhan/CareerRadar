@@ -26,6 +26,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { LandingPage } from "@/pages/landing";
+import { PageSkeleton } from "@/components/page-skeleton";
 import NotFound from "@/pages/not-found";
 
 // The signed-in app is split from the landing: a first-time visitor downloads
@@ -171,23 +172,36 @@ const clerkAppearance = {
     logoPlacement: "inside" as const,
     logoLinkUrl: basePath || "/",
     logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+    // Continue with Google first and largest, above the email form.
+    socialButtonsPlacement: "top" as const,
+    socialButtonsVariant: "blockButton" as const,
   },
   // Colours come from the shadcn theme, which reads the CSS tokens in
   // index.css, so the sign-in card follows light and dark mode with the rest
   // of the app. Only shape and layout are set here.
+  // The landing's shape and type: Geist, the 14px card on the off-white
+  // canvas with the landing's shadow, the ink pill as the primary action.
   variables: {
     fontFamily: "Geist, 'Geist Fallback', ui-sans-serif, system-ui, sans-serif",
-    borderRadius: "0.25rem",
+    borderRadius: "0.625rem",
+    colorPrimary: "var(--action)",
+    colorTextOnPrimaryBackground: "var(--action-foreground)",
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    // DESIGN.md: flat depth, a hairline frame instead of a shadow.
-    cardBox: "w-[440px] max-w-full rounded-xl border-border! shadow-none!",
-    logoBox: "flex justify-center mb-6",
+    cardBox:
+      "w-[420px] max-w-full rounded-[14px]! border border-border! shadow-[var(--card-shadow)]!",
+    logoBox: "flex justify-center mb-4",
     // logo.svg draws in currentColor, which an <img> resolves to black.
-    logoImage: "h-12 w-auto dark:invert",
-    formButtonPrimary: "rounded-full",
-    socialButtonsBlockButton: "rounded-full",
+    logoImage: "h-10 w-auto dark:invert",
+    headerTitle: "text-[20px] font-medium tracking-[-0.015em]",
+    headerSubtitle: "text-[14px] text-muted-foreground",
+    formButtonPrimary:
+      "h-11 rounded-full! bg-action! text-action-foreground! shadow-none! hover:bg-action/85! active:scale-[0.98] transition-[background-color,scale] duration-150",
+    // The most prominent control: full width, 44px, an ink hairline.
+    socialButtonsBlockButton:
+      "h-11 rounded-full! border-foreground/70! text-[15px] font-medium transition-[background-color,scale] duration-150 active:scale-[0.98]",
+    footerActionLink: "text-primary font-medium",
     main: "w-full",
   },
 };
@@ -235,9 +249,14 @@ function ProtectedRoute({
   return (
     <>
       <Show when="signed-in">
+        {/* The shell's own code loads once; after that a page's code loads
+            inside it, behind a skeleton of the page, so navigation never
+            blanks the screen. */}
         <Suspense fallback={null}>
           <AppLayout>
-            <Component />
+            <Suspense fallback={<PageSkeleton />}>
+              <Component />
+            </Suspense>
           </AppLayout>
         </Suspense>
       </Show>
@@ -307,13 +326,13 @@ function ClerkProviderWithRoutes() {
         signIn: {
           start: {
             title: "Welcome back to CareerRadar",
-            subtitle: "Track your path to placement",
+            subtitle: "Ten roles worth applying to, every morning.",
           },
         },
         signUp: {
           start: {
             title: "Join CareerRadar",
-            subtitle: "Your personal placement OS",
+            subtitle: "Ten roles worth applying to, every morning.",
           },
         },
       }}

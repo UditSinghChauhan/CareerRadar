@@ -56,7 +56,6 @@ import {
   Info,
   Layers,
   MapPin,
-  Target,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -153,8 +152,8 @@ function CompanyLogo({
 
   if (!logoUrl || failed) {
     return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-primary/10">
-        <span className="text-[10px] font-bold text-primary">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-secondary">
+        <span className="text-xs font-bold text-foreground">
           {initials(fallbackName)}
         </span>
       </div>
@@ -199,13 +198,21 @@ function QueueRow({
     >
       {/* Rank */}
       <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:gap-1">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold tabular-nums text-primary">
+        {/* The landing's rank tag: ink on pale lime, full lime on rank 1. */}
+        <span
+          className={`inline-grid h-[18px] min-w-[18px] place-items-center rounded-[5px] px-[5px] font-mono text-[11px] font-medium tabular-nums ${
+            rank === 1
+              ? "bg-signal text-signal-ink"
+              : "bg-signal-tint text-foreground"
+          }`}
+          aria-label={`Rank ${rank}`}
+        >
           {rank}
         </span>
         <Tooltip>
           <TooltipTrigger asChild>
             <span
-              className="cursor-default text-[11px] font-semibold tabular-nums text-muted-foreground"
+              className="cursor-default text-xs font-semibold tabular-nums text-muted-foreground"
               data-testid="queue-priority"
             >
               {formatScore(item.priority)}
@@ -265,11 +272,11 @@ function QueueRow({
         {/* Badges */}
         <div className="flex flex-wrap items-center gap-1.5">
           {job.relevanceTrack && (
-            <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+            <Badge variant="secondary" className="h-5 px-1.5 text-xs">
               {trackLabels[job.relevanceTrack] ?? job.relevanceTrack}
             </Badge>
           )}
-          <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+          <Badge variant="outline" className="h-5 px-1.5 text-xs">
             {workModeLabels[job.workMode] ?? job.workMode}
           </Badge>
           {/* §"Duplicates": say that rows were collapsed rather than silently
@@ -280,7 +287,7 @@ function QueueRow({
                 <Badge
                   variant="outline"
                   data-testid="duplicate-badge"
-                  className="h-5 cursor-default gap-1 px-1.5 text-[10px] text-muted-foreground"
+                  className="h-5 cursor-default gap-1 px-1.5 text-xs text-muted-foreground"
                 >
                   <Layers className="h-3 w-3" />
                   {item.duplicateCount} copies
@@ -472,8 +479,7 @@ export function TodaysQueue() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-0.5">
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Target className="h-4 w-4 text-primary" />
-              Today&apos;s Queue
+              Today&apos;s ten
             </CardTitle>
             <p className="text-xs text-muted-foreground">
               {data
@@ -492,14 +498,14 @@ export function TodaysQueue() {
               >
                 {appliedToday} / {target}
               </span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 applications today
               </span>
             </div>
             <Progress value={percent} className="h-1.5" />
             <div className="flex items-center justify-between gap-2">
               <span
-                className="flex items-center gap-1 text-[11px] text-muted-foreground"
+                className="flex items-center gap-1 text-xs text-muted-foreground"
                 data-testid="streak-counter"
               >
                 <Flame
@@ -510,7 +516,7 @@ export function TodaysQueue() {
                   : `${streak} day${streak === 1 ? "" : "s"} streak`}
               </span>
               {appliedToday >= target && (
-                <Badge className="h-4 gap-0.5 px-1.5 text-[10px]">
+                <Badge className="h-4 gap-0.5 px-1.5 text-xs">
                   <Check className="h-2.5 w-2.5" />
                   Done
                 </Badge>

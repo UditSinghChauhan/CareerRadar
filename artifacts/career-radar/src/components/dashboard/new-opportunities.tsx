@@ -12,22 +12,22 @@ export function NewOpportunities() {
   }
 
   return (
-    <Card className="bg-primary/5 border-primary/20">
+    <Card>
       <CardContent className="p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-primary/80 uppercase tracking-wide mb-1">
-              New Opportunities
+            <p className="text-sm font-medium text-muted-foreground mb-1">
+              New opportunities
             </p>
-            <p className="text-3xl font-bold text-primary tabular-nums">
+            <p className="text-3xl font-medium tracking-tight text-foreground tabular-nums">
               {total}
             </p>
-            <p className="text-xs text-primary/70 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Active listings right now
             </p>
           </div>
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <TrendingUp className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
+            <TrendingUp className="h-5 w-5 text-foreground" />
           </div>
         </div>
       </CardContent>

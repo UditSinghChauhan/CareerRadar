@@ -4,6 +4,7 @@ import {
   useGetSettings,
   useUpdateSettings,
   getGetSettingsQueryKey,
+  useGetProfile,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -37,8 +38,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { AlertCircle, RefreshCw, Save } from "lucide-react";
-import { useGetProfile } from "@workspace/api-client-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import {
   PreferencesForm,
   preferencesFrom,
@@ -195,11 +195,14 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-3xl">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your app preferences and alerts.
+    <div className="space-y-6 max-w-3xl">
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-[28px] font-medium leading-[1.15] tracking-[-0.03em] text-balance">
+          Settings
+        </h1>
+        <p className="max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground text-pretty">
+          Appearance, alerts, your daily target, and what Today’s ten puts
+          first.
         </p>
       </div>
 
@@ -251,7 +254,7 @@ export function SettingsPage() {
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base">
-                          Email Notifications
+                          Email notifications
                         </FormLabel>
                         <FormDescription>
                           Receive emails about upcoming deadlines.
@@ -273,7 +276,7 @@ export function SettingsPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col justify-between rounded-lg border p-4 sm:flex-row sm:items-center">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Alert Days</FormLabel>
+                        <FormLabel className="text-base">Alert days</FormLabel>
                         <FormDescription>
                           Days before a deadline to alert you.
                         </FormDescription>
@@ -296,7 +299,7 @@ export function SettingsPage() {
                           Daily application target
                         </FormLabel>
                         <FormDescription>
-                          How many applications Today&apos;s Queue asks of you
+                          How many applications Today&apos;s ten asks of you
                           each day.
                         </FormDescription>
                       </div>
@@ -336,12 +339,7 @@ export function SettingsPage() {
 
               <div className="flex justify-end">
                 <Button type="submit" disabled={updateSettings.isPending}>
-                  {updateSettings.isPending ? (
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="mr-2 h-4 w-4" />
-                  )}
-                  Save Preferences
+                  {updateSettings.isPending ? "Saving…" : "Save"}
                 </Button>
               </div>
             </form>

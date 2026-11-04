@@ -27,6 +27,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * How many notifications the popover holds. Deliberately a single page with no
@@ -114,7 +115,7 @@ function NotificationRow({
   const body = (
     <div
       className={`flex gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-secondary ${
-        notification.isRead ? "" : "bg-primary/5"
+        notification.isRead ? "" : "bg-secondary/60"
       }`}
     >
       <Icon
@@ -167,7 +168,7 @@ export function NotificationBell() {
     [],
   );
 
-  const { data, isLoading, isError } = useListNotifications(
+  const { data, isLoading, isError, refetch } = useListNotifications(
     { limit: PAGE_LIMIT },
     {
       query: {
@@ -251,7 +252,7 @@ export function NotificationBell() {
           {unreadCount > 0 && (
             <span
               data-testid="notification-badge"
-              className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground"
+              className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold leading-none text-primary-foreground"
             >
               {badgeLabel(unreadCount)}
             </span>
@@ -303,13 +304,30 @@ export function NotificationBell() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <div
+            className="divide-y divide-border"
+            aria-busy="true"
+            aria-label="Loading"
+          >
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex gap-3 px-3 py-3">
+                <Skeleton className="mt-1 h-1.5 w-1.5 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-2/5" />
+                  <Skeleton className="h-3 w-4/5" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : isError ? (
-          <p className="px-3 py-10 text-center text-xs text-muted-foreground">
-            Notifications are unavailable right now.
-          </p>
+          <div className="flex flex-col items-center gap-3 px-3 py-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Could not load notifications. The server did not answer.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => void refetch()}>
+              Retry
+            </Button>
+          </div>
         ) : notifications.length === 0 ? (
           <p className="px-3 py-10 text-center text-xs text-muted-foreground">
             Nothing yet. Deadline reminders appear here three days and one day

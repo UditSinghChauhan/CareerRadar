@@ -392,7 +392,7 @@ test.describe("Today's Queue on the dashboard (§3.3)", () => {
     // §3.3: "Keep the existing stat cards and charts, moved below the queue."
     const queueBox = await queue.boundingBox();
     const statsBox = await page
-      .getByText("Jobs Found", { exact: true })
+      .getByText("Jobs found", { exact: true })
       .first()
       .boundingBox();
     expect(queueBox).not.toBeNull();

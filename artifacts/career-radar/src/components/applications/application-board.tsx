@@ -89,7 +89,7 @@ function BoardCard({
             className="h-6 w-6 shrink-0 rounded border border-border bg-background object-contain"
           />
         ) : (
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-primary/10">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-secondary">
             <span className="text-[9px] font-bold text-primary">
               {initials(company?.name ?? job?.title ?? "?")}
             </span>
