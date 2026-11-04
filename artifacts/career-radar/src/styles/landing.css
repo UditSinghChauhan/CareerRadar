@@ -64,6 +64,12 @@ html:has(.lp) {
   background: #f6f6f3;
   color-scheme: light;
 }
+/* Anchor links glide, natively; each section stops clear of the nav. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.lp) {
+    scroll-behavior: smooth;
+  }
+}
 
 /* ─── Base ───────────────────────────────────────────────────────────────── */
 
@@ -233,7 +239,11 @@ html:has(.lp) {
   }
 }
 .lp-btn:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
+}
+.lp-btn:focus-visible {
+  outline-offset: 3px;
+  border-radius: 999px;
 }
 .lp-btn--nav {
   height: 38px;
@@ -306,6 +316,9 @@ html:has(.lp) {
 @media (hover: hover) and (pointer: fine) {
   .lp-nav__link:hover {
     color: var(--lp-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
   }
 }
 @media (max-width: 767px) {
@@ -352,6 +365,20 @@ html:has(.lp) {
   inset: 0;
   pointer-events: none;
 }
+/* The rings and the two far layers fade out toward the hero's foot, so
+   nothing is ever cut by its edge as it scrolls away. The near layer is not
+   masked: its cards stay sharp to the last. */
+.lp-field__deep {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 55%,
+    transparent 96%
+  );
+  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 96%);
+}
 .lp-rings circle {
   fill: none;
   stroke: var(--lp-hairline);
@@ -390,12 +417,30 @@ html:has(.lp) {
   border-radius: 14px;
   box-shadow: var(--lp-shadow);
 }
+/* Cards in the sections lift 2px on hover, with a deeper shadow. The
+   individual translate property composes with the transform framer-motion
+   writes for reveals, so neither overrides the other. */
+.lp-feature,
+.lp-vig {
+  transition:
+    translate 200ms var(--lp-ease),
+    box-shadow 200ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .lp-feature:hover,
+  .lp-vig:hover {
+    translate: 0 -2px;
+    box-shadow:
+      0 2px 4px rgb(0 0 0 / 5%),
+      0 24px 48px -20px rgb(0 0 0 / 20%);
+  }
+}
 .lp-rolecard {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 244px;
-  height: 60px;
+  width: 248px;
+  height: 68px;
   padding: 0 12px;
 }
 .lp-rolecard__text {
@@ -404,18 +449,30 @@ html:has(.lp) {
 }
 .lp-rolecard__title,
 .lp-rolecard__meta {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   font-size: 13px;
   line-height: 1.35;
 }
+/* Titles are always whole: up to two lines, never an ellipsis. The card
+   is sized for the longest sample title at every width. */
 .lp-rolecard__title {
   font-weight: 500;
   color: var(--lp-ink);
+  text-wrap: balance;
+}
+.lp-rolecard__meta {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .lp-rolecard__meta {
   color: var(--lp-grey);
+}
+/* A tablet's text spans the width, so the ten sit in rows above and below
+   it; this is the height those rows need. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .lp-hero {
+    min-height: max(1080px, 100svh);
+  }
 }
 /* Depth is fixed per layer: far is smaller, softer and paler. The blur is
    set once and never animated. */
@@ -429,19 +486,23 @@ html:has(.lp) {
   filter: blur(2px);
 }
 @media (max-width: 639px) {
+  /* Tall enough for all ten in two columns above and below the text, with
+     the 48px clear zone; the last row peeks over the fold. */
   .lp-hero {
-    min-height: max(700px, 100svh);
+    min-height: max(920px, 100svh);
     padding: 88px 0 64px;
   }
   .lp-rolecard {
-    width: 172px;
-    height: 52px;
+    width: 176px;
+    height: 58px;
     gap: 8px;
     padding: 0 10px;
   }
-  .lp-rolecard .lp-mono-tile {
-    width: 26px;
-    height: 26px;
+  /* A phone card keeps the title whole by dropping the monogram and the
+     city; the company stays. */
+  .lp-rolecard .lp-mono-tile,
+  .lp-rolecard__city {
+    display: none;
   }
 }
 
@@ -486,27 +547,31 @@ html:has(.lp) {
   background: #dfefec;
   color: #1f5b55;
 }
-/* Lime with ink: the rank of one of the day's ten. */
+/* The rank of one of the day's ten: ink on a pale lime tint, small and
+   quiet. Only rank 1 takes the full lime. */
 .lp-rank {
   display: inline-grid;
   flex: none;
   place-items: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 6px;
-  background: var(--lp-lime);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: #eef8d8;
   color: var(--lp-ink);
   font-family: var(--lp-mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.lp-rank--top {
+  background: var(--lp-lime);
 }
 
 /* ─── 2. Focus: today's ten ──────────────────────────────────────────────── */
 
 .lp-focus {
-  --lp-row: 104px;
   --lp-row-sm: 40px;
   position: relative;
   padding: var(--lp-section) 0;
@@ -540,28 +605,19 @@ html:has(.lp) {
   display: grid;
   gap: 6px;
 }
-.lp-qslot {
-  height: var(--lp-row);
-}
-.lp-qslot--compact {
-  height: var(--lp-row-sm);
-}
-.lp-qslot__in {
-  height: 100%;
-}
 .lp-qrow {
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: start;
   gap: 10px;
-  height: 100%;
-  padding: 12px;
+  /* Equal top and bottom: the row ends with its chips. */
+  padding: 16px;
   border: 1px solid var(--lp-hairline);
   border-radius: 10px;
   background: var(--lp-surface);
 }
 .lp-qrow > .lp-rank {
-  margin-top: 5px;
+  margin-top: 7px;
 }
 .lp-qrow__body {
   min-width: 0;
@@ -588,7 +644,8 @@ html:has(.lp) {
 }
 .lp-qrow--compact {
   align-items: center;
-  padding: 0 12px;
+  height: var(--lp-row-sm);
+  padding: 0 16px;
 }
 .lp-qrow--compact > .lp-rank {
   margin-top: 0;
@@ -645,13 +702,35 @@ html:has(.lp) {
     justify-self: end;
   }
 }
-@media (max-width: 639px) {
+@media (max-width: 1023px) {
+  /* The hero's foot empties as its cards leave; close the gap behind them. */
   .lp-focus {
-    --lp-row: 124px;
+    padding-top: 16px;
   }
+}
+@media (max-width: 639px) {
   .lp-queue {
     padding: 12px;
   }
+}
+
+/* The flight: one copy of each of the ten, between field and row. Fixed,
+   above the page and under the navigation. flight.tsx writes transform and
+   opacity only. */
+.lp-flight {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lp-flight__card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  transform-origin: 0 0;
+  will-change: transform, opacity;
 }
 
 /* ─── 3. Stats ───────────────────────────────────────────────────────────── */
@@ -684,11 +763,32 @@ html:has(.lp) {
   color: var(--lp-ink);
 }
 .lp-live__dot {
+  position: relative;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--lp-lime);
   box-shadow: 0 0 0 1px rgb(17 17 17 / 12%);
+}
+/* A soft pulse: a lime halo that grows and fades, every 2.4s. */
+.lp-live__dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--lp-lime);
+  animation: lp-pulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+@keyframes lp-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70%,
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
 }
 .lp-stat__value {
   display: grid;
@@ -728,7 +828,9 @@ html:has(.lp) {
 /* One gap between sections: each pads its top only. */
 .lp-section {
   padding: var(--lp-section) 0 0;
-  scroll-margin-top: 32px;
+  /* The 64px nav, plus air: the heading lands 24px under it. The section's
+     own top padding is the rest of the gap. */
+  scroll-margin-top: calc(88px - var(--lp-section));
 }
 
 /* ─── 4. How it works ────────────────────────────────────────────────────── */
@@ -777,7 +879,7 @@ html:has(.lp) {
 }
 .lp-bars li {
   display: grid;
-  grid-template-columns: 136px minmax(0, 1fr);
+  grid-template-columns: 136px minmax(0, 1fr) 3ch;
   align-items: center;
   gap: 12px;
 }
@@ -790,18 +892,25 @@ html:has(.lp) {
   font-family: var(--lp-mono);
   font-size: 12px;
 }
+/* A 4px bar on a hairline track, rounded at both ends, filled once. */
 .lp-bars__track {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--lp-wash);
+  height: 4px;
+  border-radius: 999px;
+  background: var(--lp-hairline);
   overflow: hidden;
 }
 .lp-bars__fill {
   display: block;
   height: 100%;
-  border-radius: 3px;
-  background: var(--lp-ink);
+  border-radius: 999px;
+  background: rgb(17 17 17 / 85%);
   transform-origin: left center;
+}
+.lp-bars__v {
+  justify-self: end;
+  color: var(--lp-ink-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 .lp-chips--stack {
   margin-top: 0;
@@ -912,6 +1021,36 @@ html:has(.lp) {
 }
 .lp-bcard > div {
   min-width: 0;
+}
+/* The card being moved lifts: a deeper shadow under it, faded in and out
+   by opacity, while framer-motion carries it to its new column. */
+.lp-bcard {
+  position: relative;
+}
+.lp-bcard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 6%),
+    0 14px 28px -10px rgb(0 0 0 / 24%);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+.lp-bcard.is-lifted::after {
+  opacity: 1;
+}
+.lp-bcard__note {
+  display: inline-flex;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--lp-wash);
+  color: var(--lp-ink-2);
+  font-size: 13px;
+  line-height: 1.4;
 }
 .lp-bcard__title {
   display: -webkit-box;
@@ -1043,6 +1182,11 @@ html:has(.lp) {
   height: auto;
   background-size: cover;
 }
+/* The queue crop: 880px wide at most, the size it was captured for. */
+.lp-browser--crop {
+  max-width: 880px;
+  margin-inline: auto;
+}
 .lp-browser figcaption {
   padding: 12px 16px;
   border-top: 1px solid var(--lp-hairline);
@@ -1095,6 +1239,26 @@ html:has(.lp) {
 .lp-faq__in {
   display: grid;
   gap: 24px;
+}
+.lp-faq__side {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.lp-faq__side .lp-h2 {
+  margin-bottom: 8px;
+}
+@media (min-width: 1024px) {
+  .lp-faq__in {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+    gap: 56px;
+    align-items: start;
+  }
+  /* The heading stays in view while the answers are read. */
+  .lp-faq__side {
+    position: sticky;
+    top: 96px;
+  }
 }
 .lp-faq__list {
   max-width: 820px;
@@ -1170,35 +1334,45 @@ html:has(.lp) {
   /* Read by radar-core.ts for the canvas. */
   --lp-ring: rgb(255 255 255 / 14%);
   --lp-signal: var(--lp-lime);
-  padding: calc(var(--lp-section) * 0.7) 0;
+  position: relative;
+  padding: calc(var(--lp-section) * 0.8) 0;
   background: var(--lp-band);
   color: var(--lp-band-ink);
 }
-.lp-band__radar canvas {
-  --lp-ink: #f5f5f3;
-}
+/* A slow fade on entry; the band keeps its size, so nothing moves. */
 .lp-band__in {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 64px;
+  justify-items: center;
+  gap: 40px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 900ms var(--lp-ease);
+}
+.lp-band.is-in .lp-band__in {
+  opacity: 1;
 }
 .lp-band__radar {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 360px;
   aspect-ratio: 1;
-  margin-inline: auto;
 }
 .lp-band__radar canvas {
+  --lp-ink: #f5f5f3;
   display: block;
   width: 100%;
   height: 100%;
 }
+.lp-band__h {
+  margin: 0;
+  max-width: 18ch;
+  color: var(--lp-band-ink);
+}
+/* Outside the radar, in the band's own bottom-right corner. */
 .lp-band__pause {
   position: absolute;
-  right: 0;
-  bottom: 0;
+  right: var(--lp-gutter);
+  bottom: 24px;
   display: grid;
   place-items: center;
   width: 40px;
@@ -1227,23 +1401,12 @@ html:has(.lp) {
 .lp-band :focus-visible {
   outline-color: var(--lp-lime);
 }
-.lp-band__text {
-  display: grid;
-  justify-items: start;
-  gap: 32px;
-}
-.lp-band__h {
-  margin: 0;
-  max-width: 14ch;
-  color: var(--lp-band-ink);
-}
 @media (max-width: 767px) {
-  .lp-band__in {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
   .lp-band__radar {
-    max-width: 320px;
+    max-width: 280px;
+  }
+  .lp-band__in {
+    gap: 32px;
   }
 }
 
@@ -1295,13 +1458,25 @@ html:has(.lp) {
 @media (prefers-reduced-motion: reduce) {
   .lp-drift,
   .lp-enter,
-  .lp-faq__a[data-state] {
+  .lp-faq__a[data-state],
+  .lp-live__dot::after {
     animation: none;
+  }
+  .lp-live__dot::after {
+    opacity: 0;
   }
   .lp-nav,
   .lp-btn,
   .lp-faq__trigger svg,
-  .lp-dream__mark {
+  .lp-dream__mark,
+  .lp-feature,
+  .lp-vig,
+  .lp-bcard::after,
+  .lp-band__in {
     transition: none;
+  }
+  .lp-feature:hover,
+  .lp-vig:hover {
+    translate: none;
   }
 }

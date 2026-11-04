@@ -1,6 +1,7 @@
 import * as Accordion from "@radix-ui/react-accordion";
 import { Plus } from "lucide-react";
 import { Reveal } from "./motion/reveal";
+import { REPO_URL } from "./links";
 
 /**
  * Five questions, each answered only from facts in the repository:
@@ -31,14 +32,26 @@ export const QUESTIONS = [
   },
 ] as const;
 
-/** Section 6: a left-aligned accordion of hairline rows; the first is open. */
+/**
+ * Section 6. On wide screens two columns: the heading, sticky, with one line
+ * under it on the left, and the accordion of hairline rows on the right, the
+ * first open. Stacked on narrower screens.
+ */
 export function Faq() {
   return (
     <section id="faq" className="lp-section lp-faq" aria-labelledby="faq-head">
       <div className="lp-container lp-faq__in">
-        <Reveal as="h2" id="faq-head" className="lp-h2">
-          Questions
-        </Reveal>
+        <div className="lp-faq__side">
+          <Reveal as="h2" id="faq-head" className="lp-h2">
+            Questions
+          </Reveal>
+          <Reveal as="p" index={1} className="lp-body">
+            Something else?{" "}
+            <a className="lp-link" href={REPO_URL}>
+              Read the code on GitHub
+            </a>
+          </Reveal>
+        </div>
         <Accordion.Root
           type="single"
           collapsible

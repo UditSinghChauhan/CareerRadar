@@ -32,25 +32,35 @@ const COLUMNS = [
 ] as const;
 type Column = (typeof COLUMNS)[number];
 
-const BOARD: Array<{ role: SampleRole; col: Column }> = [
+/** A little of what a real board carries: a referral, an interview day. */
+const BOARD: Array<{ role: SampleRole; col: Column; note?: string }> = [
   { role: RANKED[4], col: "Saved" },
   { role: RANKED[8], col: "Saved" },
   { role: RANKED[1], col: "Applied" },
-  { role: RANKED[5], col: "Applied" },
+  { role: RANKED[5], col: "Applied", note: "Referral" },
   { role: RANKED[2], col: "Online assessment" },
-  { role: RANKED[6], col: "Interview" },
+  { role: RANKED[6], col: "Interview", note: "Interview on Thursday" },
   { role: RANKED[9], col: "Offer" },
 ];
 /** The card that moves when the board comes into view. */
 const MOVER = RANKED[1].id;
 
-function BoardCard({ role }: { role: SampleRole }) {
+function BoardCard({
+  role,
+  note,
+  lifted = false,
+}: {
+  role: SampleRole;
+  note?: string;
+  lifted?: boolean;
+}) {
   return (
-    <div className="lp-bcard">
+    <div className={lifted ? "lp-bcard is-lifted" : "lp-bcard"}>
       <Monogram role={role} size="sm" />
       <div>
         <p className="lp-bcard__title">{role.title}</p>
         <p className="lp-bcard__meta">{role.company}</p>
+        {note && <p className="lp-bcard__note">{note}</p>}
       </div>
     </div>
   );
@@ -59,6 +69,8 @@ function BoardCard({ role }: { role: SampleRole }) {
 function Board() {
   const { ref, go, reduced } = useOnce<HTMLDivElement>(0.4);
   const [moved, setMoved] = useState(reduced);
+  // True while the moving card is in the air, for its lift shadow.
+  const [lifted, setLifted] = useState(false);
   useEffect(() => {
     if (!go || reduced) return;
     const id = window.setTimeout(() => setMoved(true), 700);
@@ -78,9 +90,24 @@ function Board() {
               <span className="lp-mono">{cards.length}</span>
             </p>
             <div className="lp-board__cards">
-              {cards.map(({ role }) => (
-                <motion.div key={role.id} layout="position" transition={move}>
-                  <BoardCard role={role} />
+              {cards.map(({ role, note }) => (
+                <motion.div
+                  key={role.id}
+                  layout="position"
+                  transition={move}
+                  onLayoutAnimationStart={() =>
+                    role.id === MOVER && setLifted(true)
+                  }
+                  onLayoutAnimationComplete={() =>
+                    role.id === MOVER && setLifted(false)
+                  }
+                  style={role.id === MOVER ? { zIndex: 1 } : undefined}
+                >
+                  <BoardCard
+                    role={role}
+                    note={note}
+                    lifted={lifted && role.id === MOVER}
+                  />
                 </motion.div>
               ))}
             </div>
@@ -166,12 +193,17 @@ function Dream() {
   );
 }
 
+/**
+ * Today's queue from the real app, cropped to the part that matters and
+ * shown large enough to read: the crops are captured so the app's smallest
+ * text lands at 14px or more here. Tilts from 6deg to flat as it enters.
+ */
 function Capture() {
   const reduced = Boolean(useReducedMotion());
-  const shot = captures.dashboard;
+  const { queue, "queue-sm": small } = captures;
   return (
     <motion.figure
-      className="lp-browser"
+      className="lp-browser lp-browser--crop"
       initial={reduced ? false : { rotateX: 6, y: 24 }}
       whileInView={{ rotateX: 0, y: 0 }}
       viewport={{ once: true, amount: 0.25 }}
@@ -183,19 +215,35 @@ function Capture() {
         </span>
       </div>
       <picture>
-        <source srcSet={shot.avif} type="image/avif" />
+        {/* Each source carries its own size, so the phone crop reserves its
+            own height and nothing shifts when it loads. */}
+        <source
+          media="(max-width: 639px)"
+          srcSet={small.avif}
+          type="image/avif"
+          width={small.width}
+          height={small.height}
+        />
+        <source
+          media="(max-width: 639px)"
+          srcSet={small.webp}
+          type="image/webp"
+          width={small.width}
+          height={small.height}
+        />
+        <source srcSet={queue.avif} type="image/avif" />
         <img
-          src={shot.webp}
-          width={shot.width}
-          height={shot.height}
-          alt="The CareerRadar dashboard in the light theme: today's ten roles, each with its rank, score and short reasons, an Apply button on every row, and the day's progress."
+          src={queue.webp}
+          width={queue.width}
+          height={queue.height}
+          alt="Today's ten in the real CareerRadar app: ranked roles, each with its rank, score, short reasons and an Apply button, and the day's progress."
           loading="lazy"
           decoding="async"
-          style={{ backgroundImage: `url(${shot.placeholder})` }}
+          style={{ backgroundImage: `url(${queue.placeholder})` }}
         />
       </picture>
       <figcaption className="lp-caption">
-        The real dashboard, on an invented demo account.
+        Today’s ten in the real app, on an invented demo account.
       </figcaption>
     </motion.figure>
   );
