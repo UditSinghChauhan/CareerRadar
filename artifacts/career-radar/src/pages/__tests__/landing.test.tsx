@@ -17,7 +17,9 @@ import illustrative from "@/components/landing/illustrative-queue.json";
 /** Renders the landing and waits for the sections it mounts after the hero. */
 async function renderLanding() {
   const utils = render(<LandingPage />);
-  await screen.findByRole("heading", { name: "Questions" });
+  // The first render imports the below-fold chunk; under a loaded runner
+  // that alone can pass the default 1s wait.
+  await screen.findByRole("heading", { name: "Questions" }, { timeout: 5000 });
   return utils;
 }
 

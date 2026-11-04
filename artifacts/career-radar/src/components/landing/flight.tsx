@@ -37,7 +37,11 @@ export function Flight() {
       const queue = document.querySelector<HTMLElement>(".lp-queue");
       if (!focus || !queue) return;
       const y = window.scrollY;
-      const wide = window.matchMedia("(min-width: 1024px)").matches;
+      // matchMedia can be missing (jsdom, some embedded browsers); the
+      // viewport width answers the same question.
+      const wide =
+        window.matchMedia?.("(min-width: 1024px)").matches ??
+        window.innerWidth >= 1024;
       // At rest: on wide screens when the sticky stage engages, otherwise
       // when the queue's top is a fifth of the way down the screen.
       const rest = wide
