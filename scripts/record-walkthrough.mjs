@@ -26,7 +26,7 @@
  * and Playwright's Chromium. Refuses any non-local database.
  */
 import { execFileSync, spawn } from "node:child_process";
-import { mkdirSync, readdirSync, renameSync, rmSync } from "node:fs";
+import { mkdirSync, renameSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -127,6 +127,7 @@ async function main() {
   const base = `http://localhost:${WEB_PORT}`;
   const browser = await chromium.launch();
   const timings = [];
+  let trim = 0;
   const t0 = Date.now();
   const mark = (step) =>
     timings.push([step, ((Date.now() - t0) / 1000).toFixed(1)]);
@@ -160,6 +161,9 @@ async function main() {
     });
     await ctx.addInitScript(CURSOR);
     const page = await ctx.newPage();
+    // The recorder starts with the page; the film is trimmed to the first
+    // frame of the landing, so it does not open on a blank tab.
+    const filmStart = Date.now();
     const pause = (ms) => page.waitForTimeout(ms);
     let mouse = { x: W / 2, y: H / 2 };
     /** Moves the drawn cursor to a target and clicks it, at a human pace. */
@@ -180,23 +184,28 @@ async function main() {
     /** Scrolls smoothly, in small steps, so the scroll-driven motion reads. */
     const glide = async (to, ms) => {
       const from = await page.evaluate(() => scrollY);
-      const n = Math.round(ms / 16);
-      for (let i = 1; i <= n; i++) {
-        const t = i / n;
+      // Timed by the clock, not by a step count, so the glide takes `ms`
+      // however slow each scroll round trip is.
+      const t0 = Date.now();
+      for (;;) {
+        const t = Math.min(1, (Date.now() - t0) / ms);
         const e = t * t * (3 - 2 * t);
         await page.evaluate(
           (y) => scrollTo(0, y),
           Math.round(from + (to - from) * e),
         );
-        await pause(16);
+        if (t === 1) break;
+        await pause(8);
       }
     };
 
     // 1. The landing hero, and the field coming into focus.
     await page.goto(`${base}/`, { waitUntil: "networkidle" });
     await page.mouse.move(mouse.x, mouse.y);
+    await page.locator(".lp-flight").waitFor({ state: "attached" });
+    trim = Math.max(0, (Date.now() - filmStart) / 1000 - 0.2);
     mark("landing");
-    await pause(3500);
+    await pause(4500);
     await glide(H * 1.15, 4200);
     await pause(2500);
     await glide(0, 1800);
@@ -228,7 +237,7 @@ async function main() {
     // 4. Today's ten.
     await page.getByTestId("queue-row").first().waitFor();
     mark("queue");
-    await pause(3000);
+    await pause(4500);
     await glide(260, 1400);
     await pause(1500);
 
@@ -244,7 +253,8 @@ async function main() {
     //    tab, as it does for a student; the film stays on CareerRadar.
     const closing = page
       .getByTestId("queue-row")
-      .filter({ hasText: /Closes (today|tomorrow|in \d+ days)/ })
+      // Within the 72-hour reminder window, so the reminder is real.
+      .filter({ hasText: /Closes (today|tomorrow|in [23] days)/ })
       .first();
     const target =
       (await closing.count()) > 0
@@ -271,7 +281,7 @@ async function main() {
       .first()
       .waitFor();
     mark("board");
-    await pause(4000);
+    await pause(6000);
 
     // 8. The deadline reminder.
     await page.reload({ waitUntil: "networkidle" });
@@ -279,9 +289,12 @@ async function main() {
     await click(page.getByTestId("notification-bell"));
     await page.getByTestId("notification-panel").waitFor();
     mark("reminder");
-    await pause(5000);
+    await pause(6500);
 
+    // The film is the main tab's; the posting's tab records its own.
+    const filmPath = await page.video().path();
     await ctx.close();
+    renameSync(filmPath, join(work, "film.webm"));
 
     // The cover: Today's ten at 1600×1000, light, at rest.
     const still = await browser.newContext({
@@ -304,7 +317,8 @@ async function main() {
     }
   }
 
-  const raw = readdirSync(work).find((f) => f.endsWith(".webm"));
+  const raw = "film.webm";
+  const cut = ["-ss", trim.toFixed(2)];
   const webm = join(out, "walkthrough.webm");
   const ff = (...args) =>
     execFileSync("ffmpeg", [
@@ -315,6 +329,7 @@ async function main() {
       ...args,
     ]);
   ff(
+    ...cut,
     "-i",
     join(work, raw),
     "-c:v",
@@ -329,6 +344,7 @@ async function main() {
     webm,
   );
   ff(
+    ...cut,
     "-i",
     join(work, raw),
     "-c:v",
@@ -351,10 +367,12 @@ async function main() {
     "3",
     join(out, "walkthrough-cover.jpg"),
   );
-  renameSync(join(work, raw), join(work, "raw.webm"));
 
   console.log("timeline (seconds from the first frame):");
-  for (const [step, s] of timings) console.log(`  ${s.padStart(5)}  ${step}`);
+  const first = Number(timings[0][1]);
+  for (const [step, s] of timings) {
+    console.log(`  ${(Number(s) - first).toFixed(1).padStart(5)}  ${step}`);
+  }
   console.log(`wrote ${webm}, walkthrough.mp4 and walkthrough-cover.jpg`);
 }
 
