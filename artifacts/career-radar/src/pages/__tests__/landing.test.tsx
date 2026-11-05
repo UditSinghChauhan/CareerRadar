@@ -216,6 +216,34 @@ describe("live counts", () => {
     ).toBeInTheDocument();
   });
 
+  it("swaps the live figures in when a sleeping API wakes", async () => {
+    // A sleeping API: the first request gets the host's wake-up page (not
+    // JSON) or runs out of time; the second, once it is awake, answers.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("<html>waking up</html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          activePostings: 6100,
+          openToFreshers: 3150,
+          lastSyncedAt: "2026-11-01T00:00:00.000Z",
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    resetPublicStats();
+    await renderLanding();
+    expect(await screen.findAllByText("Live")).toHaveLength(1);
+    expect(
+      await screen.findByText(`${fmt(6100)} open roles`),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("prints each total in one place only, so no two can disagree", async () => {
     const { container } = await renderLanding();
     const text = container.textContent ?? "";

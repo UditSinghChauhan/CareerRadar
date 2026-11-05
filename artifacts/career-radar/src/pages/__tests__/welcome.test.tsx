@@ -13,6 +13,11 @@ import { togglePlace } from "@/components/onboarding/preferences-form";
 import { WelcomePage } from "../welcome";
 import { DashboardPage } from "../dashboard";
 
+// The first-run prefetch would import real chunks; only whether it starts
+// matters here.
+const prefetchFirstRun = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/app-chunks", () => ({ prefetchFirstRun }));
+
 vi.mock("@clerk/react", () => ({
   useUser: () => ({ isLoaded: true, user: { firstName: "New" } }),
 }));
@@ -56,6 +61,14 @@ describe("togglePlace", () => {
 });
 
 describe("onboarding, /welcome", () => {
+  // "Show my ten" used to open a blank screen while the shell and the
+  // dashboard's code downloaded; it now downloads while the question is up.
+  it("starts loading the dashboard's code at once", () => {
+    prefetchFirstRun.mockClear();
+    setup(<WelcomePage />, "/welcome");
+    expect(prefetchFirstRun).toHaveBeenCalledTimes(1);
+  });
+
   it("asks one question with complete defaults", () => {
     setup(<WelcomePage />, "/welcome");
     expect(

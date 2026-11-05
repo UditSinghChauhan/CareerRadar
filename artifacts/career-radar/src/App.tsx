@@ -27,15 +27,22 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { LandingPage } from "@/pages/landing";
 import { PageSkeleton } from "@/components/page-skeleton";
+import { ShellSkeleton } from "@/components/shell-skeleton";
+import {
+  loadDashboard,
+  loadLayout,
+  loadWelcome,
+  prefetchFirstRun,
+} from "@/lib/app-chunks";
 import NotFound from "@/pages/not-found";
 
 // The signed-in app is split from the landing: a first-time visitor downloads
 // the landing alone, and the app's pages load when they are opened.
 const AppLayout = lazy(() =>
-  import("@/components/layout").then((m) => ({ default: m.AppLayout })),
+  loadLayout().then((m) => ({ default: m.AppLayout })),
 );
 const DashboardPage = lazy(() =>
-  import("@/pages/dashboard").then((m) => ({ default: m.DashboardPage })),
+  loadDashboard().then((m) => ({ default: m.DashboardPage })),
 );
 const JobsPage = lazy(() =>
   import("@/pages/jobs").then((m) => ({ default: m.JobsPage })),
@@ -52,7 +59,7 @@ const SettingsPage = lazy(() =>
   import("@/pages/settings").then((m) => ({ default: m.SettingsPage })),
 );
 const WelcomePage = lazy(() =>
-  import("@/pages/welcome").then((m) => ({ default: m.WelcomePage })),
+  loadWelcome().then((m) => ({ default: m.WelcomePage })),
 );
 const ToolsCapturePage = lazy(() =>
   import("@/pages/tools-capture").then((m) => ({
@@ -206,7 +213,24 @@ const clerkAppearance = {
   },
 };
 
+/**
+ * Readies what comes after signing in or up, while the visitor types:
+ * wakes the API and its database (the API's host sleeps when idle,
+ * docs/DEPLOY.md), and downloads the onboarding, shell and dashboard code.
+ * Without it the first screens after sign-up would wait on both. Fire and
+ * forget: nothing waits on either.
+ */
+function useWakeApi() {
+  useEffect(() => {
+    void fetch(`${basePath}/api/health`, { cache: "no-store" }).catch(
+      () => undefined,
+    );
+    prefetchFirstRun();
+  }, []);
+}
+
 function SignInPage() {
+  useWakeApi();
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 selection:bg-primary/20">
       <SignIn
@@ -219,6 +243,7 @@ function SignInPage() {
 }
 
 function SignUpPage() {
+  useWakeApi();
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 selection:bg-primary/20">
       <SignUp
@@ -249,10 +274,10 @@ function ProtectedRoute({
   return (
     <>
       <Show when="signed-in">
-        {/* The shell's own code loads once; after that a page's code loads
-            inside it, behind a skeleton of the page, so navigation never
-            blanks the screen. */}
-        <Suspense fallback={null}>
+        {/* The shell's own code loads once, behind a skeleton of the
+            shell; after that a page's code loads inside it, behind a
+            skeleton of the page, so the screen never blanks. */}
+        <Suspense fallback={<ShellSkeleton />}>
           <AppLayout>
             <Suspense fallback={<PageSkeleton />}>
               <Component />
