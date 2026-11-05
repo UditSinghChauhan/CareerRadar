@@ -1,0 +1,172 @@
+{
+  "note": "Local machine, local Postgres, production build via vite preview, Clerk stubbed (its time is not included). Milliseconds. /api/health is 404 here because capture-server.ts mounts only the API router; the health route lives in app.ts and answers in production.",
+  "steps": [
+    {
+      "step": "landing: headline painted",
+      "ms": 216,
+      "sinceSignUp": null,
+      "note": ""
+    },
+    {
+      "step": "sign-up card",
+      "ms": 680,
+      "sinceSignUp": null,
+      "note": ""
+    },
+    {
+      "step": "signed up",
+      "ms": 773,
+      "sinceSignUp": 40,
+      "note": ""
+    },
+    {
+      "step": "onboarding: question painted",
+      "ms": 1622,
+      "sinceSignUp": 889,
+      "note": ""
+    },
+    {
+      "step": "pressed Show my ten",
+      "ms": 1738,
+      "sinceSignUp": 1005,
+      "note": ""
+    },
+    {
+      "step": "dashboard: route",
+      "ms": 1769,
+      "sinceSignUp": 1036,
+      "note": ""
+    },
+    {
+      "step": "dashboard: first queue row",
+      "ms": 2649,
+      "sinceSignUp": 1916,
+      "note": "10 rows"
+    },
+    {
+      "step": "30 s after sign-up",
+      "ms": 30759,
+      "sinceSignUp": 30026,
+      "note": ""
+    },
+    {
+      "step": "60 s after sign-up",
+      "ms": 60761,
+      "sinceSignUp": 60028,
+      "note": ""
+    },
+    {
+      "step": "spinners or busy regions at 60 s",
+      "ms": 60840,
+      "sinceSignUp": 60107,
+      "note": "0"
+    }
+  ],
+  "calls": [
+    {
+      "at": 250,
+      "method": "GET",
+      "path": "/api/public/stats",
+      "status": 200,
+      "ms": 58
+    },
+    {
+      "at": 731,
+      "method": "GET",
+      "path": "/api/health",
+      "status": 404,
+      "ms": 15
+    },
+    {
+      "at": 1143,
+      "method": "GET",
+      "path": "/api/profile",
+      "status": 200,
+      "ms": 15
+    },
+    {
+      "at": 1767,
+      "method": "PUT",
+      "path": "/api/profile",
+      "status": 200,
+      "ms": 33
+    },
+    {
+      "at": 2105,
+      "method": "GET",
+      "path": "/api/profile",
+      "status": 200,
+      "ms": 28
+    },
+    {
+      "at": 2126,
+      "method": "GET",
+      "path": "/api/jobs/deadlines/soon?days=7",
+      "status": 200,
+      "ms": 38
+    },
+    {
+      "at": 2136,
+      "method": "GET",
+      "path": "/api/bookmarks",
+      "status": 200,
+      "ms": 45
+    },
+    {
+      "at": 2171,
+      "method": "GET",
+      "path": "/api/notifications?limit=20",
+      "status": 200,
+      "ms": 90
+    },
+    {
+      "at": 2171,
+      "method": "GET",
+      "path": "/api/jobs?status=active&limit=1",
+      "status": 200,
+      "ms": 90
+    },
+    {
+      "at": 2221,
+      "method": "GET",
+      "path": "/api/jobs?status=active&isFresherEligible=true&sort=relevance&limit=6",
+      "status": 200,
+      "ms": 130
+    },
+    {
+      "at": 2224,
+      "method": "GET",
+      "path": "/api/jobs?status=active&limit=100",
+      "status": 200,
+      "ms": 133
+    },
+    {
+      "at": 2240,
+      "method": "GET",
+      "path": "/api/applications?limit=8",
+      "status": 200,
+      "ms": 137
+    },
+    {
+      "at": 2240,
+      "method": "GET",
+      "path": "/api/dashboard/today",
+      "status": 200,
+      "ms": 143
+    },
+    {
+      "at": 2241,
+      "method": "GET",
+      "path": "/api/jobs/deadlines/soon?days=21",
+      "status": 200,
+      "ms": 143
+    },
+    {
+      "at": 2242,
+      "method": "GET",
+      "path": "/api/dashboard/summary",
+      "status": 200,
+      "ms": 149
+    }
+  ]
+}
