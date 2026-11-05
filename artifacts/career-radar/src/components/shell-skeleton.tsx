@@ -1,3 +1,4 @@
+import { Suspense, type ReactNode } from "react";
 import { PageSkeleton } from "@/components/page-skeleton";
 
 /**
@@ -27,4 +28,13 @@ export function ShellSkeleton() {
       </div>
     </div>
   );
+}
+
+/**
+ * Where the shell's code loads (App.tsx). Its fallback used to be nothing,
+ * so "Show my ten" opened a blank screen until the code arrived
+ * (scripts/first-minute.mjs); now it is the shell's skeleton.
+ */
+export function ShellBoundary({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<ShellSkeleton />}>{children}</Suspense>;
 }

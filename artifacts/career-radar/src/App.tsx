@@ -27,22 +27,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { LandingPage } from "@/pages/landing";
 import { PageSkeleton } from "@/components/page-skeleton";
-import { ShellSkeleton } from "@/components/shell-skeleton";
-import {
-  loadDashboard,
-  loadLayout,
-  loadWelcome,
-  prefetchFirstRun,
-} from "@/lib/app-chunks";
+import { ShellBoundary } from "@/components/shell-skeleton";
 import NotFound from "@/pages/not-found";
 
 // The signed-in app is split from the landing: a first-time visitor downloads
 // the landing alone, and the app's pages load when they are opened.
 const AppLayout = lazy(() =>
-  loadLayout().then((m) => ({ default: m.AppLayout })),
+  import("@/components/layout").then((m) => ({ default: m.AppLayout })),
 );
 const DashboardPage = lazy(() =>
-  loadDashboard().then((m) => ({ default: m.DashboardPage })),
+  import("@/pages/dashboard").then((m) => ({ default: m.DashboardPage })),
 );
 const JobsPage = lazy(() =>
   import("@/pages/jobs").then((m) => ({ default: m.JobsPage })),
@@ -59,7 +53,7 @@ const SettingsPage = lazy(() =>
   import("@/pages/settings").then((m) => ({ default: m.SettingsPage })),
 );
 const WelcomePage = lazy(() =>
-  loadWelcome().then((m) => ({ default: m.WelcomePage })),
+  import("@/pages/welcome").then((m) => ({ default: m.WelcomePage })),
 );
 const ToolsCapturePage = lazy(() =>
   import("@/pages/tools-capture").then((m) => ({
@@ -214,18 +208,16 @@ const clerkAppearance = {
 };
 
 /**
- * Readies what comes after signing in or up, while the visitor types:
- * wakes the API and its database (the API's host sleeps when idle,
- * docs/DEPLOY.md), and downloads the onboarding, shell and dashboard code.
- * Without it the first screens after sign-up would wait on both. Fire and
- * forget: nothing waits on either.
+ * Wakes the API and its database while someone signs in or up. The API's
+ * host sleeps when idle (docs/DEPLOY.md); without this the first screen
+ * after sign-up, which is the first to need the API, would wait for it.
+ * Fire and forget: nothing waits on the answer.
  */
 function useWakeApi() {
   useEffect(() => {
     void fetch(`${basePath}/api/health`, { cache: "no-store" }).catch(
       () => undefined,
     );
-    prefetchFirstRun();
   }, []);
 }
 
@@ -277,13 +269,13 @@ function ProtectedRoute({
         {/* The shell's own code loads once, behind a skeleton of the
             shell; after that a page's code loads inside it, behind a
             skeleton of the page, so the screen never blanks. */}
-        <Suspense fallback={<ShellSkeleton />}>
+        <ShellBoundary>
           <AppLayout>
             <Suspense fallback={<PageSkeleton />}>
               <Component />
             </Suspense>
           </AppLayout>
-        </Suspense>
+        </ShellBoundary>
       </Show>
       <Show when="signed-out">
         <Redirect to="/sign-in" />

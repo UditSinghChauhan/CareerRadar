@@ -1,8 +1,6 @@
-import { useEffect } from "react";
 import { useGetProfile } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { LogoMark } from "@/components/logo-mark";
-import { prefetchFirstRun } from "@/lib/app-chunks";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   PreferencesForm,
@@ -19,8 +17,6 @@ export function WelcomePage() {
   const [, setLocation] = useLocation();
   const { data: profile, isLoading } = useGetProfile();
   const { save, pending, error } = useSavePreferences();
-  // The dashboard is next: have its code ready before "Show my ten".
-  useEffect(prefetchFirstRun, []);
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">

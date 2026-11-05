@@ -182,6 +182,9 @@ async function main() {
     mark("sign-up card");
     await shot("02-sign-up");
 
+    // A person takes seconds over the sign-up form; the script waits 3s,
+    // so the first-run prefetch is not measured mid-parse.
+    await page.waitForTimeout(3000);
     signUpAt = since();
     await page.getByRole("button", { name: "Continue with Google" }).click();
     mark("signed up");
@@ -228,7 +231,7 @@ async function main() {
     join(out, "timings.json"),
     JSON.stringify(
       {
-        note: "Local machine, local Postgres, production build via vite preview, Clerk stubbed (its time is not included). Milliseconds. /api/health is 404 here because capture-server.ts mounts only the API router; the health route lives in app.ts and answers in production.",
+        note: "Local machine, local Postgres, production build via vite preview, Clerk stubbed (its time is not included). Milliseconds. The script waits 3 s on the sign-up card, as a person filling in the form would. /api/health is 404 here because capture-server.ts mounts only the API router; the health route lives in app.ts and answers in production.",
         steps,
         calls: calls.sort((a, b) => a.at - b.at),
       },
