@@ -8,6 +8,8 @@ import { EASE_OUT } from "./motion/tokens";
 import { Statement } from "./statement";
 
 const ROW = RANKED[0];
+/** The pick that moves up once the first is applied to. */
+const NEXT = RANKED[1];
 
 /** The four parts of a score, weighted as in api-server/src/queue/priority.ts. */
 export const PARTS = [
@@ -132,9 +134,24 @@ function Tracked() {
     </motion.div>
   );
 
+  // Once the first pick has moved onto the board, the next takes its place,
+  // as in the real queue, so the card never shows an empty slot.
+  const next = (
+    <motion.div
+      className="lp-trow"
+      initial={reduced ? false : { opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.15 }}
+    >
+      <Monogram role={NEXT} size="sm" />
+      <p className="lp-vig__title">{NEXT.title}</p>
+      <span className="lp-btn lp-btn--sm">Apply</span>
+    </motion.div>
+  );
+
   return (
     <div ref={ref} className="lp-card lp-vig">
-      <div className="lp-vig__slot">{step < 3 && row}</div>
+      <div className="lp-vig__slot">{step < 3 ? row : next}</div>
       <div className="lp-mini-col">
         <p className="lp-mono">Applied</p>
         <div className="lp-mini-col__cards">

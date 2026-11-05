@@ -1,0 +1,588 @@
+[
+  {
+    "y": 0,
+    "faults": [],
+    "flying": [],
+    "centreGap": null
+  },
+  {
+    "y": 50,
+    "faults": [],
+    "flying": [],
+    "centreGap": null
+  },
+  {
+    "y": 100,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 150,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 0.07
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 200,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 0.49
+      },
+      {
+        "rank": 2,
+        "o": 0.29
+      },
+      {
+        "rank": 3,
+        "o": 0.15
+      },
+      {
+        "rank": 4,
+        "o": 0.07
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 250,
+    "faults": ["empty queue"],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 1
+      },
+      {
+        "rank": 2,
+        "o": 0.94
+      },
+      {
+        "rank": 3,
+        "o": 0.72
+      },
+      {
+        "rank": 4,
+        "o": 0.47
+      },
+      {
+        "rank": 7,
+        "o": 0.06
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 300,
+    "faults": ["copy headline under 4", "empty queue"],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 1
+      },
+      {
+        "rank": 2,
+        "o": 1
+      },
+      {
+        "rank": 3,
+        "o": 1
+      },
+      {
+        "rank": 4,
+        "o": 1
+      },
+      {
+        "rank": 7,
+        "o": 0.45
+      },
+      {
+        "rank": 8,
+        "o": 0.25
+      },
+      {
+        "rank": 10,
+        "o": 0.06
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 350,
+    "faults": ["copy headline under 4", "copy headline under 5", "empty queue"],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 1
+      },
+      {
+        "rank": 2,
+        "o": 1
+      },
+      {
+        "rank": 3,
+        "o": 1
+      },
+      {
+        "rank": 4,
+        "o": 1
+      },
+      {
+        "rank": 5,
+        "o": 1
+      },
+      {
+        "rank": 7,
+        "o": 1
+      },
+      {
+        "rank": 8,
+        "o": 0.9
+      },
+      {
+        "rank": 10,
+        "o": 0.42
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 400,
+    "faults": [
+      "overlap 2/3",
+      "overlap 3/10",
+      "overlap 7/8",
+      "copy headline under 6",
+      "copy lead under 5",
+      "copy lead under 6",
+      "copy cta under 4",
+      "copy oss under 4"
+    ],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 1
+      },
+      {
+        "rank": 2,
+        "o": 1
+      },
+      {
+        "rank": 3,
+        "o": 1
+      },
+      {
+        "rank": 4,
+        "o": 1
+      },
+      {
+        "rank": 5,
+        "o": 1
+      },
+      {
+        "rank": 6,
+        "o": 1
+      },
+      {
+        "rank": 7,
+        "o": 1
+      },
+      {
+        "rank": 8,
+        "o": 1
+      },
+      {
+        "rank": 10,
+        "o": 1
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 450,
+    "faults": [
+      "overlap 1/7",
+      "overlap 2/3",
+      "overlap 3/10",
+      "overlap 7/8",
+      "copy lead under 9"
+    ],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 1
+      },
+      {
+        "rank": 2,
+        "o": 1
+      },
+      {
+        "rank": 3,
+        "o": 1
+      },
+      {
+        "rank": 4,
+        "o": 1
+      },
+      {
+        "rank": 5,
+        "o": 1
+      },
+      {
+        "rank": 6,
+        "o": 1
+      },
+      {
+        "rank": 7,
+        "o": 1
+      },
+      {
+        "rank": 8,
+        "o": 1
+      },
+      {
+        "rank": 9,
+        "o": 1
+      },
+      {
+        "rank": 10,
+        "o": 1
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 500,
+    "faults": [
+      "overlap 1/4",
+      "overlap 1/6",
+      "overlap 2/3",
+      "overlap 3/10",
+      "overlap 4/5",
+      "overlap 7/8"
+    ],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 0.92
+      },
+      {
+        "rank": 2,
+        "o": 1
+      },
+      {
+        "rank": 3,
+        "o": 1
+      },
+      {
+        "rank": 4,
+        "o": 1
+      },
+      {
+        "rank": 5,
+        "o": 1
+      },
+      {
+        "rank": 6,
+        "o": 1
+      },
+      {
+        "rank": 7,
+        "o": 1
+      },
+      {
+        "rank": 8,
+        "o": 1
+      },
+      {
+        "rank": 9,
+        "o": 1
+      },
+      {
+        "rank": 10,
+        "o": 1
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 550,
+    "faults": [
+      "overlap 1/9",
+      "overlap 2/4",
+      "overlap 2/6",
+      "overlap 3/4",
+      "overlap 3/5",
+      "overlap 3/6",
+      "overlap 4/5",
+      "overlap 4/6",
+      "overlap 5/6",
+      "overlap 7/8",
+      "smear 2 on row 1",
+      "smear 3 on row 2",
+      "smear 4 on row 2"
+    ],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 0.37
+      },
+      {
+        "rank": 2,
+        "o": 0.55
+      },
+      {
+        "rank": 3,
+        "o": 0.75
+      },
+      {
+        "rank": 4,
+        "o": 0.93
+      },
+      {
+        "rank": 5,
+        "o": 1
+      },
+      {
+        "rank": 6,
+        "o": 1
+      },
+      {
+        "rank": 7,
+        "o": 1
+      },
+      {
+        "rank": 8,
+        "o": 1
+      },
+      {
+        "rank": 9,
+        "o": 1
+      },
+      {
+        "rank": 10,
+        "o": 1
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 600,
+    "faults": [
+      "overlap 3/4",
+      "overlap 3/9",
+      "overlap 4/5",
+      "overlap 4/6",
+      "overlap 4/9",
+      "overlap 5/6",
+      "overlap 7/8",
+      "smear 2 on row 1",
+      "smear 3 on row 2",
+      "smear 4 on row 3",
+      "smear 5 on row 3",
+      "smear 6 on row 3",
+      "smear 7 on row 4",
+      "band 132px"
+    ],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 0.08
+      },
+      {
+        "rank": 2,
+        "o": 0.14
+      },
+      {
+        "rank": 3,
+        "o": 0.25
+      },
+      {
+        "rank": 4,
+        "o": 0.39
+      },
+      {
+        "rank": 5,
+        "o": 0.57
+      },
+      {
+        "rank": 6,
+        "o": 0.77
+      },
+      {
+        "rank": 7,
+        "o": 0.95
+      },
+      {
+        "rank": 8,
+        "o": 1
+      },
+      {
+        "rank": 9,
+        "o": 1
+      },
+      {
+        "rank": 10,
+        "o": 1
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 650,
+    "faults": [
+      "overlap 5/6",
+      "overlap 5/9",
+      "overlap 6/9",
+      "overlap 7/8",
+      "smear 3 on row 2",
+      "smear 4 on row 3",
+      "smear 5 on row 4",
+      "smear 6 on row 4",
+      "smear 7 on row 5",
+      "smear 7 on row 6",
+      "smear 8 on row 6",
+      "smear 9 on row 4",
+      "smear 9 on row 5",
+      "smear 10 on row 7",
+      "band 107px"
+    ],
+    "flying": [
+      {
+        "rank": 3,
+        "o": 0.04
+      },
+      {
+        "rank": 4,
+        "o": 0.08
+      },
+      {
+        "rank": 5,
+        "o": 0.15
+      },
+      {
+        "rank": 6,
+        "o": 0.26
+      },
+      {
+        "rank": 7,
+        "o": 0.41
+      },
+      {
+        "rank": 8,
+        "o": 0.59
+      },
+      {
+        "rank": 9,
+        "o": 0.8
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 700,
+    "faults": [
+      "overlap 7/8",
+      "overlap 7/9",
+      "overlap 8/9",
+      "smear 6 on row 5",
+      "smear 7 on row 6",
+      "smear 8 on row 7",
+      "smear 9 on row 6",
+      "smear 9 on row 7",
+      "smear 10 on row 8",
+      "smear 10 on row 9",
+      "band 82px"
+    ],
+    "flying": [
+      {
+        "rank": 6,
+        "o": 0.04
+      },
+      {
+        "rank": 7,
+        "o": 0.09
+      },
+      {
+        "rank": 8,
+        "o": 0.16
+      },
+      {
+        "rank": 9,
+        "o": 0.27
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 750,
+    "faults": ["smear 9 on row 8", "smear 10 on row 9", "band 57px"],
+    "flying": [
+      {
+        "rank": 9,
+        "o": 0.05
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 800,
+    "faults": ["band 32px"],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 850,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 900,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 950,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 1000,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 1050,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 1100,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 1150,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 1200,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  }
+]
