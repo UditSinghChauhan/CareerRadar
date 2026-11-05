@@ -26,7 +26,7 @@
         "id": "illustrative-1",
         "companyId": "illustrative-company-1",
         "title": "Software Engineer, New Grad",
-        "location": "Bengaluru",
+        "location": "Indore",
         "relevanceTrack": "new_grad",
         "jobType": "full_time",
         "workMode": "hybrid",
@@ -141,11 +141,46 @@
         "workMode": "onsite",
         "status": "active",
         "applyUrl": "#illustrative",
-        "postedDate": "2026-09-11T03:30:00.000Z",
-        "createdAt": "2026-09-11T03:30:00.000Z",
+        "postedDate": "2026-09-12T03:30:00.000Z",
+        "createdAt": "2026-09-12T03:30:00.000Z",
         "company": {
           "id": "illustrative-company-4",
           "name": "Orbit Retail",
+          "logoUrl": null
+        }
+      },
+      "priority": 61.57,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 92.86,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 18.57,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": ["Posted 4 days ago", "Strong match for new grads"]
+    },
+    {
+      "job": {
+        "id": "illustrative-5",
+        "companyId": "illustrative-company-5",
+        "title": "Software Engineer Intern",
+        "location": "Delhi",
+        "relevanceTrack": "internship",
+        "jobType": "internship",
+        "workMode": "hybrid",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-11T03:30:00.000Z",
+        "createdAt": "2026-09-11T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-5",
+          "name": "Meridian Health",
           "logoUrl": null
         }
       },
@@ -163,24 +198,24 @@
         "dreamCompanyBoost": 0
       },
       "duplicateCount": 1,
-      "reasons": ["Posted 5 days ago", "Strong match for new grads"]
+      "reasons": ["Posted 5 days ago", "Strong match for interns"]
     },
     {
       "job": {
-        "id": "illustrative-5",
-        "companyId": "illustrative-company-5",
-        "title": "Software Engineer Intern",
-        "location": "Gurugram",
-        "relevanceTrack": "internship",
-        "jobType": "internship",
-        "workMode": "hybrid",
+        "id": "illustrative-6",
+        "companyId": "illustrative-company-6",
+        "title": "Associate Software Engineer",
+        "location": "Kochi",
+        "relevanceTrack": "new_grad",
+        "jobType": "full_time",
+        "workMode": "onsite",
         "status": "active",
         "applyUrl": "#illustrative",
         "postedDate": "2026-09-10T03:30:00.000Z",
         "createdAt": "2026-09-10T03:30:00.000Z",
         "company": {
-          "id": "illustrative-company-5",
-          "name": "Meridian Health",
+          "id": "illustrative-company-6",
+          "name": "Lumen Logistics",
           "logoUrl": null
         }
       },
@@ -198,84 +233,84 @@
         "dreamCompanyBoost": 0
       },
       "duplicateCount": 1,
-      "reasons": ["Posted 6 days ago", "Strong match for interns"]
-    },
-    {
-      "job": {
-        "id": "illustrative-6",
-        "companyId": "illustrative-company-6",
-        "title": "Associate Software Engineer",
-        "location": "Chennai",
-        "relevanceTrack": "new_grad",
-        "jobType": "full_time",
-        "workMode": "onsite",
-        "status": "active",
-        "applyUrl": "#illustrative",
-        "postedDate": "2026-09-08T03:30:00.000Z",
-        "createdAt": "2026-09-08T03:30:00.000Z",
-        "company": {
-          "id": "illustrative-company-6",
-          "name": "Lumen Logistics",
-          "logoUrl": null
-        }
-      },
-      "priority": 58.71,
-      "components": {
-        "relevanceScore": 100,
-        "deadlineUrgency": 10,
-        "freshness": 78.57,
-        "dreamCompanyBoost": 0
-      },
-      "contributions": {
-        "relevanceScore": 40,
-        "deadlineUrgency": 3,
-        "freshness": 15.71,
-        "dreamCompanyBoost": 0
-      },
-      "duplicateCount": 1,
-      "reasons": ["Posted 8 days ago", "Strong match for new grads"]
+      "reasons": ["Posted 6 days ago", "Strong match for new grads"]
     },
     {
       "job": {
         "id": "illustrative-8",
         "companyId": "illustrative-company-8",
         "title": "SDE 1, Search",
-        "location": "Bengaluru",
+        "location": "Surat",
         "relevanceTrack": "new_grad",
         "jobType": "full_time",
         "workMode": "hybrid",
         "status": "active",
         "applyUrl": "#illustrative",
-        "postedDate": "2026-09-05T03:30:00.000Z",
-        "createdAt": "2026-09-05T03:30:00.000Z",
+        "postedDate": "2026-09-09T15:30:00.000Z",
+        "createdAt": "2026-09-09T15:30:00.000Z",
         "company": {
           "id": "illustrative-company-8",
           "name": "Quill Commerce",
           "logoUrl": null
         }
       },
-      "priority": 56.57,
+      "priority": 59.79,
       "components": {
         "relevanceScore": 100,
         "deadlineUrgency": 10,
-        "freshness": 67.86,
+        "freshness": 83.93,
         "dreamCompanyBoost": 0
       },
       "contributions": {
         "relevanceScore": 40,
         "deadlineUrgency": 3,
-        "freshness": 13.57,
+        "freshness": 16.79,
         "dreamCompanyBoost": 0
       },
       "duplicateCount": 1,
-      "reasons": ["Posted 11 days ago", "Strong match for new grads"]
+      "reasons": ["Posted 6 days ago", "Strong match for new grads"]
+    },
+    {
+      "job": {
+        "id": "illustrative-10",
+        "companyId": "illustrative-company-10",
+        "title": "Software Developer, Graduate",
+        "location": "Noida",
+        "relevanceTrack": "new_grad",
+        "jobType": "full_time",
+        "workMode": "onsite",
+        "status": "active",
+        "applyUrl": "#illustrative",
+        "postedDate": "2026-09-09T03:30:00.000Z",
+        "createdAt": "2026-09-09T03:30:00.000Z",
+        "company": {
+          "id": "illustrative-company-10",
+          "name": "Harbor Systems",
+          "logoUrl": null
+        }
+      },
+      "priority": 59.43,
+      "components": {
+        "relevanceScore": 100,
+        "deadlineUrgency": 10,
+        "freshness": 82.14,
+        "dreamCompanyBoost": 0
+      },
+      "contributions": {
+        "relevanceScore": 40,
+        "deadlineUrgency": 3,
+        "freshness": 16.43,
+        "dreamCompanyBoost": 0
+      },
+      "duplicateCount": 1,
+      "reasons": ["Posted 7 days ago", "Strong match for new grads"]
     },
     {
       "job": {
         "id": "illustrative-7",
         "companyId": "illustrative-company-7",
         "title": "Frontend Engineer, Early Career",
-        "location": "Remote, India",
+        "location": "Remote",
         "relevanceTrack": "early_career",
         "jobType": "full_time",
         "workMode": "remote",
@@ -307,45 +342,10 @@
     },
     {
       "job": {
-        "id": "illustrative-10",
-        "companyId": "illustrative-company-10",
-        "title": "Software Developer, Graduate",
-        "location": "Noida",
-        "relevanceTrack": "new_grad",
-        "jobType": "full_time",
-        "workMode": "onsite",
-        "status": "active",
-        "applyUrl": "#illustrative",
-        "postedDate": "2026-09-02T03:30:00.000Z",
-        "createdAt": "2026-09-02T03:30:00.000Z",
-        "company": {
-          "id": "illustrative-company-10",
-          "name": "Harbor Systems",
-          "logoUrl": null
-        }
-      },
-      "priority": 54.43,
-      "components": {
-        "relevanceScore": 100,
-        "deadlineUrgency": 10,
-        "freshness": 57.14,
-        "dreamCompanyBoost": 0
-      },
-      "contributions": {
-        "relevanceScore": 40,
-        "deadlineUrgency": 3,
-        "freshness": 11.43,
-        "dreamCompanyBoost": 0
-      },
-      "duplicateCount": 1,
-      "reasons": ["Posted 14 days ago", "Strong match for new grads"]
-    },
-    {
-      "job": {
         "id": "illustrative-9",
         "companyId": "illustrative-company-9",
         "title": "Data Engineer Intern",
-        "location": "Mumbai",
+        "location": "Jaipur",
         "relevanceTrack": "internship",
         "jobType": "internship",
         "workMode": "onsite",
