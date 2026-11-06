@@ -9,7 +9,7 @@ Scope: the landing page (`/`) in full, and the brand rules the app shares with i
 **"Field to focus."** Every open role is a field; CareerRadar brings ten of them into focus. The landing is a light, quiet page of seven sections, and the same idea runs through it once each:
 
 - **The field:** the hero's headline sits inside faint concentric rings (the radar, used as layout) with small white sample job cards on them at three depths.
-- **The focus:** as the hero leaves, the ten ranked cards travel into one "Today's ten" card.
+- **The focus:** as the hero leaves, its field drifts outward and fades, and the ten arrive in one "Today's ten" card, row by row.
 - **The proof:** the numbers, how it works, and the features, each shown with one working fragment of the real product.
 - **The signal:** the radar itself appears once, lit, in the page's only dark band at the end.
 
@@ -30,7 +30,7 @@ Techniques are borrowed from lightspark.com (canvas, depth field, two-tone state
 | grey | #6B6B66 | any grey text under 24px |
 | grey-lg | #8A8A85 | grey text 24px and larger only (statements' second tone, source wordmarks) |
 | green | #316B17 | links, focus ring, the app's primary action |
-| lime | #BCF053 | only: the "Live" dot, rank 1's tag, and inside the dark band |
+| lime | #BCF053 | only: rank 1's tag in "Today's ten", and inside the dark band. At most one lime mark in any viewport outside the band |
 | lime-tint | #EEF8D8 | the rank tag of ranks 2 to 10, with ink text |
 | band | #0C0D0B | the dark band |
 | band-ink | #F5F5F3 | text in the dark band |
@@ -51,6 +51,8 @@ Measured with `node docs/screenshots/landing-v3/contrast.mjs` (WCAG 2.x):
 | monogram ink on its tint (sky, sand, rose) | 4.5 | 7.82, 6.42, 7.21 |
 
 - No glows, gradients or grain on the light page. Lime never sits on the light canvas as text.
+- The "Live" mark's dot is green, still. Rank tags in the hero's field all take lime-tint, rank 1 included, so the queue's rank 1 is the only lime on screen.
+- One hairline colour (hairline) on the light page; no element carries two shadows.
 - Monogram tiles take one of six soft tints (sky, sage, sand, rose, stone, teal) with a dark ink of the same hue. They stand in for logos; no real logo is shown.
 
 ## Type
@@ -80,8 +82,8 @@ The app uses the same two families (`--app-font-sans`, `--app-font-mono` in `src
 ## Space
 
 - Base unit 4px. Gutters 48px at 1024 and up, 32px from 640 to 1023, 20px under 640. Content max 1200px.
-- One gap between sections, set as each section's top padding: 120px at 1024 and up, 96px from 640, 72px under 640.
-- Page height budget: at most 6,500px at 1440 and 8,500px at 390. Measured 2026-11-03: 6,439px, 7,082px at 768, 7,579px at 390.
+- One vertical rhythm, `--lp-section`: 128px from 768 up, 80px under 768. Every section after the hero pads its top with it (FAQ and the band their bottom too); no section has an empty band taller than it (the stat columns are 240px).
+- Page height budget: at most 6,500px at 1440 and 8,500px at 390. Measured 2026-11-06: 6,453px at 1440, 7,784px at 768, 8,204px at 390.
 
 ## Shape and depth
 
@@ -92,33 +94,21 @@ The app uses the same two families (`--app-font-sans`, `--app-font-mono` in `src
 
 ## Motion
 
-Built with framer-motion. Native scroll only, no scroll-jacking.
+Built with framer-motion and CSS. Native scroll only, no scroll-jacking. One easing everywhere: `cubic-bezier(0.16, 1, 0.3, 1)` (`--lp-ease`, `EASE_OUT`).
 
-| Token | Duration | Easing | Use |
-|---|---|---|---|
-| micro | 150ms | ease or the reveal curve | hover, press (`scale(0.98)`) |
-| short | 250ms | ease | nav background, accordion icon |
-| reveal | 500ms | `cubic-bezier(0.16, 1, 0.3, 1)` | content entering: opacity 0 to 1, y 12 to 0, once, siblings 70ms apart |
-| travel | spring, 0.9s, bounce 0.12 | | the ten moving between the field and the card |
-| count | 900ms | the reveal curve | stat numbers, once |
-| drift | 14 to 22s per card, alternate, each with its own phase | ease-in-out | the field's idle loop, translate up to 4px; none on phones |
-| copy out | scrubbed by scroll, the first 11vh | smoothstep | the hero's copy fades and lifts 24px before any card above it moves |
-| flight | scrubbed by scroll; each card leaves 20vh before its row lands | ease-in-out per card | the ten from the field into their rows, one row at a time |
-| lift | 200ms | the reveal curve | section cards rise 2px on hover with a deeper shadow; the moving board card lifts |
+The page has three motions and no others:
 
-- **The field** moves by transform only: each depth layer translates with scroll at its own rate (far +140px, mid +70px, near -40px over the hero), far and mid scale outward and fade as the hero leaves. Blur is a fixed CSS filter per layer (far 6px, mid 2px), never animated. Cards never sit under the headline: `layoutField()` measures the hero's text block and skips any spot that would overlap it, the nav, or another card.
-- **The field** has at most eight sharp cards on wide screens and six on phones: ranks 1 to 8 (1 to 6). Ranks 9 and 10 (7 to 10) rest soft (blurred, 0.9 scale) in the highest places of the middle layer, but do not fade with it. No card comes within 48px of the hero's text block (`CLEAR_ZONE`). The sharp cards fill the rings from just below the button, clockwise and outward; their **ranks read from the bottom up** (rank 1 is the lowest), the order in which they leave for "Today's ten", so a card on its way down never meets one still waiting below it. Titles are whole, up to two lines, never an ellipsis; the company and city line is whole too (sample cities are short). On a wide but short screen the cards sit in as many columns as fit above and below the text. Phone cards keep at least 8px apart: a 10px layout gap and no idle drift. The rings and the two far layers fade out toward the hero's foot through a mask, so nothing is cut by its edge.
-- **The focus** is scrubbed by the scroll (`flight.tsx`, `flight-math.ts`) and runs backward when scrolling up. In order:
-  1. The hero's copy fades and lifts out over the first 11vh. No card that starts above the copy's foot moves before it has gone, so no card ever passes over the headline, lead, button or "Free and open source".
-  2. Each row of "Today's ten" lands as it scrolls fully into view, top to bottom, at least 5vh and three quarters of the previous row's height after the one before, so the next card crosses a row only once that row's card is home. A card leaves the field 20vh before its row lands: at most two or three are in the air, and no two ever overlap.
-  3. A fixed overlay holds a copy of each of the ten and places it, every frame, between its slot in the field and its row, by transform only. It lands with its title on the row's title and hands over by opacity only within its last 8px, so a fading card never smears across another row. A rank with no place in the field (a short screen has fewer) slides in from 48px left of its row instead.
-  4. The card's white frame and its "Today's ten" header appear with row 1, so the card is never seen empty; every card ends in its row, with no ghost left in the field.
+1. **The reveal.** Content entering rises and fades in once, when it comes into view (`Reveal`; opacity 0 to 1, y 12 to 0, 500ms, siblings 70ms apart). "Today's ten" plays its own version when a quarter of the card is in view: the card fades and rises 12px over 500ms, starting with row 1, so the frame is never seen empty; its ten rows rise 8px and fade in over 400ms, 45ms apart; after the last lands, rank 1's lime tag pulses once (one soft halo, 900ms). The field's cards enter on load the same way.
+2. **The hero's scroll fade.** framer-motion `useScroll` on the hero, through `useTransform` motion values only. Each field card drifts straight out from the centre, at most 60px and never past the hero's edge, and the cards and rings fade to 0 by 70% of the hero scrolled; the copy fades and lifts 16px by 50%, so a little earlier. The copy is static HTML painted before the motion chunk loads, so its values are bound with `styleEffect`. Cards only move away from the text, so none ever crosses the headline, lead or button.
+3. **The radar sweep** in the dark band, at 30fps, only after the band has faded in, while on screen and not paused. The icon-only pause button ("Pause the radar sweep") sits in the band's bottom-right corner.
 
-  On 1024px and wider the section holds for 15vh of sticky, and the statement is kept centred on the part of the list on screen (transform only), so there is never an empty band above it; under 1024 it does not stick. `scripts/capture-focus-frames.mjs` records and checks every frame: overlaps, cards over the copy, an empty frame, ghosts, smears, and the statement's centring.
-- Vignettes in How it works and Features play once, when half in view.
-- The dark band fades in over 900ms when a third of it is in view; the radar sweeps at 30fps only after that, while on screen and not paused. The icon-only pause button ("Pause the radar sweep") sits in the band's bottom-right corner, outside the radar.
+Plus interaction feedback, which is not decoration: hover and press (150ms, `scale(0.98)`), the nav's background (250ms), the FAQ accordion's height, and section cards lifting 2px on hover with a deeper shadow (200ms).
+
+**No scroll listener positions anything.** No element on the landing is positioned or transformed from a `scroll` event. Scroll-linked motion is either framer-motion `useScroll`/`useTransform` motion values (no React state, no hand-written style writes) or CSS scroll-driven animation (`animation-timeline: view()`/`scroll()`) with the still end state as its fallback. The nav's listener only toggles a class. Nothing is sticky except the FAQ heading. `e2e-landing/smooth-scroll.spec.ts` wheel-scrolls 0 to 1600px and back at 1440x900 and fails if the statement moves at all, if the hero copy or the card moves outside its declared motion, or if a flying or duplicate card exists.
+
+- Still on purpose: the stat numbers (printed, not counted), the How it works fragments, the board, the reminder, the dream list and the app crop all show their end state; the step or card they sit in takes the reveal. No idle drift, marquee or repeating pulse.
 - Anchor links scroll natively and smoothly (off under reduced motion), and each section stops 24px under the nav.
-- **Reduced motion:** no parallax, drift, travel, copy fade, sweep or counting. The field is static, the ten are already in the card, every vignette shows its end state.
+- **Reduced motion:** nothing moves. The field and the copy stay put, every row and card is shown in place, no pulse, no sweep, no hover lift.
 
 ## Navigation
 
@@ -127,10 +117,10 @@ A plain transparent bar, 64px tall: the logo, "How it works", "Features", "FAQ" 
 ## Sections
 
 1. **Hero, "Field to focus."** Centred h1 "Ten roles worth applying to, every morning.", a one-line lead, Get started, "Free and open source". Around it, rings and sample cards: 24 at 1440 in three depths (8 near, 8 mid, 8 far), 18 at 768 (8, 6, 4), 12 at 390 in two depths (6 near, 6 mid). On phones and tablets the text spans the width, so the cards sit in rows above and below it; the hero is at least 1080px tall at 640 to 1023 and 920px on phones to fit all ten.
-2. **Focus.** The statement "Ten, not ten thousand. Ranked by fit, how soon it closes, how fresh it is and the companies you care about.", the caption "Sample roles. Ranking from the real scoring code.", and the "Today's ten" card: four full rows (16px padding top and bottom) with reasons and an Apply on row 1, six one-line rows.
-3. **Stats.** Three columns 344px tall with a hairline left rule: "Tracked" {activePostings} open roles, "Open to you" {openToFreshers} open to freshers, "Your queue" 10 ranked each morning; mono index 01 to 03; a lime "Live" dot on the first. Rows with a top rule under 768px.
-4. **How it works.** A statement, then three cards of equal height with their content set from the top: Ranked (four 4px bars: ink at 85% on a hairline track, rounded, values in tabular figures, filling once 60ms apart), Explained (reason chips), Tracked (Apply, check, onto the Applied column, and the next pick takes the empty place, as in the real queue).
-5. **Features.** The board (Saved, Applied, Online assessment, Interview, Offer) with one card gliding from Applied to Online assessment under a lift shadow, a referral chip on one card and an interview day on another; deadline reminders (a reminder as the app writes it); dream companies (a bookmark lifts a row by ten points); a crop of the real app's Today's ten, 880px wide at most, captured so its smallest text shows at 14px or more, its last 96px fading into the frame through a mask instead of cutting a row, in a light browser frame with no window dots, tilting from 6deg to flat; the sources as wordmarks.
+2. **Focus.** A plain two-column section from 1024px (statement 4fr, card 7fr), the statement centred beside the card by the grid; stacked below. The statement "Ten, not ten thousand. Ranked by fit, how soon it closes, how fresh it is and the companies you care about.", the caption "Sample roles. Ranking from the real scoring code.", and the "Today's ten" card: four full rows (16px padding top and bottom) with reasons and an Apply on row 1, six one-line rows.
+3. **Stats.** Three columns 240px tall with a hairline left rule: "Tracked" {activePostings} open roles, "Open to you" {openToFreshers} open to freshers, "Your queue" 10 ranked each morning; mono index 01 to 03; a green "Live" dot on the first. Rows with a top rule under 768px.
+4. **How it works.** A statement, then three cards of equal height with their content set from the top: Ranked (four 4px bars: ink at 85% on a hairline track, rounded, values in tabular figures), Explained (reason chips), Tracked (the next pick with Apply, and the first, checked, on the Applied column, as in the real queue). All three are still.
+5. **Features.** The board (Saved, Applied, Online assessment, Interview, Offer) with a referral chip on one card and an interview day on another; deadline reminders (a reminder as the app writes it, flat, no shadow inside its card); dream companies (the bookmarked row sits ten points up, on top); a crop of the real app's Today's ten, 880px wide at most, captured so its smallest text shows at 14px or more, its last 200px fading into the frame through a mask so it ends in white, never on a cut row, with the caption below and no rule between, in a light browser frame with no window dots; the sources as wordmarks.
 6. **Questions.** Five, in an accordion of hairline rows with a height animation. At 1024px and wider, two columns: "Questions" and "Something else? Read the code on GitHub" on the left, sticky; the accordion on the right.
 7. **The dark band.** The lit radar centred above "Tomorrow's ten are already being ranked.", Get started in lime. Then the footer on the canvas: logo, one line, Sign in, Source on GitHub, MIT licence, "Designed and built by Udit Singh Chauhan".
 
@@ -164,7 +154,9 @@ The app's light theme uses the landing's tokens (canvas, white cards, hairline, 
 
 ## Decisions
 
-- **2026-11-05: field to focus, one row at a time.** A frame-by-frame capture at 1440x900, every 50px from 0 to 1200, found faults in 12 of 25 frames: up to ten overlapping pairs of flying cards, cards over the headline and button, "Today's ten" shown empty, and the statement low beside a rising list. All ten had flown together from scattered places into one column, so their paths crossed. Now the copy leaves first, the field ranks from the bottom up, and rows land in turn as they come into view; the same capture finds 25 of 25 clean, and a 10px sweep at ten viewports from 375 to 2560 wide finds none. Before and after strips: `docs/screenshots/focus-frames/`.
+- **2026-11-06: the scroll fade and the row reveal replace the flight.** The statement beside "Today's ten" shook on scroll: `useCentredBeside()` wrote a transform from a window scroll listener onto an element inside a CSS-sticky stage. The browser moves sticky content on the compositor at once and the script's correction lands a frame later, so the two fought; on production the offset swung from -296px to +57px in one scroll, with 15 of 43 frames jumping over 12px. The flight had the same weakness (an overlay placed from scroll every frame) and made the focus section a 115vh sticky hold. Both are gone. The hero's field now drifts outward and fades with the scroll (motion values only), "Today's ten" reveals its rows once in a plain grid section, and the rule is written down: no scroll listener positions anything (Motion). `e2e-landing/smooth-scroll.spec.ts` fails on the old page (the statement jumps 297px in one frame, flying and duplicate cards) and passes on the new one. The same pass cut the motion to three (reveal, scroll fade, sweep), set one easing, one 128/80px section rhythm, one lime mark per viewport, and a softer foot on the app crop. Before and after: `docs/screenshots/smooth-premium/`.
+
+- **2026-11-05 (superseded 2026-11-06): field to focus, one row at a time.** A frame-by-frame capture at 1440x900, every 50px from 0 to 1200, found faults in 12 of 25 frames: up to ten overlapping pairs of flying cards, cards over the headline and button, "Today's ten" shown empty, and the statement low beside a rising list. All ten had flown together from scattered places into one column, so their paths crossed. Now the copy leaves first, the field ranks from the bottom up, and rows land in turn as they come into view; the same capture finds 25 of 25 clean, and a 10px sweep at ten viewports from 375 to 2560 wide finds none. Before and after strips: `docs/screenshots/focus-frames/`.
 
 - **2026-11-03: light, "Field to focus."** The dark page was about 12,200px long at 1440, showed the radar full-size twice, ran a 3,600px pinned chapter, put lime glow on everything so nothing stood out, spoke in engine terms, and did not match the app (briefcase logo, Geologica, engine reasons in the real queue). Kept: Geist, the radar mark, lime as a signal, the real scoring code, live counts, the honesty rules. Changed: light canvas with one dark band; lime restricted to three uses; one field of cards instead of a canvas of points; a seven-section page under 6,500px; Geist Mono for labels; the app brought onto the same brand. Study and measurements: `docs/LANDING_V3.md`.
 - 2026-11-01 (superseded): dark stage, "From 4,512 to ten." References in `docs/REVAMP.md`.
