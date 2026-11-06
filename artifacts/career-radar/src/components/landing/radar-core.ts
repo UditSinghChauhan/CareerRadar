@@ -177,8 +177,6 @@ export type FieldFrame = {
   lit: readonly number[];
   /** 0 to 1 per rank: a glow pulse on top of `lit`. */
   pulse?: readonly number[];
-  /** Skip drawing found roles (the chapter draws them in flight itself). */
-  hideFound?: boolean;
 };
 
 type Layer = HTMLCanvasElement;
@@ -301,7 +299,6 @@ export function drawField(
     ctx.restore();
   }
 
-  if (f.hideFound) return;
   for (const p of foundInRank(points)) {
     const lit = f.lit[p.rank - 1] ?? 0;
     if (lit <= 0) continue;

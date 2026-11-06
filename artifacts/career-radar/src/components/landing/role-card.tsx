@@ -19,11 +19,21 @@ export function Monogram({
   );
 }
 
-/** The rank of one of the day's ten: ink on pale lime; full lime on rank 1 only. */
-export function RankTag({ rank }: { rank: number }) {
+/**
+ * The rank of one of the day's ten: ink on pale lime; full lime on rank 1
+ * only, and only in "Today's ten". `quiet` keeps rank 1 on the tint too (the
+ * hero's field), so no viewport shows two lime marks.
+ */
+export function RankTag({
+  rank,
+  quiet = false,
+}: {
+  rank: number;
+  quiet?: boolean;
+}) {
   return (
     <span
-      className={rank === 1 ? "lp-rank lp-rank--top" : "lp-rank"}
+      className={rank === 1 && !quiet ? "lp-rank lp-rank--top" : "lp-rank"}
       aria-label={`Rank ${rank}`}
     >
       {rank}
@@ -31,7 +41,10 @@ export function RankTag({ rank }: { rank: number }) {
   );
 }
 
-/** A small white sample job card, as it floats in the hero's field. */
+/**
+ * A small white sample job card, as it sits in the hero's field. Its rank
+ * tag is always the quiet tint: the full lime belongs to "Today's ten".
+ */
 export function RoleCard({ role }: { role: SampleRole }) {
   return (
     <div className="lp-card lp-rolecard">
@@ -43,7 +56,7 @@ export function RoleCard({ role }: { role: SampleRole }) {
           <span className="lp-rolecard__city"> · {role.city}</span>
         </p>
       </div>
-      {role.rank > 0 && <RankTag rank={role.rank} />}
+      {role.rank > 0 && <RankTag rank={role.rank} quiet />}
     </div>
   );
 }

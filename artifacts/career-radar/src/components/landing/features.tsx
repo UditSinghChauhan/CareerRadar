@@ -1,26 +1,14 @@
-import { useEffect, useRef, useState } from "react";
 import { Bell, Bookmark, BookmarkCheck } from "lucide-react";
-import {
-  motion,
-  useInView,
-  useReducedMotion,
-  type Transition,
-} from "framer-motion";
 import { Monogram } from "./role-card";
 import { RANKED, type SampleRole } from "./sample-roles";
 import { Reveal } from "./motion/reveal";
-import { EASE_OUT } from "./motion/tokens";
 import { SOURCE_NAMES } from "./sources";
 import captures from "./captures.json";
 
-const move: Transition = { type: "spring", duration: 0.8, bounce: 0.1 };
-
-function useOnce<T extends Element>(amount = 0.5) {
-  const ref = useRef<T>(null);
-  const reduced = Boolean(useReducedMotion());
-  const seen = useInView(ref, { once: true, amount });
-  return { ref, go: reduced || seen, reduced };
-}
+/*
+ * Every fragment here is still: it shows the product's state, and the card
+ * it sits in rises in with the page's one reveal (DESIGN.md, Motion).
+ */
 
 /** The app's board columns, named as the board's statuses group them. */
 const COLUMNS = [
@@ -36,26 +24,16 @@ type Column = (typeof COLUMNS)[number];
 const BOARD: Array<{ role: SampleRole; col: Column; note?: string }> = [
   { role: RANKED[4], col: "Saved" },
   { role: RANKED[8], col: "Saved" },
-  { role: RANKED[1], col: "Applied" },
   { role: RANKED[5], col: "Applied", note: "Referral" },
+  { role: RANKED[1], col: "Online assessment" },
   { role: RANKED[2], col: "Online assessment" },
   { role: RANKED[6], col: "Interview", note: "Interview on Thursday" },
   { role: RANKED[9], col: "Offer" },
 ];
-/** The card that moves when the board comes into view. */
-const MOVER = RANKED[1].id;
 
-function BoardCard({
-  role,
-  note,
-  lifted = false,
-}: {
-  role: SampleRole;
-  note?: string;
-  lifted?: boolean;
-}) {
+function BoardCard({ role, note }: { role: SampleRole; note?: string }) {
   return (
-    <div className={lifted ? "lp-bcard is-lifted" : "lp-bcard"}>
+    <div className="lp-bcard">
       <Monogram role={role} size="sm" />
       <div>
         <p className="lp-bcard__title">{role.title}</p>
@@ -67,22 +45,10 @@ function BoardCard({
 }
 
 function Board() {
-  const { ref, go, reduced } = useOnce<HTMLDivElement>(0.4);
-  const [moved, setMoved] = useState(reduced);
-  // True while the moving card is in the air, for its lift shadow.
-  const [lifted, setLifted] = useState(false);
-  useEffect(() => {
-    if (!go || reduced) return;
-    const id = window.setTimeout(() => setMoved(true), 700);
-    return () => window.clearTimeout(id);
-  }, [go, reduced]);
-  const colOf = (role: SampleRole, col: Column): Column =>
-    role.id === MOVER && moved ? "Online assessment" : col;
-
   return (
-    <div ref={ref} className="lp-board" inert>
+    <div className="lp-board" inert>
       {COLUMNS.map((col) => {
-        const cards = BOARD.filter((b) => colOf(b.role, b.col) === col);
+        const cards = BOARD.filter((b) => b.col === col);
         return (
           <div key={col} className="lp-board__col">
             <p className="lp-board__head">
@@ -91,24 +57,7 @@ function Board() {
             </p>
             <div className="lp-board__cards">
               {cards.map(({ role, note }) => (
-                <motion.div
-                  key={role.id}
-                  layout="position"
-                  transition={move}
-                  onLayoutAnimationStart={() =>
-                    role.id === MOVER && setLifted(true)
-                  }
-                  onLayoutAnimationComplete={() =>
-                    role.id === MOVER && setLifted(false)
-                  }
-                  style={role.id === MOVER ? { zIndex: 1 } : undefined}
-                >
-                  <BoardCard
-                    role={role}
-                    note={note}
-                    lifted={lifted && role.id === MOVER}
-                  />
-                </motion.div>
+                <BoardCard key={role.id} role={role} note={note} />
               ))}
             </div>
           </div>
@@ -119,17 +68,10 @@ function Board() {
 }
 
 function Reminder() {
-  const { ref, go, reduced } = useOnce<HTMLDivElement>();
   const role = RANKED[1];
   return (
-    <div ref={ref} className="lp-remind" inert>
-      <motion.div
-        className="lp-toast"
-        role="presentation"
-        initial={reduced ? false : { opacity: 0, y: 16 }}
-        animate={go ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-        transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.3 }}
-      >
+    <div className="lp-remind" inert>
+      <div className="lp-toast" role="presentation">
         <span className="lp-toast__icon">
           <Bell aria-hidden="true" />
         </span>
@@ -140,7 +82,7 @@ function Reminder() {
             applied yet.
           </p>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -150,27 +92,16 @@ const DREAM_ROWS = [RANKED[1], RANKED[2], RANKED[3]];
 const DREAM_ID = RANKED[3].id;
 
 function Dream() {
-  const { ref, go, reduced } = useOnce<HTMLDivElement>();
-  const [on, setOn] = useState(reduced);
-  useEffect(() => {
-    if (!go || reduced) return;
-    const id = window.setTimeout(() => setOn(true), 800);
-    return () => window.clearTimeout(id);
-  }, [go, reduced]);
-  // The dream-company part of the score is 100 x 10%: ten points.
-  const score = (r: SampleRole) => r.score + (on && r.id === DREAM_ID ? 10 : 0);
+  // The dream-company part of the score is 100 x 10%: ten points, enough to
+  // lift the bookmarked role to the top.
+  const score = (r: SampleRole) => r.score + (r.id === DREAM_ID ? 10 : 0);
   const rows = [...DREAM_ROWS].sort((a, b) => score(b) - score(a));
   return (
-    <div ref={ref} className="lp-dream" inert>
+    <div className="lp-dream" inert>
       {rows.map((r) => {
-        const starred = on && r.id === DREAM_ID;
+        const starred = r.id === DREAM_ID;
         return (
-          <motion.div
-            key={r.id}
-            layout="position"
-            transition={move}
-            className="lp-dream__row"
-          >
+          <div key={r.id} className="lp-dream__row">
             <Monogram role={r} size="sm" />
             <div className="lp-dream__text">
               <p className="lp-bcard__title">{r.title}</p>
@@ -186,7 +117,7 @@ function Dream() {
                 <Bookmark aria-hidden="true" />
               )}
             </span>
-          </motion.div>
+          </div>
         );
       })}
     </div>
@@ -196,19 +127,13 @@ function Dream() {
 /**
  * Today's queue from the real app, cropped to the part that matters and
  * shown large enough to read: the crops are captured so the app's smallest
- * text lands at 14px or more here. Tilts from 6deg to flat as it enters.
+ * text lands at 14px or more here. Its foot fades out through a mask, so
+ * the crop never ends on a cut row. Enters with the page's reveal.
  */
 function Capture() {
-  const reduced = Boolean(useReducedMotion());
   const { queue, "queue-sm": small } = captures;
   return (
-    <motion.figure
-      className="lp-browser lp-browser--crop"
-      initial={reduced ? false : { rotateX: 6, y: 24 }}
-      whileInView={{ rotateX: 0, y: 0 }}
-      viewport={{ once: true, amount: 0.25 }}
-      transition={{ duration: 0.9, ease: EASE_OUT }}
-    >
+    <Reveal as="figure" className="lp-browser lp-browser--crop">
       <div className="lp-browser__bar" aria-hidden="true">
         <span className="lp-browser__url">
           careerradar-34ec.onrender.com/dashboard
@@ -245,7 +170,7 @@ function Capture() {
       <figcaption className="lp-caption">
         Today’s ten in the real app, on an invented demo account.
       </figcaption>
-    </motion.figure>
+    </Reveal>
   );
 }
 

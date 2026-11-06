@@ -2,19 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   CARD_GAP,
   CLEAR_ZONE,
+  DRIFT_OUT,
   cardSize,
   layoutField,
+  outward,
   type Rect,
 } from "../field";
-import {
-  COPY_OUT_VH,
-  LEAD_VH,
-  cardProgress,
-  copyOut,
-  crossfade,
-  easeInOut,
-  planFlight,
-} from "../flight-math";
 
 /** The hero's text block as measured in Chromium at each width. */
 const VIEWS: Array<{ name: string; W: number; H: number; zone: Rect }> = [
@@ -66,23 +59,33 @@ describe.each(VIEWS)("the hero's field at $name", ({ W, H, zone }) => {
     ]);
   });
 
-  // The rows fill from the top as the list rises, so the card that leaves
-  // first must have nothing still waiting below it (flight-math.ts).
-  it("ranks the sharp cards from the bottom up", () => {
-    const sharp = layout.cards
-      .filter((c) => c.depth === "near")
-      .sort((a, b) => a.role.rank - b.role.rank);
-    for (let i = 1; i < sharp.length; i++) {
-      expect(sharp[i].y).toBeLessThanOrEqual(sharp[i - 1].y);
-    }
+  it("puts rank 1 just under the button", () => {
+    const one = layout.cards.find((c) => c.role.rank === 1)!;
+    expect(one.depth).toBe("near");
+    expect(one.y).toBeGreaterThan(zone.b);
   });
 
-  it("gives the soft ranked cards the highest places of the middle layer", () => {
-    const mid = layout.cards.filter((c) => c.depth === "mid");
-    const ranked = mid.filter((c) => c.role.rank > 0);
-    const others = mid.filter((c) => c.role.rank === 0);
-    const lowestRanked = Math.max(...ranked.map((c) => c.y));
-    for (const c of others) expect(c.y).toBeGreaterThanOrEqual(lowestRanked);
+  // The scroll fade moves each card straight out from the centre, at most
+  // 60px, so a card outside the clear zone never crosses into the text, and
+  // never past the hero's edge, which would cut it.
+  it("drifts every card away from the text, never across it or out of the hero", () => {
+    const clear = grow(zone, CLEAR_ZONE);
+    for (const c of layout.cards) {
+      const { ux, uy, reach } = outward(layout, c);
+      expect(Math.hypot(ux, uy)).toBeCloseTo(1, 6);
+      expect(reach).toBeGreaterThanOrEqual(0);
+      expect(reach).toBeLessThanOrEqual(DRIFT_OUT);
+      const start = box(c.x, c.y, scale[c.depth]);
+      for (let k = 0; k <= 1; k += 0.1) {
+        const at = box(
+          c.x + ux * reach * k,
+          c.y + uy * reach * k,
+          scale[c.depth],
+        );
+        expect(overlaps(at, clear)).toBe(false);
+        if (start.b <= H) expect(at.b).toBeLessThanOrEqual(H);
+      }
+    }
   });
 
   it("keeps at least 8px between any two sharp cards", () => {
@@ -93,107 +96,6 @@ describe.each(VIEWS)("the hero's field at $name", ({ W, H, zone }) => {
     for (let i = 0; i < sharp.length; i++) {
       for (let j = i + 1; j < sharp.length; j++) {
         expect(overlaps(grow(sharp[i], 4), grow(sharp[j], 4))).toBe(false);
-      }
-    }
-  });
-});
-
-describe("the flight", () => {
-  const vh = 900;
-  // The rows of "Today's ten" at 1440x900, measured in Chromium: four full
-  // rows, then six one-line rows, their bottoms in page coordinates.
-  const rows = [1144, 1253, 1362, 1471, 1517, 1563, 1609, 1655, 1701, 1747].map(
-    (bottom, i) => ({ bottom, height: i < 4 ? 103 : 40 }),
-  );
-  const waitForCopy = [
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    true,
-    true,
-    true,
-    true,
-  ];
-  // The stage sticks at 900 and holds for 15vh (135px).
-  const end = 900 + 135;
-  const plan = planFlight({ rows, viewport: vh, end, waitForCopy });
-
-  it("lands the rows in order, each once it is in view, all by the hold's end", () => {
-    for (let i = 0; i < 10; i++) {
-      if (i > 0) expect(plan.land[i]).toBeGreaterThan(plan.land[i - 1]);
-      expect(plan.land[i]).toBeGreaterThanOrEqual(
-        Math.min(rows[i].bottom - vh, end),
-      );
-      expect(plan.land[i]).toBeLessThanOrEqual(end);
-    }
-  });
-
-  it("leaves a full row's card time to land before the next crosses it", () => {
-    for (let i = 1; i < 10; i++) {
-      expect(plan.land[i] - plan.land[i - 1]).toBeGreaterThanOrEqual(
-        0.75 * rows[i - 1].height,
-      );
-    }
-  });
-
-  it("moves no card from above the copy until the copy has gone", () => {
-    const gone = vh * COPY_OUT_VH;
-    expect(copyOut(gone, vh).opacity).toBe(0);
-    expect(copyOut(0, vh)).toEqual({ opacity: 1, y: 0 });
-    waitForCopy.forEach((wait, i) => {
-      if (wait) expect(plan.depart[i]).toBeGreaterThanOrEqual(gone);
-      expect(plan.depart[i]).toBeLessThan(plan.land[i]);
-      expect(plan.land[i] - plan.depart[i]).toBeLessThanOrEqual(vh * LEAD_VH);
-    });
-  });
-
-  // A 2560x1440 screen shows the whole list at once, so every row could
-  // land on the shortest gap; a card on a long diagonal path would then
-  // still be crossing the row above while that row's card landed.
-  it("lands a long path's card late enough to clear the row above", () => {
-    const wide = planFlight({
-      rows: rows.map((r) => ({ ...r, bottom: r.bottom - 600 })),
-      viewport: 1440,
-      end: 1100,
-      waitForCopy: rows.map(() => false),
-      distances: rows.map(() => 970),
-      cardHeight: 73,
-    });
-    for (let i = 1; i < 10; i++) {
-      const at = wide.land[i - 1];
-      const t = (at - wide.depart[i]) / (wide.land[i] - wide.depart[i]);
-      const left = (1 - easeInOut(Math.min(1, Math.max(0, t)))) * 970;
-      expect(left).toBeGreaterThanOrEqual(rows[i - 1].height + 73 - 0.5);
-    }
-  });
-
-  it("is scrubbed: the same scroll gives the same place, both ways", () => {
-    const there = cardProgress(500, plan, 3);
-    cardProgress(800, plan, 3);
-    expect(cardProgress(500, plan, 3)).toBe(there);
-    expect(cardProgress(0, plan, 3)).toBe(0);
-    expect(cardProgress(plan.land[3], plan, 3)).toBe(1);
-  });
-
-  it("hands the card from field to flight to row without a blink", () => {
-    for (const distance of [0, 48, 600, 1600]) {
-      for (let e = 0; e <= 1; e += 0.01) {
-        const o = crossfade(e, distance);
-        expect(Math.max(o.field, o.flying, o.row)).toBeGreaterThan(0.45);
-      }
-      expect(crossfade(0, distance)).toEqual({ field: 1, flying: 0, row: 0 });
-      expect(crossfade(1, distance)).toEqual({ field: 0, flying: 0, row: 1 });
-    }
-  });
-
-  it("starts the hand-over to the row only within 8px of home", () => {
-    const distance = 1600;
-    for (let e = 0; e < 1; e += 0.001) {
-      if (crossfade(e, distance).row > 0) {
-        expect((1 - e) * distance).toBeLessThanOrEqual(8.01);
       }
     }
   });

@@ -11,7 +11,8 @@
     "test": "pnpm -r --if-present run test",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:report": "playwright show-report e2e/.report"
+    "test:e2e:report": "playwright show-report e2e/.report",
+    "test:landing": "playwright test -c playwright.landing.config.ts"
   },
   "private": true,
   "devDependencies": {

@@ -1,0 +1,40 @@
+
+> workspace@0.0.0 test:landing /home/user/CareerRadar
+> playwright test -c playwright.landing.config.ts
+
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › e2e-landing/smooth-scroll.spec.ts:135:5 › the landing does not shake while it scrolls (6.4s)
+
+
+  1) [chromium] › e2e-landing/smooth-scroll.spec.ts:135:5 › the landing does not shake while it scrolls 
+
+    Error: faults in 128 frames (flying: 128, duplicate: 128, statement: 30, hero copy: 108, queue card: 63); first of each:
+    [flying] t=2930ms scrollY=0: 11 flying card elements
+    [duplicate] t=2930ms scrollY=0: card "SAData Engineer InternSable Analytics · Jaipur10" twice
+    [flying] t=2947ms scrollY=100: 11 flying card elements
+    [duplicate] t=2947ms scrollY=100: card "SAData Engineer InternSable Analytics · Jaipur10" twice
+    [flying] t=2980ms scrollY=100: 11 flying card elements
+    [duplicate] t=2980ms scrollY=100: card "SAData Engineer InternSable Analytics · Jaipur10" twice
+    [flying] t=3014ms scrollY=100: 11 flying card elements
+    [duplicate] t=3014ms scrollY=100: card "SAData Engineer InternSable Analytics · Jaipur10" twice
+    [statement] t=2947ms scrollY=100: statement moved 0.0,-297.0px in one frame
+    [hero copy] t=2947ms scrollY=100: hero copy -24.0px from rest
+    [hero copy] t=2980ms scrollY=100: hero copy -24.0px from rest
+    [hero copy] t=3014ms scrollY=100: hero copy -24.0px from rest
+    [hero copy] t=3030ms scrollY=200: hero copy -24.0px from rest
+    [statement] t=3097ms scrollY=300: statement moved 0.0,16.0px in one frame
+    [statement] t=3147ms scrollY=400: statement moved 0.0,50.0px in one frame
+    [statement] t=3214ms scrollY=500: statement moved 0.0,50.0px in one frame
+    [queue card] t=3464ms scrollY=1000: queue card moved down 100.0px
+    [queue card] t=3464ms scrollY=1000: queue card 100.0px from rest
+    [queue card] t=3480ms scrollY=1000: queue card 100.0px from rest
+    [queue card] t=3497ms scrollY=1000: queue card 100.0px from rest
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []

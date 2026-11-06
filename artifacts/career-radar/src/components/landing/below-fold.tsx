@@ -1,7 +1,6 @@
 import { Faq } from "./faq";
 import { Features } from "./features";
 import { FinalBand } from "./final-band";
-import { Flight } from "./flight";
 import { Focus } from "./focus";
 import { HowItWorks } from "./how";
 import { Stats } from "./stats";
@@ -24,7 +23,6 @@ export default function BelowFold({
 }) {
   return (
     <>
-      <Flight />
       <Focus />
       <Stats stats={stats} />
       <HowItWorks />

@@ -1,0 +1,10 @@
+
+> workspace@0.0.0 test:landing /home/user/CareerRadar
+> playwright test -c playwright.landing.config.ts
+
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › e2e-landing/smooth-scroll.spec.ts:135:5 › the landing does not shake while it scrolls (6.7s)
+
+  1 passed (7.4s)

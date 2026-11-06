@@ -1,8 +1,8 @@
 import { useEffect, useState, type RefObject } from "react";
 
 /**
- * True while the element is on screen and the tab is visible. Loops, the
- * sweep and the marquee run only while this is true.
+ * True while the element is on screen and the tab is visible. The final
+ * band's radar sweep, the page's one loop, runs only while this is true.
  */
 export function useActive(
   ref: RefObject<Element | null>,

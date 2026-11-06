@@ -1,0 +1,40 @@
+{
+  "before": {
+    "lighthouse": "12.6.0",
+    "formFactor": "mobile",
+    "scores": {
+      "performance": 88,
+      "accessibility": 100,
+      "best-practices": 96,
+      "seo": 100
+    },
+    "cls": 0,
+    "lcp": "2.3 s",
+    "tbt": "310 ms",
+    "consoleErrors": [
+      "Error: ClerkJS: Something went wrong initializing Clerk in development mode. We were unable to attribute this request to",
+      "Failed to load resource: the server responded with a status of 400 ()",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ]
+  },
+  "after": {
+    "lighthouse": "12.6.0",
+    "formFactor": "mobile",
+    "scores": {
+      "performance": 92,
+      "accessibility": 100,
+      "best-practices": 96,
+      "seo": 100
+    },
+    "cls": 0,
+    "lcp": "2.4 s",
+    "tbt": "210 ms",
+    "consoleErrors": [
+      "Error: ClerkJS: Something went wrong initializing Clerk in development mode. We were unable to attribute this request to",
+      "Failed to load resource: the server responded with a status of 400 ()",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ]
+  }
+}
