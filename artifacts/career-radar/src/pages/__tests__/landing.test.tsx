@@ -119,8 +119,8 @@ describe("LandingPage", () => {
     ).toBeInTheDocument();
     const queue = container.querySelector(".lp-queue")!;
     expect(queue).toHaveAttribute("inert");
-    // jsdom has reduced motion off, so the ten arrive when the card is seen;
-    // the hero holds them until then.
+    // All ten rows are always in the list; the reveal only fades them in.
+    expect(queue.querySelectorAll("ol > li")).toHaveLength(10);
     expect(RANKED).toHaveLength(10);
     RANKED.forEach((role, i) => {
       const row = illustrative.items[i];
@@ -246,10 +246,12 @@ describe("live counts", () => {
 
   it("prints each total in one place only, so no two can disagree", async () => {
     const { container } = await renderLanding();
-    const text = container.textContent ?? "";
+    // What a reader gets: the stats band's sentence. The big numeral beside
+    // it is the same value, hidden from assistive tech.
+    const read = container.cloneNode(true) as HTMLElement;
+    read.querySelectorAll("[aria-hidden='true']").forEach((n) => n.remove());
+    const text = read.textContent ?? "";
     for (const n of Object.values(COMMITTED_STATS)) {
-      // The stats band's sentence. Its visible numeral counts up from zero
-      // once the band is in view, which jsdom never reports.
       expect(text.split(fmt(n)).length - 1).toBe(1);
     }
   });

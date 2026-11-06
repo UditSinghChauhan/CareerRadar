@@ -1,38 +1,31 @@
-import { useRef } from "react";
-import { useInView } from "framer-motion";
-import { formatCount, useCountUp } from "./motion/use-count-up";
 import { QUEUE_SIZE, type LandingStats } from "./use-public-stats";
+
+/** Indian digit grouping, as everywhere else on the page: 4,512 and 2,109. */
+export const formatCount = (n: number) => n.toLocaleString("en-IN");
 
 /**
  * Section 3: three tall columns, each ruled on the left by a hairline, a
  * mono label at the top and a big number at the bottom. With the hero, the
  * only place the page prints a total, and the totals come only from
  * GET /api/public/stats (committed figures when it fails, with no "Live").
+ * The figures are printed as they are: no counting, so the live ones replace
+ * the committed ones in place, in tabular figures.
  */
 export function Stats({ stats }: { stats: LandingStats }) {
-  const ref = useRef<HTMLDListElement>(null);
-  const seen = useInView(ref, { once: true, amount: 0.4 });
-  const active = useCountUp(stats.activePostings, { start: seen });
-  const freshers = useCountUp(stats.openToFreshers, { start: seen });
-  const ten = useCountUp(QUEUE_SIZE, { start: seen });
-
   const cols = [
     {
       label: "Tracked",
-      n: active,
-      final: stats.activePostings,
+      n: stats.activePostings,
       line: "open roles",
     },
     {
       label: "Open to you",
-      n: freshers,
-      final: stats.openToFreshers,
+      n: stats.openToFreshers,
       line: "open to freshers",
     },
     {
       label: "Your queue",
-      n: ten,
-      final: QUEUE_SIZE,
+      n: QUEUE_SIZE,
       line: "ranked each morning",
     },
   ];
@@ -43,7 +36,7 @@ export function Stats({ stats }: { stats: LandingStats }) {
         <h2 id="stats-head" className="lp-sr">
           In numbers
         </h2>
-        <dl ref={ref} className="lp-stats__cols">
+        <dl className="lp-stats__cols">
           {cols.map((c, i) => (
             <div key={c.label} className="lp-stat">
               <dt className="lp-mono lp-stat__label">
@@ -60,7 +53,7 @@ export function Stats({ stats }: { stats: LandingStats }) {
                   {formatCount(c.n)}
                 </span>
                 <span className="lp-sr">
-                  {formatCount(c.final)} {c.line}
+                  {formatCount(c.n)} {c.line}
                 </span>
                 <span className="lp-stat__line" aria-hidden="true">
                   {c.line}

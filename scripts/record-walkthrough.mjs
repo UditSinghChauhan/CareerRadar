@@ -199,10 +199,10 @@ async function main() {
       }
     };
 
-    // 1. The landing hero, and the field coming into focus.
+    // 1. The landing hero, and the field fading as Today's ten comes in.
     await page.goto(`${base}/`, { waitUntil: "networkidle" });
     await page.mouse.move(mouse.x, mouse.y);
-    await page.locator(".lp-flight").waitFor({ state: "attached" });
+    await page.locator(".lp-rolecard").first().waitFor({ state: "visible" });
     trim = Math.max(0, (Date.now() - filmStart) / 1000 - 0.2);
     mark("landing");
     await pause(4500);

@@ -32,7 +32,8 @@
   --lp-short: 250ms;
 
   --lp-gutter: 48px;
-  --lp-section: 120px;
+  /* The one vertical rhythm: every section's padding. */
+  --lp-section: 128px;
 
   color-scheme: light;
   min-height: 100vh;
@@ -49,13 +50,16 @@
 @media (max-width: 1023px) {
   .lp {
     --lp-gutter: 32px;
-    --lp-section: 96px;
+  }
+}
+@media (max-width: 767px) {
+  .lp {
+    --lp-section: 80px;
   }
 }
 @media (max-width: 639px) {
   .lp {
     --lp-gutter: 20px;
-    --lp-section: 72px;
   }
 }
 /* The landing is light whatever the app's theme, from the first paint. */
@@ -228,7 +232,7 @@ html:has(.lp) {
   white-space: nowrap;
   transition:
     transform var(--lp-micro) var(--lp-ease),
-    background-color var(--lp-micro) ease;
+    background-color var(--lp-micro) var(--lp-ease);
 }
 @media (hover: hover) and (pointer: fine) {
   .lp-btn:hover {
@@ -265,7 +269,7 @@ html:has(.lp) {
   text-decoration-thickness: 1px;
   text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
   text-underline-offset: 3px;
-  transition: text-decoration-color var(--lp-micro) ease;
+  transition: text-decoration-color var(--lp-micro) var(--lp-ease);
 }
 /* Hover on the landing's few remaining quiet controls: the underline of a
    text link fills in, the logo dims a touch, a question's plus darkens. */
@@ -281,7 +285,7 @@ html:has(.lp) {
   }
 }
 a.lp-word {
-  transition: opacity var(--lp-micro) ease;
+  transition: opacity var(--lp-micro) var(--lp-ease);
 }
 
 /* ─── Navigation ─────────────────────────────────────────────────────────── */
@@ -292,8 +296,8 @@ a.lp-word {
   z-index: 50;
   border-bottom: 1px solid transparent;
   transition:
-    background-color var(--lp-short) ease,
-    border-color var(--lp-short) ease;
+    background-color var(--lp-short) var(--lp-ease),
+    border-color var(--lp-short) var(--lp-ease);
 }
 .lp-nav.is-scrolled {
   background: var(--lp-canvas);
@@ -329,7 +333,7 @@ a.lp-word {
   color: var(--lp-grey);
   font-size: 15px;
   text-decoration: none;
-  transition: color var(--lp-micro) ease;
+  transition: color var(--lp-micro) var(--lp-ease);
 }
 @media (hover: hover) and (pointer: fine) {
   .lp-nav__link:hover {
@@ -368,8 +372,8 @@ a.lp-word {
 .lp-hero__text .lp-lead {
   margin-top: 20px;
 }
-/* flight.tsx fades and lifts the copy as the ten leave; a keyboard user
-   who returns to it always finds it whole. */
+/* The hero's scroll fade (field.tsx) fades and lifts the copy; a keyboard
+   user who returns to it always finds it whole. */
 .lp-hero__text:focus-within {
   opacity: 1 !important;
   transform: none !important;
@@ -409,28 +413,13 @@ a.lp-word {
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
-.lp-layer {
-  will-change: transform, opacity;
-}
 .lp-slot {
   position: absolute;
   transform: translate(-50%, -50%);
 }
-/* A slow idle loop of a few pixels; each card has its own period. */
-.lp-drift {
-  animation: lp-drift var(--d, 10s) ease-in-out var(--dl, 0s) infinite alternate;
-}
-@keyframes lp-drift {
-  to {
-    transform: translate3d(
-      calc(var(--dx, 0px) * var(--lp-drift-amp, 1)),
-      calc(var(--dy, 4px) * var(--lp-drift-amp, 1)),
-      0
-    );
-  }
-}
+/* The field's cards enter with the page's reveal, a few at a time. */
 .lp-enter {
-  animation: lp-in 700ms var(--lp-ease) var(--in, 0ms) both;
+  animation: lp-in 500ms var(--lp-ease) var(--in, 0ms) both;
 }
 @keyframes lp-in {
   from {
@@ -452,7 +441,7 @@ a.lp-word {
 .lp-vig {
   transition:
     translate 200ms var(--lp-ease),
-    box-shadow 200ms ease;
+    box-shadow 200ms var(--lp-ease);
 }
 @media (hover: hover) and (pointer: fine) {
   .lp-feature:hover,
@@ -527,11 +516,6 @@ a.lp-word {
     gap: 8px;
     padding: 0 10px;
   }
-  /* Close rows: no idle drift, so neighbours keep the layout's gap of at
-     least 8px at every moment (field.tsx, CARD_GAP). */
-  .lp-field {
-    --lp-drift-amp: 0;
-  }
   /* A phone card keeps the title whole by dropping the monogram and the
      city; the company stays. */
   .lp-rolecard .lp-mono-tile,
@@ -600,15 +584,36 @@ a.lp-word {
   font-variant-numeric: tabular-nums;
 }
 .lp-rank--top {
+  position: relative;
   background: var(--lp-lime);
+}
+/* Once the ten rows of "Today's ten" have landed (9 x 45ms + 400ms), rank
+   1's tag pulses once: a soft lime halo that grows and fades. Never again. */
+.lp-queue.is-in .lp-rank--top::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--lp-lime);
+  opacity: 0;
+  animation: lp-pulse 900ms var(--lp-ease) 850ms 1 both;
+}
+@keyframes lp-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
 }
 
 /* ─── 2. Focus: today's ten ──────────────────────────────────────────────── */
 
 .lp-focus {
   --lp-row-sm: 40px;
-  position: relative;
-  padding: var(--lp-section) 0;
+  padding: var(--lp-section) 0 0;
 }
 .lp-focus__grid {
   display: grid;
@@ -620,20 +625,9 @@ a.lp-word {
   align-content: center;
 }
 .lp-queue {
-  position: relative;
   width: 100%;
   max-width: 660px;
   padding: 16px;
-}
-/* The card's surface is its own layer, behind the rows, so the flight can
-   show it with the first row and the card is never seen empty. */
-.lp-queue__frame {
-  position: absolute;
-  inset: 0;
-}
-.lp-queue__head,
-.lp-queue__list {
-  position: relative;
 }
 .lp-queue__head {
   display: flex;
@@ -724,20 +718,9 @@ a.lp-word {
   line-height: 1;
   white-space: nowrap;
 }
+/* Side by side from 1024px: the grid centres the statement on the list.
+   Nothing sticks and no script positions either. */
 @media (min-width: 1024px) {
-  /* A short hold: 15vh of sticky while the ten land. */
-  .lp-focus {
-    height: 115vh;
-    padding: 0;
-  }
-  .lp-focus__stick {
-    position: sticky;
-    top: 0;
-    display: flex;
-    align-items: center;
-    height: 100vh;
-    padding-top: 48px;
-  }
   .lp-focus__grid {
     grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
     align-items: center;
@@ -747,41 +730,16 @@ a.lp-word {
     justify-self: end;
   }
 }
-@media (max-width: 1023px) {
-  /* The hero's foot empties as its cards leave; close the gap behind them. */
-  .lp-focus {
-    padding-top: 16px;
-  }
-}
 @media (max-width: 639px) {
   .lp-queue {
     padding: 12px;
   }
 }
 
-/* The flight: one copy of each of the ten, between field and row. Fixed,
-   above the page and under the navigation. flight.tsx writes transform and
-   opacity only. */
-.lp-flight {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  pointer-events: none;
-  overflow: hidden;
-}
-.lp-flight__card {
-  position: absolute;
-  left: 0;
-  top: 0;
-  opacity: 0;
-  transform-origin: 0 0;
-  will-change: transform, opacity;
-}
-
 /* ─── 3. Stats ───────────────────────────────────────────────────────────── */
 
 .lp-stats {
-  padding: calc(var(--lp-section) * 0.5) 0 0;
+  padding: var(--lp-section) 0 0;
 }
 .lp-stats__cols {
   display: grid;
@@ -792,7 +750,9 @@ a.lp-word {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 344px;
+  /* Tall enough to read as a column, short enough that the space between
+     the label and the number stays under one section gap. */
+  height: 240px;
   padding-left: 24px;
   border-left: 1px solid var(--lp-hairline);
 }
@@ -807,33 +767,13 @@ a.lp-word {
   gap: 6px;
   color: var(--lp-ink);
 }
+/* A still green dot: "Live" is a state, not an event, and lime belongs to
+   rank 1 in the same viewport. */
 .lp-live__dot {
-  position: relative;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--lp-lime);
-  box-shadow: 0 0 0 1px rgb(17 17 17 / 12%);
-}
-/* A soft pulse: a lime halo that grows and fades, every 2.4s. */
-.lp-live__dot::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--lp-lime);
-  animation: lp-pulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-}
-@keyframes lp-pulse {
-  from {
-    transform: scale(1);
-    opacity: 0.7;
-  }
-  70%,
-  to {
-    transform: scale(2.6);
-    opacity: 0;
-  }
+  background: var(--lp-green);
 }
 .lp-stat__value {
   display: grid;
@@ -1073,26 +1013,6 @@ a.lp-word {
 .lp-bcard > div {
   min-width: 0;
 }
-/* The card being moved lifts: a deeper shadow under it, faded in and out
-   by opacity, while framer-motion carries it to its new column. */
-.lp-bcard {
-  position: relative;
-}
-.lp-bcard::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow:
-    0 2px 4px rgb(0 0 0 / 6%),
-    0 14px 28px -10px rgb(0 0 0 / 24%);
-  opacity: 0;
-  transition: opacity 200ms ease;
-  pointer-events: none;
-}
-.lp-bcard.is-lifted::after {
-  opacity: 1;
-}
 .lp-bcard__note {
   display: inline-flex;
   margin-top: 6px;
@@ -1141,7 +1061,6 @@ a.lp-word {
   border: 1px solid var(--lp-hairline);
   border-radius: 12px;
   background: var(--lp-surface);
-  box-shadow: var(--lp-shadow);
 }
 .lp-toast__icon {
   display: grid;
@@ -1191,7 +1110,6 @@ a.lp-word {
 .lp-dream__mark {
   display: inline-grid;
   color: var(--lp-grey);
-  transition: color var(--lp-short) ease;
 }
 .lp-dream__mark.is-on {
   color: var(--lp-green);
@@ -1202,7 +1120,6 @@ a.lp-word {
 }
 .lp-feature-wide {
   margin-top: 24px;
-  perspective: 1600px;
 }
 .lp-browser {
   overflow: hidden;
@@ -1210,7 +1127,6 @@ a.lp-word {
   border-radius: 14px;
   background: var(--lp-surface);
   box-shadow: var(--lp-shadow);
-  transform-origin: 50% 0;
 }
 .lp-browser__bar {
   display: grid;
@@ -1234,7 +1150,8 @@ a.lp-word {
   background-size: cover;
 }
 /* The queue crop: 880px wide at most, the size it was captured for. Its
-   foot fades into the frame's surface instead of cutting through a row. */
+   last 200px fade into the frame's surface, so the crop ends in white, not
+   on a cut row, and the caption sits under it with no rule between. */
 .lp-browser--crop {
   max-width: 880px;
   margin-inline: auto;
@@ -1243,19 +1160,18 @@ a.lp-word {
   -webkit-mask-image: linear-gradient(
     180deg,
     #000 0,
-    #000 calc(100% - 96px),
+    #000 calc(100% - 200px),
     transparent 100%
   );
   mask-image: linear-gradient(
     180deg,
     #000 0,
-    #000 calc(100% - 96px),
+    #000 calc(100% - 200px),
     transparent 100%
   );
 }
 .lp-browser figcaption {
-  padding: 12px 16px;
-  border-top: 1px solid var(--lp-hairline);
+  padding: 16px 16px 14px;
 }
 .lp-sources {
   display: grid;
@@ -1360,7 +1276,7 @@ a.lp-word {
   color: var(--lp-grey);
   transition:
     transform var(--lp-short) var(--lp-ease),
-    color var(--lp-micro) ease;
+    color var(--lp-micro) var(--lp-ease);
 }
 .lp-faq__trigger[data-state="open"] svg {
   transform: rotate(45deg);
@@ -1403,7 +1319,7 @@ a.lp-word {
   --lp-ring: rgb(255 255 255 / 14%);
   --lp-signal: var(--lp-lime);
   position: relative;
-  padding: calc(var(--lp-section) * 0.8) 0;
+  padding: var(--lp-section) 0;
   background: var(--lp-band);
   color: var(--lp-band-ink);
 }
@@ -1451,7 +1367,7 @@ a.lp-word {
   color: var(--lp-band-ink);
   cursor: pointer;
   transition:
-    background-color var(--lp-micro) ease,
+    background-color var(--lp-micro) var(--lp-ease),
     transform var(--lp-micro) var(--lp-ease);
 }
 .lp-band__pause svg {
@@ -1524,24 +1440,18 @@ a.lp-word {
 /* ─── Reduced motion: every loop and entrance shows its end state. ──────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .lp-drift,
   .lp-enter,
   .lp-faq__a[data-state],
-  .lp-live__dot::after {
+  .lp-queue.is-in .lp-rank--top::after {
     animation: none;
-  }
-  .lp-live__dot::after {
-    opacity: 0;
   }
   .lp-nav,
   .lp-btn,
   .lp-link,
   a.lp-word,
   .lp-faq__trigger svg,
-  .lp-dream__mark,
   .lp-feature,
   .lp-vig,
-  .lp-bcard::after,
   .lp-band__in {
     transition: none;
   }

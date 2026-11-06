@@ -1,6 +1,8 @@
-import { useLayoutEffect, useState, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useState, type RefObject } from "react";
 import {
   motion,
+  styleEffect,
+  useMotionValue,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -21,21 +23,31 @@ import { FIELD_ROLES, RANKED, type SampleRole } from "./sample-roles";
  * and open source": the layout is measured from the hero's text block and
  * every spot that would break that, overlap the navigation or another card
  * is skipped. The sharp cards fill the rings from just below the button,
- * clockwise and outward; their ranks then read from the bottom up, the
- * order in which they leave for "Today's ten" (rankBottomUp).
+ * clockwise and outward, in rank order: rank 1 sits under the button.
  *
- * Motion is transform and opacity only. Each layer moves with the scroll at
- * its own rate (parallax), far and mid drift outward and fade as the hero
- * leaves, and every card idles on a slow CSS loop of a few pixels with its
- * own period and phase. The blur is a fixed property of each depth layer and
- * never animates. The ten leave the field in flight.tsx.
+ * Motion is transform and opacity only, and only the hero's scroll fade
+ * (HeroField): as the hero leaves, every card drifts straight out from the
+ * centre, at most 60px, so none ever crosses the text, and the field fades
+ * out. The cards never fly anywhere; "Today's ten" has its own rows. The
+ * blur is a fixed property of each depth layer and never animates.
  */
 
 type Depth = "far" | "mid" | "near";
 type Placed = { role: SampleRole; depth: Depth; x: number; y: number };
-type Layout = { cx: number; cy: number; rings: number[]; cards: Placed[] };
+type Layout = {
+  W: number;
+  H: number;
+  cx: number;
+  cy: number;
+  rings: number[];
+  cards: Placed[];
+};
 
 const DEPTH_SCALE: Record<Depth, number> = { far: 0.8, mid: 0.9, near: 1 };
+
+/** The hero's copy fades out and lifts this far by COPY_GONE of the hero's scroll. */
+export const COPY_LIFT = 16;
+export const COPY_GONE = 0.5;
 
 /** The clear zone around the hero's text block. DESIGN.md, Sections. */
 export const CLEAR_ZONE = 48;
@@ -127,7 +139,7 @@ export function layoutField(
   // When the text spans most of the width (phones, tablets) there is room
   // only above and below it, so the cards sit in staggered rows there,
   // still drawn over the same rings. Places are taken outward from the
-  // button, below first, then above; rankBottomUp then sets the ranks.
+  // button, below first, then above.
   if (zone.r - zone.l > W * 0.7) {
     // Two staggered columns on phones and tablets; a wide but short screen
     // (a 1280x720 laptop) takes as many as fit, so the ten find places.
@@ -221,35 +233,7 @@ export function layoutField(
       left--;
     }
   }
-  rankBottomUp(placed);
-  return { cx, cy, rings, cards: placed };
-}
-
-/**
- * Ranks read from the bottom of the field up: rank 1 is the lowest sharp
- * card and the soft ranked ones take the highest of the middle layer's
- * places. The rows of "Today's ten" fill from the top as the list rises,
- * so each card leaves in turn with nothing still waiting below it, and the
- * flight never crosses two cards (flight-math.ts). Roles only swap within
- * one depth, where every place has the same size, so no card is moved.
- */
-function rankBottomUp(placed: Placed[]) {
-  const lowestFirst = (a: Placed, b: Placed) => b.y - a.y;
-  const near = placed.filter((p) => p.depth === "near").sort(lowestFirst);
-  const nearRoles = near.map((p) => p.role).sort((a, b) => a.rank - b.rank);
-  near.forEach((p, i) => {
-    p.role = nearRoles[i];
-  });
-  const mid = placed.filter((p) => p.depth === "mid").sort(lowestFirst);
-  const ranked = mid
-    .filter((p) => p.role.rank > 0)
-    .map((p) => p.role)
-    .sort((a, b) => a.rank - b.rank);
-  const rest = mid.filter((p) => p.role.rank === 0).map((p) => p.role);
-  const firstRanked = mid.length - ranked.length;
-  mid.forEach((p, i) => {
-    p.role = i < firstRanked ? rest[i] : ranked[i - firstRanked];
-  });
+  return { W, H, cx, cy, rings, cards: placed };
 }
 
 function useLayout(
@@ -297,76 +281,105 @@ function useLayout(
   return layout;
 }
 
+/** How far a card drifts outward as the hero leaves, in px. DESIGN.md, Motion. */
+export const DRIFT_OUT = 60;
+/** The hero's scroll progress by which the field has faded out. */
+export const FIELD_GONE = 0.7;
+
+/**
+ * How a card drifts as the hero leaves: straight out from the field's
+ * centre, so it only ever moves away from the hero's text block, by up to
+ * DRIFT_OUT px, but never past the hero's edges, which clip it: a card is
+ * never seen cut. (A far card that already crosses an edge does not drift.)
+ */
+export function outward(layout: Layout, card: Placed) {
+  const { W, H, cx, cy } = layout;
+  const d = Math.hypot(card.x - cx, card.y - cy);
+  const ux = d < 1 ? 0 : (card.x - cx) / d;
+  const uy = d < 1 ? 1 : (card.y - cy) / d;
+  const { w, h } = cardSize(W);
+  const s = DEPTH_SCALE[card.depth];
+  const room = (lo: number, hi: number, at: number, half: number, u: number) =>
+    u > 0 ? (hi - (at + half)) / u : u < 0 ? (at - half - lo) / -u : Infinity;
+  const reach = Math.max(
+    0,
+    Math.min(
+      DRIFT_OUT,
+      room(8, W - 8, card.x, (w * s) / 2, ux),
+      room(0, H - 8, card.y, (h * s) / 2, uy),
+    ),
+  );
+  return { ux, uy, reach };
+}
+
+function FieldCard({
+  card,
+  layout,
+  index,
+  progress,
+}: {
+  card: Placed;
+  layout: Layout;
+  index: number;
+  progress: MotionValue<number>;
+}) {
+  const { ux, uy, reach } = outward(layout, card);
+  const x = useTransform(progress, [0, FIELD_GONE], [0, ux * reach]);
+  const y = useTransform(progress, [0, FIELD_GONE], [0, uy * reach]);
+  const style = {
+    left: card.x,
+    top: card.y,
+    "--in": `${120 + index * 45}ms`,
+  } as React.CSSProperties;
+  return (
+    <div
+      className={card.depth === "mid" ? "lp-slot lp-slot--soft" : "lp-slot"}
+      style={style}
+    >
+      <motion.div style={{ x, y }}>
+        <div className="lp-enter">
+          <RoleCard role={card.role} />
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function Layer({
   depth,
   layout,
   progress,
-  reduced,
 }: {
   depth: Depth;
   layout: Layout;
   progress: MotionValue<number>;
-  reduced: boolean;
 }) {
-  const rate = { far: 140, mid: 70, near: -40 }[depth];
-  const spread = { far: 0.35, mid: 0.2, near: 0 }[depth];
-  const y = useTransform(progress, [0, 1], [0, reduced ? 0 : rate]);
-  const scale = useTransform(progress, [0, 1], [1, reduced ? 1 : 1 + spread]);
-  const opacity = useTransform(
-    progress,
-    [0, depth === "near" ? 1 : 0.75],
-    [1, reduced || depth === "near" ? 1 : 0],
-  );
-  // Ranked cards from the middle layer rest here, styled soft, so they do
-  // not fade out with that layer before their turn to fly.
-  const ranked = (c: Placed) => c.depth === "mid" && c.role.rank > 0;
-  const cards = layout.cards.filter((c) =>
-    depth === "near"
-      ? c.depth === "near" || ranked(c)
-      : c.depth === depth && !ranked(c),
-  );
   return (
-    <motion.div
-      className={`lp-layer lp-layer--${depth}`}
-      style={{
-        y,
-        scale,
-        opacity,
-        transformOrigin: `${layout.cx}px ${layout.cy}px`,
-      }}
-    >
-      {cards.map((c, i) => {
-        // A slow breath: 14 to 22 seconds a cycle, a few pixels, each card
-        // with its own period and phase so no two move together.
-        const seed = i * 7 + c.role.title.length;
-        const style = {
-          left: c.x,
-          top: c.y,
-          "--d": `${14 + (seed % 9)}s`,
-          "--dl": `${-((seed * 1.7) % 14).toFixed(2)}s`,
-          "--dx": `${((i % 3) - 1) * 2}px`,
-          "--dy": `${i % 2 ? 4 : -4}px`,
-          "--in": `${120 + i * 45}ms`,
-        } as React.CSSProperties;
-        return (
-          <div
+    <div className={`lp-layer lp-layer--${depth}`}>
+      {layout.cards
+        .filter((c) => c.depth === depth)
+        .map((c, i) => (
+          <FieldCard
             key={c.role.id}
-            className={c.depth === "mid" ? "lp-slot lp-slot--soft" : "lp-slot"}
-            style={style}
-            data-fly-src={c.role.rank > 0 ? c.role.rank : undefined}
-          >
-            <div className="lp-drift">
-              <div className="lp-enter">
-                <RoleCard role={c.role} />
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </motion.div>
+            card={c}
+            layout={layout}
+            index={i}
+            progress={progress}
+          />
+        ))}
+    </div>
   );
 }
 
+/**
+ * The hero's scroll fade: the field's cards drift outward and fade out, with
+ * the rings, by the time 70% of the hero has scrolled past; the hero's copy
+ * fades and lifts 16px a little earlier. Everything is a framer-motion value
+ * derived from useScroll on the hero: the field through motion components,
+ * the copy (static HTML painted before this chunk loads) through
+ * styleEffect. No scroll listener, no React state. Under reduced motion
+ * nothing moves.
+ */
 export function HeroField({
   heroRef,
   textRef,
@@ -382,18 +395,23 @@ export function HeroField({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const ringY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 90]);
+  const still = useMotionValue(0);
+  const progress = reduced ? still : scrollYProgress;
+  const fieldOpacity = useTransform(progress, [0, FIELD_GONE], [1, 0]);
+  const copyOpacity = useTransform(progress, [0, COPY_GONE], [1, 0]);
+  const copyY = useTransform(progress, [0, COPY_GONE], [0, -COPY_LIFT]);
+
+  useEffect(() => {
+    const text = textRef.current;
+    if (!text || reduced) return;
+    return styleEffect(text, { opacity: copyOpacity, y: copyY });
+  }, [textRef, reduced, copyOpacity, copyY]);
+
   if (!layout) return null;
   return (
-    <div className="lp-field__in">
+    <motion.div className="lp-field__in" style={{ opacity: fieldOpacity }}>
       <div className="lp-field__deep">
-        <motion.svg
-          className="lp-rings"
-          style={{ y: ringY }}
-          aria-hidden="true"
-          width="100%"
-          height="100%"
-        >
+        <svg className="lp-rings" aria-hidden="true" width="100%" height="100%">
           {layout.rings.map((r, i) => (
             <circle
               key={r}
@@ -403,23 +421,12 @@ export function HeroField({
               style={{ opacity: Math.max(0.25, 1 - i * 0.16) }}
             />
           ))}
-        </motion.svg>
+        </svg>
         {(["far", "mid"] as const).map((d) => (
-          <Layer
-            key={d}
-            depth={d}
-            layout={layout}
-            progress={scrollYProgress}
-            reduced={reduced}
-          />
+          <Layer key={d} depth={d} layout={layout} progress={progress} />
         ))}
       </div>
-      <Layer
-        depth="near"
-        layout={layout}
-        progress={scrollYProgress}
-        reduced={reduced}
-      />
-    </div>
+      <Layer depth="near" layout={layout} progress={progress} />
+    </motion.div>
   );
 }
