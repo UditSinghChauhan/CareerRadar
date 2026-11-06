@@ -1,0 +1,264 @@
+[
+  {
+    "y": 0,
+    "faults": [],
+    "flying": [],
+    "centreGap": null
+  },
+  {
+    "y": 50,
+    "faults": [],
+    "flying": [],
+    "centreGap": null
+  },
+  {
+    "y": 100,
+    "faults": [],
+    "flying": [],
+    "centreGap": -297
+  },
+  {
+    "y": 150,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 0.74
+      }
+    ],
+    "centreGap": -297
+  },
+  {
+    "y": 200,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 1
+      }
+    ],
+    "centreGap": -297
+  },
+  {
+    "y": 250,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 1,
+        "o": 1
+      },
+      {
+        "rank": 2,
+        "o": 0.27
+      }
+    ],
+    "centreGap": -297
+  },
+  {
+    "y": 300,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 2,
+        "o": 1
+      }
+    ],
+    "centreGap": -281
+  },
+  {
+    "y": 350,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 2,
+        "o": 1
+      },
+      {
+        "rank": 3,
+        "o": 0.06
+      }
+    ],
+    "centreGap": -256
+  },
+  {
+    "y": 400,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 3,
+        "o": 1
+      }
+    ],
+    "centreGap": -231
+  },
+  {
+    "y": 450,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 3,
+        "o": 1
+      }
+    ],
+    "centreGap": -206
+  },
+  {
+    "y": 500,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 4,
+        "o": 1
+      }
+    ],
+    "centreGap": -181
+  },
+  {
+    "y": 550,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 4,
+        "o": 1
+      },
+      {
+        "rank": 5,
+        "o": 0.48
+      }
+    ],
+    "centreGap": -156
+  },
+  {
+    "y": 600,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 5,
+        "o": 1
+      }
+    ],
+    "centreGap": -131
+  },
+  {
+    "y": 650,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 5,
+        "o": 1
+      },
+      {
+        "rank": 6,
+        "o": 1
+      }
+    ],
+    "centreGap": -106
+  },
+  {
+    "y": 700,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 6,
+        "o": 1
+      },
+      {
+        "rank": 7,
+        "o": 1
+      }
+    ],
+    "centreGap": -81
+  },
+  {
+    "y": 750,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 7,
+        "o": 1
+      },
+      {
+        "rank": 8,
+        "o": 1
+      }
+    ],
+    "centreGap": -56
+  },
+  {
+    "y": 800,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 8,
+        "o": 1
+      },
+      {
+        "rank": 9,
+        "o": 1
+      }
+    ],
+    "centreGap": -31
+  },
+  {
+    "y": 850,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 9,
+        "o": 1
+      },
+      {
+        "rank": 10,
+        "o": 1
+      }
+    ],
+    "centreGap": -6
+  },
+  {
+    "y": 900,
+    "faults": [],
+    "flying": [
+      {
+        "rank": 10,
+        "o": 1
+      }
+    ],
+    "centreGap": 0
+  },
+  {
+    "y": 950,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 1000,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 1050,
+    "faults": [],
+    "flying": [],
+    "centreGap": 0
+  },
+  {
+    "y": 1100,
+    "faults": [],
+    "flying": [],
+    "centreGap": 22
+  },
+  {
+    "y": 1150,
+    "faults": [],
+    "flying": [],
+    "centreGap": 47
+  },
+  {
+    "y": 1200,
+    "faults": [],
+    "flying": [],
+    "centreGap": 72
+  }
+]

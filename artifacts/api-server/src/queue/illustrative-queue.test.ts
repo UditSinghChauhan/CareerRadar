@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   deadlineUrgency,
   explainPriority,
+  freshness,
   priorityContributions,
   priorityFromComponents,
   type PriorityComponents,
@@ -47,6 +48,9 @@ describe("landing illustrative queue", () => {
     "row %i matches the scoring code",
     (_rank, item) => {
       expect(item.components.deadlineUrgency).toBe(deadlineUrgency(null, now));
+      expect(item.components.freshness).toBe(
+        freshness(new Date(item.job.postedDate), now),
+      );
       expect(item.priority).toBe(priorityFromComponents(item.components));
       expect(item.contributions).toEqual(
         priorityContributions(item.components),
@@ -62,6 +66,16 @@ describe("landing illustrative queue", () => {
       );
     },
   );
+
+  // A ranked pick a week old or more reads as stale on a page about
+  // "every morning"; the sample stays within the last seven days.
+  it("ranks nothing posted more than 7 days before the queue day", () => {
+    for (const item of queue.items) {
+      const days =
+        (now.getTime() - new Date(item.job.postedDate).getTime()) / 86400000;
+      expect(days).toBeLessThanOrEqual(7);
+    }
+  });
 
   it("gives every row at least one reason and at most three", () => {
     for (const item of queue.items) {

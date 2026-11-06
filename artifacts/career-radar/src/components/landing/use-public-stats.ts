@@ -37,13 +37,29 @@ export function acceptStats(body: unknown): LandingStats | null {
   return { activePostings, openToFreshers, live: true };
 }
 
-// One request per page load, shared by every component that shows a count.
+/** The first request's limit: an awake API answers well inside it. */
+export const FIRST_WAIT_MS = 8000;
+/**
+ * The second request's limit. The API's host puts it to sleep when idle and
+ * takes up to about a minute to wake it (docs/DEPLOY.md); the static site's
+ * proxy waits up to 120s. The committed figures stay on screen meanwhile.
+ */
+export const WAKE_WAIT_MS = 90000;
+
+const attempt = (ms: number) =>
+  getPublicStats({ signal: AbortSignal.timeout(ms) })
+    .then((body) => acceptStats(body))
+    .catch(() => null);
+
+// At most two requests per page load, shared by every component that shows
+// a count: if the first meets a sleeping API (a timeout, an error, or the
+// host's wake-up page instead of JSON), one more waits for it to wake.
 let pending: Promise<LandingStats> | null = null;
 
 function load(): Promise<LandingStats> {
-  pending ??= getPublicStats({ signal: AbortSignal.timeout(8000) })
-    .then((body) => acceptStats(body) ?? FALLBACK)
-    .catch(() => FALLBACK);
+  pending ??= attempt(FIRST_WAIT_MS)
+    .then((first) => first ?? attempt(WAKE_WAIT_MS))
+    .then((stats) => stats ?? FALLBACK);
   return pending;
 }
 
@@ -53,8 +69,11 @@ export function resetPublicStats() {
 }
 
 /**
- * Committed figures at once, live ones when the API answers. A failed or slow
- * request (8s) keeps the committed figures and never shows "Live".
+ * Committed figures at once, live ones when the API answers, even if it was
+ * asleep and takes a minute to wake. Nothing waits on it: the page renders
+ * in full with the committed figures, and the live ones swap in quietly
+ * (same digits, tabular figures, "Live" in the label's own line). If both
+ * requests fail, the committed figures stay and "Live" never shows.
  */
 export function usePublicStats(): LandingStats {
   const [stats, setStats] = useState<LandingStats>(FALLBACK);

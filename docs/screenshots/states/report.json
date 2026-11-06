@@ -1,0 +1,602 @@
+[
+  {
+    "path": "/",
+    "i": 0,
+    "name": "Skip to content",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "(none)",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 1,
+    "name": "CareerRadar, home",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "opacity",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 2,
+    "name": "How it works",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color, textDecorationLine, textDecorationColor",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 3,
+    "name": "Features",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color, textDecorationLine, textDecorationColor",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 4,
+    "name": "FAQ",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color, textDecorationLine, textDecorationColor",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 5,
+    "name": "Sign in",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color, textDecorationLine, textDecorationColor",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 6,
+    "name": "Get started",
+    "focusRing": "2px solid rgb(49, 107, 23) +3px",
+    "hover": "backgroundColor",
+    "press": "matrix(0.98, 0, 0, 0.98, 0, 0)"
+  },
+  {
+    "path": "/",
+    "i": 7,
+    "name": "Get started",
+    "focusRing": "2px solid rgb(49, 107, 23) +3px",
+    "hover": "backgroundColor",
+    "press": "matrix(0.98, 0, 0, 0.98, 0, 0)"
+  },
+  {
+    "path": "/",
+    "i": 8,
+    "name": "Read the code on GitHub",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "textDecorationColor",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 9,
+    "name": "Is it free?",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 10,
+    "name": "Who is it for?",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 11,
+    "name": "Does an AI pick my roles?",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 12,
+    "name": "Where do postings come from?",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 13,
+    "name": "How often does it update?",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 14,
+    "name": "Get started",
+    "focusRing": "2px solid rgb(188, 240, 83) +3px",
+    "hover": "backgroundColor",
+    "press": "matrix(0.98, 0, 0, 0.98, 0, 0)"
+  },
+  {
+    "path": "/",
+    "i": 15,
+    "name": "Pause the radar sweep",
+    "focusRing": "2px solid rgb(188, 240, 83) +2px",
+    "hover": "backgroundColor",
+    "press": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+  },
+  {
+    "path": "/",
+    "i": 16,
+    "name": "Sign in",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "textDecorationLine",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 17,
+    "name": "Source on GitHub",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "textDecorationLine",
+    "press": "(none)"
+  },
+  {
+    "path": "/",
+    "i": 18,
+    "name": "Udit Singh Chauhan",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "textDecorationLine",
+    "press": "(none)"
+  },
+  {
+    "path": "/welcome",
+    "i": 0,
+    "name": "Internships",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "backgroundColor, borderColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 1,
+    "name": "New grad roles",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "backgroundColor, borderColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 2,
+    "name": "Both",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "(none)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 3,
+    "name": "Anywhere in India",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "backgroundColor, borderColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 4,
+    "name": "Remote",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "(none)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 5,
+    "name": "Bengaluru",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "(none)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 6,
+    "name": "Hyderabad",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "backgroundColor, borderColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 7,
+    "name": "Pune",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "backgroundColor, borderColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 8,
+    "name": "Chennai",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "(none)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 9,
+    "name": "Delhi NCR",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "backgroundColor, borderColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 10,
+    "name": "Mumbai",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "backgroundColor, borderColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 11,
+    "name": "Kolkata",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "backgroundColor, borderColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 12,
+    "name": "Ahmedabad",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "backgroundColor, borderColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/welcome",
+    "i": 13,
+    "name": "Show my ten",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 0,
+    "name": "CareerRadar",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "(none)",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 1,
+    "name": "Dashboard",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "(none)",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 2,
+    "name": "Jobs",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), backgroundColor (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 3,
+    "name": "Applications",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), backgroundColor (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 4,
+    "name": "Capture",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), backgroundColor (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 5,
+    "name": "Profile",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), backgroundColor (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 6,
+    "name": "Settings",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color (inner), backgroundColor (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 7,
+    "name": "Switch to dark theme",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 8,
+    "name": "Notifications, 1 unread",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 9,
+    "name": "Sign out",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 10,
+    "name": "Browse all jobs",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "textDecorationLine",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 11,
+    "name": "How is this ranked?",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 12,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 13,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 14,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 15,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 16,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 17,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 18,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 19,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 20,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 21,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 22,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 23,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 24,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 25,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 26,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 27,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 28,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 29,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 30,
+    "name": "Apply",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "backgroundColor",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 31,
+    "name": "Dismiss",
+    "focusRing": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(246, 246, 243) 0px 0px 0px 2px, rgb(49, 107, 23) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "hover": "color, backgroundColor, textDecorationColor, color (inner), textDecorationColor (inner)",
+    "press": "scale 0.98"
+  },
+  {
+    "path": "/dashboard",
+    "i": 32,
+    "name": "Apply",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "opacity",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 33,
+    "name": "Apply",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "opacity",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 34,
+    "name": "Apply",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "opacity",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 35,
+    "name": "Apply",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "opacity",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 36,
+    "name": "Apply",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "opacity",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 37,
+    "name": "Apply",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "opacity",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 38,
+    "name": "Apply for Full Stack Engineer, Entry Level",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "opacity",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 39,
+    "name": "Apply for Software Engineer, New Grad",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "opacity",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 40,
+    "name": "A",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color, textDecorationColor, opacity, color (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  },
+  {
+    "path": "/dashboard",
+    "i": 41,
+    "name": "A",
+    "focusRing": "2px solid rgb(49, 107, 23) +2px",
+    "hover": "color, textDecorationColor, opacity, color (inner), textDecorationColor (inner)",
+    "press": "(none)"
+  }
+]

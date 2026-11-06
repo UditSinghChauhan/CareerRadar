@@ -29,7 +29,7 @@ import {
 } from "@workspace/db";
 import { classifyJob, toRelevanceColumns } from "../relevance/classifier";
 import { normalizeLocation, toLocationColumns } from "../relevance/location";
-import { CAPTURE_CLERK_ID } from "./capture-seed-id";
+import { CAPTURE_CLERK_ID, postedDaysAgo } from "./capture-seed-id";
 
 const url = new URL(process.env.DATABASE_URL ?? "");
 if (!["localhost", "127.0.0.1"].includes(url.hostname)) {
@@ -153,7 +153,7 @@ async function main() {
           location: city,
           country: "India",
           status: "active",
-          postedDate: daysAgo((n * 7) % 30),
+          postedDate: daysAgo(postedDaysAgo(n)),
           // Sources rarely publish deadlines. Two here do, so the dashboard's
           // closing-soon card has something to show without the demo
           // pretending deadlines are common.

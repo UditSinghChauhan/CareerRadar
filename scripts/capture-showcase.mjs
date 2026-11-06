@@ -31,6 +31,9 @@ const require = createRequire(join(root, "package.json"));
 const { chromium } = require("@playwright/test");
 
 const url = process.argv[2] ?? "http://localhost:5173/";
+// The capture build's Clerk stand-in (career-radar/capture/) is signed in
+// unless told otherwise; the real app ignores this key.
+const SIGNED_OUT = () => localStorage.setItem("capture-signed-in", "0");
 const out = join(root, "docs/showcase");
 const work = join(tmpdir(), "careerradar-showcase");
 mkdirSync(out, { recursive: true });
@@ -95,6 +98,7 @@ async function main() {
       deviceScaleFactor: 2,
       colorScheme: "light",
     });
+    await ctx.addInitScript(SIGNED_OUT);
     let page = await ctx.newPage();
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForTimeout(2500);
@@ -116,6 +120,7 @@ async function main() {
       deviceScaleFactor: 2,
       colorScheme: "light",
     });
+    await ctx.addInitScript(SIGNED_OUT);
     page = await ctx.newPage();
     await page.goto(url, { waitUntil: "networkidle" });
     await page.addStyleTag({
@@ -154,6 +159,7 @@ async function main() {
       deviceScaleFactor: 1,
       colorScheme: "light",
     });
+    await ctx.addInitScript(SIGNED_OUT);
     page = await ctx.newPage();
     await page.goto(url, { waitUntil: "networkidle" });
     await page.waitForTimeout(2500);

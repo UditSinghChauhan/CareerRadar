@@ -263,7 +263,25 @@ html:has(.lp) {
   color: var(--lp-green);
   text-decoration: underline;
   text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
   text-underline-offset: 3px;
+  transition: text-decoration-color var(--lp-micro) ease;
+}
+/* Hover on the landing's few remaining quiet controls: the underline of a
+   text link fills in, the logo dims a touch, a question's plus darkens. */
+@media (hover: hover) and (pointer: fine) {
+  .lp-link:hover {
+    text-decoration-color: currentColor;
+  }
+  a.lp-word:hover {
+    opacity: 0.72;
+  }
+  .lp-faq__trigger:hover svg {
+    color: var(--lp-ink);
+  }
+}
+a.lp-word {
+  transition: opacity var(--lp-micro) ease;
 }
 
 /* ─── Navigation ─────────────────────────────────────────────────────────── */
@@ -350,6 +368,12 @@ html:has(.lp) {
 .lp-hero__text .lp-lead {
   margin-top: 20px;
 }
+/* flight.tsx fades and lifts the copy as the ten leave; a keyboard user
+   who returns to it always finds it whole. */
+.lp-hero__text:focus-within {
+  opacity: 1 !important;
+  transform: none !important;
+}
 .lp-hero__act {
   display: flex;
   flex-direction: column;
@@ -398,7 +422,11 @@ html:has(.lp) {
 }
 @keyframes lp-drift {
   to {
-    transform: translate3d(var(--dx, 0), var(--dy, 4px), 0);
+    transform: translate3d(
+      calc(var(--dx, 0px) * var(--lp-drift-amp, 1)),
+      calc(var(--dy, 4px) * var(--lp-drift-amp, 1)),
+      0
+    );
   }
 }
 .lp-enter {
@@ -481,7 +509,8 @@ html:has(.lp) {
   filter: blur(6px);
   opacity: 0.5;
 }
-.lp-layer--mid .lp-rolecard {
+.lp-layer--mid .lp-rolecard,
+.lp-slot--soft .lp-rolecard {
   transform: scale(0.9);
   filter: blur(2px);
 }
@@ -497,6 +526,11 @@ html:has(.lp) {
     height: 58px;
     gap: 8px;
     padding: 0 10px;
+  }
+  /* Close rows: no idle drift, so neighbours keep the layout's gap of at
+     least 8px at every moment (field.tsx, CARD_GAP). */
+  .lp-field {
+    --lp-drift-amp: 0;
   }
   /* A phone card keeps the title whole by dropping the monogram and the
      city; the company stays. */
@@ -586,9 +620,20 @@ html:has(.lp) {
   align-content: center;
 }
 .lp-queue {
+  position: relative;
   width: 100%;
   max-width: 660px;
   padding: 16px;
+}
+/* The card's surface is its own layer, behind the rows, so the flight can
+   show it with the first row and the card is never seen empty. */
+.lp-queue__frame {
+  position: absolute;
+  inset: 0;
+}
+.lp-queue__head,
+.lp-queue__list {
+  position: relative;
 }
 .lp-queue__head {
   display: flex;
@@ -849,11 +894,17 @@ html:has(.lp) {
 .lp-step .lp-body {
   min-height: 3.1em;
 }
+/* The three cards share one height (the tallest), with their content set
+   from the top. */
 .lp-step__vig {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   margin-top: 16px;
 }
 .lp-vig {
   display: grid;
+  flex: 1;
   gap: 14px;
   min-height: 172px;
   padding: 16px;
@@ -1182,10 +1233,25 @@ html:has(.lp) {
   height: auto;
   background-size: cover;
 }
-/* The queue crop: 880px wide at most, the size it was captured for. */
+/* The queue crop: 880px wide at most, the size it was captured for. Its
+   foot fades into the frame's surface instead of cutting through a row. */
 .lp-browser--crop {
   max-width: 880px;
   margin-inline: auto;
+}
+.lp-browser--crop img {
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 0,
+    #000 calc(100% - 96px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 0,
+    #000 calc(100% - 96px),
+    transparent 100%
+  );
 }
 .lp-browser figcaption {
   padding: 12px 16px;
@@ -1292,7 +1358,9 @@ html:has(.lp) {
   width: 18px;
   height: 18px;
   color: var(--lp-grey);
-  transition: transform var(--lp-short) var(--lp-ease);
+  transition:
+    transform var(--lp-short) var(--lp-ease),
+    color var(--lp-micro) ease;
 }
 .lp-faq__trigger[data-state="open"] svg {
   transform: rotate(45deg);
@@ -1467,6 +1535,8 @@ html:has(.lp) {
   }
   .lp-nav,
   .lp-btn,
+  .lp-link,
+  a.lp-word,
   .lp-faq__trigger svg,
   .lp-dream__mark,
   .lp-feature,

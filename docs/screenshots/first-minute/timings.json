@@ -1,0 +1,172 @@
+{
+  "note": "Local machine, local Postgres, production build via vite preview, Clerk stubbed (its time is not included). Milliseconds. The script waits 3 s on the sign-up card, as a person filling in the form would. /api/health is 404 here because capture-server.ts mounts only the API router; the health route lives in app.ts and answers in production.",
+  "steps": [
+    {
+      "step": "landing: headline painted",
+      "ms": 176,
+      "sinceSignUp": null,
+      "note": ""
+    },
+    {
+      "step": "sign-up card",
+      "ms": 495,
+      "sinceSignUp": null,
+      "note": ""
+    },
+    {
+      "step": "signed up",
+      "ms": 3612,
+      "sinceSignUp": 62,
+      "note": ""
+    },
+    {
+      "step": "onboarding: question painted",
+      "ms": 4457,
+      "sinceSignUp": 907,
+      "note": ""
+    },
+    {
+      "step": "pressed Show my ten",
+      "ms": 4535,
+      "sinceSignUp": 985,
+      "note": ""
+    },
+    {
+      "step": "dashboard: route",
+      "ms": 4553,
+      "sinceSignUp": 1003,
+      "note": ""
+    },
+    {
+      "step": "dashboard: first queue row",
+      "ms": 5434,
+      "sinceSignUp": 1884,
+      "note": "10 rows"
+    },
+    {
+      "step": "30 s after sign-up",
+      "ms": 33576,
+      "sinceSignUp": 30026,
+      "note": ""
+    },
+    {
+      "step": "60 s after sign-up",
+      "ms": 63578,
+      "sinceSignUp": 60028,
+      "note": ""
+    },
+    {
+      "step": "spinners or busy regions at 60 s",
+      "ms": 63661,
+      "sinceSignUp": 60111,
+      "note": "0"
+    }
+  ],
+  "calls": [
+    {
+      "at": 230,
+      "method": "GET",
+      "path": "/api/public/stats",
+      "status": 200,
+      "ms": 64
+    },
+    {
+      "at": 545,
+      "method": "GET",
+      "path": "/api/health",
+      "status": 404,
+      "ms": 10
+    },
+    {
+      "at": 3966,
+      "method": "GET",
+      "path": "/api/profile",
+      "status": 200,
+      "ms": 10
+    },
+    {
+      "at": 4551,
+      "method": "PUT",
+      "path": "/api/profile",
+      "status": 200,
+      "ms": 23
+    },
+    {
+      "at": 4887,
+      "method": "GET",
+      "path": "/api/profile",
+      "status": 200,
+      "ms": 21
+    },
+    {
+      "at": 4917,
+      "method": "GET",
+      "path": "/api/bookmarks",
+      "status": 200,
+      "ms": 50
+    },
+    {
+      "at": 4924,
+      "method": "GET",
+      "path": "/api/jobs/deadlines/soon?days=7",
+      "status": 200,
+      "ms": 60
+    },
+    {
+      "at": 4927,
+      "method": "GET",
+      "path": "/api/notifications?limit=20",
+      "status": 200,
+      "ms": 64
+    },
+    {
+      "at": 4964,
+      "method": "GET",
+      "path": "/api/jobs?status=active&limit=1",
+      "status": 200,
+      "ms": 89
+    },
+    {
+      "at": 4973,
+      "method": "GET",
+      "path": "/api/jobs?status=active&limit=100",
+      "status": 200,
+      "ms": 100
+    },
+    {
+      "at": 4973,
+      "method": "GET",
+      "path": "/api/jobs/deadlines/soon?days=21",
+      "status": 200,
+      "ms": 101
+    },
+    {
+      "at": 4997,
+      "method": "GET",
+      "path": "/api/dashboard/today",
+      "status": 200,
+      "ms": 128
+    },
+    {
+      "at": 4999,
+      "method": "GET",
+      "path": "/api/jobs?status=active&isFresherEligible=true&sort=relevance&limit=6",
+      "status": 200,
+      "ms": 131
+    },
+    {
+      "at": 5000,
+      "method": "GET",
+      "path": "/api/applications?limit=8",
+      "status": 200,
+      "ms": 130
+    },
+    {
+      "at": 5048,
+      "method": "GET",
+      "path": "/api/dashboard/summary",
+      "status": 200,
+      "ms": 140
+    }
+  ]
+}

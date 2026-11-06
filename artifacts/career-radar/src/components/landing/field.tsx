@@ -20,8 +20,9 @@ import { FIELD_ROLES, RANKED, type SampleRole } from "./sample-roles";
  * No card comes within 48px of the headline, the lead, the button or "Free
  * and open source": the layout is measured from the hero's text block and
  * every spot that would break that, overlap the navigation or another card
- * is skipped. Rank 1 sits just below the button and the others follow it
- * round the rings and outward, so the ranks read in order.
+ * is skipped. The sharp cards fill the rings from just below the button,
+ * clockwise and outward; their ranks then read from the bottom up, the
+ * order in which they leave for "Today's ten" (rankBottomUp).
  *
  * Motion is transform and opacity only. Each layer moves with the scroll at
  * its own rate (parallax), far and mid drift outward and fade as the hero
@@ -43,6 +44,12 @@ export const CLEAR_ZONE = 48;
 export function cardSize(W: number) {
   return W < 640 ? { w: 176, h: 58 } : { w: 248, h: 68 };
 }
+
+/**
+ * The space kept between cards. Phone cards sit in close rows and do not
+ * idle (landing.css), so 10px is what a visitor sees: never under 8px.
+ */
+export const CARD_GAP = { phone: 10, wide: 16 } as const;
 
 /** mulberry32, so every visitor sees the same field. */
 function seeded(seed: number) {
@@ -74,7 +81,7 @@ export function layoutField(
       ? { near: 8, mid: 6, far: 4 }
       : { near: 8, mid: 8, far: 8 };
   const { w: cardW, h: cardH } = cardSize(W);
-  const gap = phone ? 8 : 16;
+  const gap = phone ? CARD_GAP.phone : CARD_GAP.wide;
   const cx = (zone.l + zone.r) / 2;
   const cy = (zone.t + zone.b) / 2;
   const clear: Rect = {
@@ -119,10 +126,17 @@ export function layoutField(
 
   // When the text spans most of the width (phones, tablets) there is room
   // only above and below it, so the cards sit in staggered rows there,
-  // still drawn over the same rings. Ranks are read outward from the
-  // button: below first, then above.
+  // still drawn over the same rings. Places are taken outward from the
+  // button, below first, then above; rankBottomUp then sets the ranks.
   if (zone.r - zone.l > W * 0.7) {
-    const cols = phone ? [0.26, 0.74] : [0.3, 0.7];
+    // Two staggered columns on phones and tablets; a wide but short screen
+    // (a 1280x720 laptop) takes as many as fit, so the ten find places.
+    const fit = Math.floor((W - 16) / (cardW + gap));
+    const cols = phone
+      ? [0.26, 0.74]
+      : fit <= 2
+        ? [0.3, 0.7]
+        : Array.from({ length: fit }, (_, i) => (i + 0.5) / fit);
     candidates.length = 0;
     candidates.push({ ...anchor, ring: -1, k: 0, t: -1 });
     const rowsIn = (from: number, to: number, below: boolean) => {
@@ -207,7 +221,35 @@ export function layoutField(
       left--;
     }
   }
+  rankBottomUp(placed);
   return { cx, cy, rings, cards: placed };
+}
+
+/**
+ * Ranks read from the bottom of the field up: rank 1 is the lowest sharp
+ * card and the soft ranked ones take the highest of the middle layer's
+ * places. The rows of "Today's ten" fill from the top as the list rises,
+ * so each card leaves in turn with nothing still waiting below it, and the
+ * flight never crosses two cards (flight-math.ts). Roles only swap within
+ * one depth, where every place has the same size, so no card is moved.
+ */
+function rankBottomUp(placed: Placed[]) {
+  const lowestFirst = (a: Placed, b: Placed) => b.y - a.y;
+  const near = placed.filter((p) => p.depth === "near").sort(lowestFirst);
+  const nearRoles = near.map((p) => p.role).sort((a, b) => a.rank - b.rank);
+  near.forEach((p, i) => {
+    p.role = nearRoles[i];
+  });
+  const mid = placed.filter((p) => p.depth === "mid").sort(lowestFirst);
+  const ranked = mid
+    .filter((p) => p.role.rank > 0)
+    .map((p) => p.role)
+    .sort((a, b) => a.rank - b.rank);
+  const rest = mid.filter((p) => p.role.rank === 0).map((p) => p.role);
+  const firstRanked = mid.length - ranked.length;
+  mid.forEach((p, i) => {
+    p.role = i < firstRanked ? rest[i] : ranked[i - firstRanked];
+  });
 }
 
 function useLayout(
@@ -275,7 +317,14 @@ function Layer({
     [0, depth === "near" ? 1 : 0.75],
     [1, reduced || depth === "near" ? 1 : 0],
   );
-  const cards = layout.cards.filter((c) => c.depth === depth);
+  // Ranked cards from the middle layer rest here, styled soft, so they do
+  // not fade out with that layer before their turn to fly.
+  const ranked = (c: Placed) => c.depth === "mid" && c.role.rank > 0;
+  const cards = layout.cards.filter((c) =>
+    depth === "near"
+      ? c.depth === "near" || ranked(c)
+      : c.depth === depth && !ranked(c),
+  );
   return (
     <motion.div
       className={`lp-layer lp-layer--${depth}`}
@@ -302,7 +351,7 @@ function Layer({
         return (
           <div
             key={c.role.id}
-            className="lp-slot"
+            className={c.depth === "mid" ? "lp-slot lp-slot--soft" : "lp-slot"}
             style={style}
             data-fly-src={c.role.rank > 0 ? c.role.rank : undefined}
           >

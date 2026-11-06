@@ -15,6 +15,7 @@ import {
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { corsOrigin, parseAllowedOrigins } from "./lib/allowed-origins";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -77,7 +78,14 @@ app.get("/api", (_req, res) => res.json({ ok: true, status: "running" }));
 // Drift-aware: 503 with the missing columns when the migration has not landed.
 app.get("/api/health", healthHandler);
 
-app.use(cors({ credentials: true, origin: true }));
+// The static frontend's origin(s); see lib/allowed-origins.ts.
+const allowedOrigins = parseAllowedOrigins(process.env["ALLOWED_ORIGINS"]);
+if (process.env["ALLOWED_ORIGINS"] && !allowedOrigins) {
+  logger.warn(
+    "ALLOWED_ORIGINS is set but holds no valid origin; reflecting any origin",
+  );
+}
+app.use(cors({ credentials: true, origin: corsOrigin(allowedOrigins) }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -87,6 +95,8 @@ app.use(
       getClerkProxyHost(req) ?? "",
       process.env.CLERK_PUBLISHABLE_KEY,
     ),
+    // Only session tokens issued to our own frontends.
+    ...(allowedOrigins ? { authorizedParties: allowedOrigins } : {}),
   })),
 );
 

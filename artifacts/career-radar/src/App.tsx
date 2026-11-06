@@ -27,6 +27,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { LandingPage } from "@/pages/landing";
 import { PageSkeleton } from "@/components/page-skeleton";
+import { ShellBoundary } from "@/components/shell-skeleton";
 import NotFound from "@/pages/not-found";
 
 // The signed-in app is split from the landing: a first-time visitor downloads
@@ -206,7 +207,22 @@ const clerkAppearance = {
   },
 };
 
+/**
+ * Wakes the API and its database while someone signs in or up. The API's
+ * host sleeps when idle (docs/DEPLOY.md); without this the first screen
+ * after sign-up, which is the first to need the API, would wait for it.
+ * Fire and forget: nothing waits on the answer.
+ */
+function useWakeApi() {
+  useEffect(() => {
+    void fetch(`${basePath}/api/health`, { cache: "no-store" }).catch(
+      () => undefined,
+    );
+  }, []);
+}
+
 function SignInPage() {
+  useWakeApi();
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 selection:bg-primary/20">
       <SignIn
@@ -219,6 +235,7 @@ function SignInPage() {
 }
 
 function SignUpPage() {
+  useWakeApi();
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 selection:bg-primary/20">
       <SignUp
@@ -249,16 +266,16 @@ function ProtectedRoute({
   return (
     <>
       <Show when="signed-in">
-        {/* The shell's own code loads once; after that a page's code loads
-            inside it, behind a skeleton of the page, so navigation never
-            blanks the screen. */}
-        <Suspense fallback={null}>
+        {/* The shell's own code loads once, behind a skeleton of the
+            shell; after that a page's code loads inside it, behind a
+            skeleton of the page, so the screen never blanks. */}
+        <ShellBoundary>
           <AppLayout>
             <Suspense fallback={<PageSkeleton />}>
               <Component />
             </Suspense>
           </AppLayout>
-        </Suspense>
+        </ShellBoundary>
       </Show>
       <Show when="signed-out">
         <Redirect to="/sign-in" />
