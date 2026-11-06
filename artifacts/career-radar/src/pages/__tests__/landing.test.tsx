@@ -118,7 +118,12 @@ describe("LandingPage", () => {
       screen.getByText("Sample roles. Ranking from the real scoring code."),
     ).toBeInTheDocument();
     const queue = container.querySelector(".lp-queue")!;
-    expect(queue).toHaveAttribute("inert");
+    // A picture of the product: hidden from assistive tech and holding
+    // nothing focusable, but not inert, so its rows answer hover.
+    expect(queue).toHaveAttribute("aria-hidden", "true");
+    expect(queue.querySelectorAll("a, button, input, [tabindex]")).toHaveLength(
+      0,
+    );
     // All ten rows are always in the list; the reveal only fades them in.
     expect(queue.querySelectorAll("ol > li")).toHaveLength(10);
     expect(RANKED).toHaveLength(10);

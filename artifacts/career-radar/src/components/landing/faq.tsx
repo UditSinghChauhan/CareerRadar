@@ -1,6 +1,7 @@
 import * as Accordion from "@radix-ui/react-accordion";
 import { Plus } from "lucide-react";
 import { Reveal } from "./motion/reveal";
+import { Settle } from "./motion/scroll-motion";
 import { REPO_URL } from "./links";
 
 /**
@@ -42,9 +43,9 @@ export function Faq() {
     <section id="faq" className="lp-section lp-faq" aria-labelledby="faq-head">
       <div className="lp-container lp-faq__in">
         <div className="lp-faq__side">
-          <Reveal as="h2" id="faq-head" className="lp-h2">
+          <Settle as="h2" id="faq-head" className="lp-h2">
             Questions
-          </Reveal>
+          </Settle>
           <Reveal as="p" index={1} className="lp-body">
             Something else?{" "}
             <a className="lp-link" href={REPO_URL}>

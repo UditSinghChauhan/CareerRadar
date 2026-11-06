@@ -2,8 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   CARD_GAP,
   CLEAR_ZONE,
+  DRIFT,
   DRIFT_OUT,
+  ENTER_MS,
+  ENTER_SPAN,
+  ENTER_START,
+  SPREAD,
   cardSize,
+  driftFor,
+  entranceDelay,
   layoutField,
   outward,
   type Rect,
@@ -74,7 +81,7 @@ describe.each(VIEWS)("the hero's field at $name", ({ W, H, zone }) => {
       const { ux, uy, reach } = outward(layout, c);
       expect(Math.hypot(ux, uy)).toBeCloseTo(1, 6);
       expect(reach).toBeGreaterThanOrEqual(0);
-      expect(reach).toBeLessThanOrEqual(DRIFT_OUT);
+      expect(reach).toBeLessThanOrEqual(DRIFT_OUT * SPREAD[c.depth].reach);
       const start = box(c.x, c.y, scale[c.depth]);
       for (let k = 0; k <= 1; k += 0.1) {
         const at = box(
@@ -98,5 +105,102 @@ describe.each(VIEWS)("the hero's field at $name", ({ W, H, zone }) => {
         expect(overlaps(grow(sharp[i], 4), grow(sharp[j], 4))).toBe(false);
       }
     }
+  });
+});
+
+describe("the field's ambient drift", () => {
+  const layout = layoutField(1440, 900, VIEWS[0].zone, 76);
+  const phone = layoutField(390, 920, VIEWS[2].zone, 76);
+
+  it("gives every card its own loop, so no two move together", () => {
+    const loops = layout.cards.map((c) => driftFor(c.role.id, c.depth, false));
+    // No two cards share both a loop length and a phase: none move together.
+    const keys = loops.map(
+      (l) => `${l.seconds.toFixed(2)}|${l.phase.toFixed(2)}`,
+    );
+    expect(new Set(keys).size).toBe(loops.length);
+    // The same card always gets the same loop.
+    const c = layout.cards[0];
+    expect(driftFor(c.role.id, c.depth, false)).toEqual(
+      driftFor(c.role.id, c.depth, false),
+    );
+  });
+
+  it("stays within the brief: 8-16s, 6-14px of travel, under 0.6deg", () => {
+    for (const { cards, W } of [layout, phone]) {
+      for (const c of cards) {
+        const d = driftFor(c.role.id, c.depth, W < 640);
+        expect(d.seconds).toBeGreaterThanOrEqual(8);
+        expect(d.seconds).toBeLessThanOrEqual(16);
+        const travel = 2 * Math.max(Math.abs(d.ax), Math.abs(d.ay));
+        expect(travel).toBeGreaterThanOrEqual(6);
+        expect(travel).toBeLessThanOrEqual(14);
+        expect(Math.abs(d.rotate)).toBeLessThanOrEqual(0.6);
+        expect(d.phase).toBeLessThanOrEqual(0);
+        expect(-d.phase).toBeLessThan(d.seconds);
+      }
+    }
+  });
+
+  it("drifts far cards slower and less than near ones, for depth", () => {
+    const [nearLo] = DRIFT.seconds.near;
+    const [, nearHi] = DRIFT.seconds.near;
+    const [farLo] = DRIFT.seconds.far;
+    expect(farLo).toBeGreaterThanOrEqual(nearHi);
+    expect(nearLo).toBeGreaterThanOrEqual(8);
+    expect(DRIFT.amp.far).toBeLessThan(DRIFT.amp.near);
+    expect(SPREAD.far.reach).toBeLessThan(SPREAD.near.reach);
+    expect(SPREAD.far.gone).toBeGreaterThan(SPREAD.near.gone);
+  });
+
+  it("never lets two drifting neighbours come within 4px", () => {
+    const largest = Math.max(DRIFT.amp.near, DRIFT.amp.mid, DRIFT.amp.far);
+    expect(CARD_GAP.wide - 2 * largest).toBeGreaterThanOrEqual(4);
+    expect(CARD_GAP.phone - 2 * DRIFT.amp.phone).toBeGreaterThanOrEqual(4);
+  });
+
+  it("keeps the clear zone around the text even at the drift's extreme", () => {
+    for (const { zone, W, H } of VIEWS) {
+      const l = layoutField(W, H, zone, 76);
+      const { w, h } = cardSize(W);
+      const amp = W < 640 ? DRIFT.amp.phone : DRIFT.amp.near;
+      const clear = grow(zone, CLEAR_ZONE - amp - 2);
+      const scale = { near: 1, mid: 0.9, far: 0.8 } as const;
+      for (const c of l.cards) {
+        const s = scale[c.depth];
+        const box = {
+          l: c.x - (w * s) / 2,
+          t: c.y - (h * s) / 2,
+          r: c.x + (w * s) / 2,
+          b: c.y + (h * s) / 2,
+        };
+        expect(overlaps(box, clear)).toBe(false);
+      }
+    }
+  });
+});
+
+describe("the field's entrance", () => {
+  it("brings near cards in first, then mid, then far", () => {
+    expect(entranceDelay("near", 7, 0)).toBeLessThan(
+      entranceDelay("far", 7, 0),
+    );
+    expect(entranceDelay("near", 0, 0)).toBeLessThan(
+      entranceDelay("mid", 0, 0),
+    );
+    expect(entranceDelay("mid", 0, 0)).toBeLessThan(entranceDelay("far", 0, 0));
+  });
+
+  it("is over within 1.2s when the field is placed by 500ms", () => {
+    expect(ENTER_START + ENTER_SPAN).toBeLessThanOrEqual(1200);
+    for (const elapsed of [0, 200, 450, 500]) {
+      const last = elapsed + entranceDelay("far", 7, elapsed) + ENTER_MS;
+      expect(last).toBeLessThanOrEqual(1200);
+    }
+  });
+
+  it("starts at once, in order, when the field is placed late", () => {
+    expect(entranceDelay("near", 0, 900)).toBe(0);
+    expect(entranceDelay("near", 1, 900)).toBeGreaterThan(0);
   });
 });

@@ -1,13 +1,20 @@
-import { useEffect, useLayoutEffect, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from "react";
 import {
   motion,
   styleEffect,
-  useMotionValue,
   useReducedMotion,
   useScroll,
   useTransform,
   type MotionValue,
 } from "framer-motion";
+import { SCROLL_TIMELINE } from "./motion/scroll-timeline";
 import { RoleCard } from "./role-card";
 import { FIELD_ROLES, RANKED, type SampleRole } from "./sample-roles";
 
@@ -25,11 +32,17 @@ import { FIELD_ROLES, RANKED, type SampleRole } from "./sample-roles";
  * is skipped. The sharp cards fill the rings from just below the button,
  * clockwise and outward, in rank order: rank 1 sits under the button.
  *
- * Motion is transform and opacity only, and only the hero's scroll fade
- * (HeroField): as the hero leaves, every card drifts straight out from the
- * centre, at most 60px, so none ever crosses the text, and the field fades
- * out. The cards never fly anywhere; "Today's ten" has its own rows. The
- * blur is a fixed property of each depth layer and never animates.
+ * Motion (DESIGN.md, Motion), transform, opacity and filter only:
+ *   - ambient: every card drifts on its own slow loop (driftFor), far cards
+ *     slower and smaller than near ones; the rings turn once in 120s.
+ *     Both pause off screen and in a hidden tab, and stop under reduced
+ *     motion (landing.css).
+ *   - entrance: the cards fade in from an 8px blur to their depth's blur,
+ *     near cards first (entranceDelay), all done within 1.2s of the hero.
+ *   - scroll: as the hero leaves, every card spreads straight out from the
+ *     centre and fades, near cards further and sooner than far ones
+ *     (SPREAD), so none ever crosses the text. "Today's ten" has its own
+ *     rows; no card flies anywhere.
  */
 
 type Depth = "far" | "mid" | "near";
@@ -58,8 +71,9 @@ export function cardSize(W: number) {
 }
 
 /**
- * The space kept between cards. Phone cards sit in close rows and do not
- * idle (landing.css), so 10px is what a visitor sees: never under 8px.
+ * The space kept between cards at rest. Two neighbours drifting toward each
+ * other close it by at most the sum of their drift amplitudes (DRIFT), so a
+ * visitor never sees under 4px.
  */
 export const CARD_GAP = { phone: 10, wide: 16 } as const;
 
@@ -281,10 +295,80 @@ function useLayout(
   return layout;
 }
 
-/** How far a card drifts outward as the hero leaves, in px. DESIGN.md, Motion. */
+/** How far a near card spreads outward as the hero leaves, in px. DESIGN.md, Motion. */
 export const DRIFT_OUT = 60;
-/** The hero's scroll progress by which the field has faded out. */
+/** The hero's scroll progress by which the rings, the last of the field, have faded out. */
 export const FIELD_GONE = 0.7;
+
+/**
+ * The scroll spread per depth, for parallax: near cards travel the full
+ * DRIFT_OUT and are gone by half the hero; far ones travel 40% of it and
+ * fade last.
+ */
+export const SPREAD: Record<Depth, { reach: number; gone: number }> = {
+  near: { reach: 1, gone: 0.5 },
+  mid: { reach: 0.65, gone: 0.6 },
+  far: { reach: 0.4, gone: FIELD_GONE },
+};
+
+/**
+ * The ambient drift's amplitude per depth, in px either side of rest (so a
+ * travel of 6 to 10px), and its loop length in seconds: far cards move less
+ * and slower than near ones. Phones use the smallest amplitude, as their
+ * cards sit 10px apart.
+ */
+export const DRIFT = {
+  amp: { near: 5, mid: 4, far: 3, phone: 3 },
+  seconds: { near: [8, 10.5], mid: [10.5, 13], far: [13, 16] },
+  /** Largest tilt either way, in degrees. */
+  rotate: { near: 0.6, mid: 0.45, far: 0.3 },
+} as const;
+
+/** A stable 32-bit hash of a card's id, so each card keeps its own loop. */
+function hash(id: string) {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++)
+    h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+/**
+ * Pure: one card's ambient loop. An ellipse of half-axes ax and ay (one of
+ * them the full amplitude), turning either way, with a tilt that follows
+ * it; its own length and its own phase (a negative delay), so no two cards
+ * move together.
+ */
+export function driftFor(id: string, depth: Depth, phone: boolean) {
+  const r = seeded(hash(id));
+  const amp = phone ? DRIFT.amp.phone : DRIFT.amp[depth];
+  const [lo, hi] = DRIFT.seconds[depth];
+  const seconds = lo + r() * (hi - lo);
+  const wide = r() < 0.5;
+  const minor = amp * (0.55 + r() * 0.35);
+  const ax = wide ? amp : minor;
+  const ay = (wide ? minor : amp) * (r() < 0.5 ? -1 : 1);
+  const rotate = DRIFT.rotate[depth] * (0.5 + r() * 0.5) * (r() < 0.5 ? -1 : 1);
+  return { ax, ay, rotate, seconds, phase: -r() * seconds };
+}
+
+/**
+ * The cards' entrance, after the copy's: it starts ENTER_START ms after the
+ * hero first painted, or as soon as the field is placed if that is later
+ * (about 450ms on a desktop, measured). Near cards first, then mid 60ms
+ * later, then far 120ms later, 18ms apart in each layer, each ENTER_MS
+ * long: the last is in ENTER_SPAN ms after the start.
+ */
+export const ENTER_START = 360;
+export const ENTER_MS = 360;
+export const ENTER_AT: Record<Depth, number> = { near: 0, mid: 60, far: 120 };
+export const ENTER_STAGGER = 18;
+/** The longest a layer holds: eight cards. */
+export const ENTER_SPAN = ENTER_AT.far + 7 * ENTER_STAGGER + ENTER_MS;
+/** ms from now until this card's entrance starts; `elapsed` is ms since the hero painted. */
+export function entranceDelay(depth: Depth, index: number, elapsed: number) {
+  const start = Math.max(ENTER_START - elapsed, 0);
+  return start + ENTER_AT[depth] + index * ENTER_STAGGER;
+}
 
 /**
  * How a card drifts as the hero leaves: straight out from the field's
@@ -293,6 +377,7 @@ export const FIELD_GONE = 0.7;
  * never seen cut. (A far card that already crosses an edge does not drift.)
  */
 export function outward(layout: Layout, card: Placed) {
+  const limit = DRIFT_OUT * SPREAD[card.depth].reach;
   const { W, H, cx, cy } = layout;
   const d = Math.hypot(card.x - cx, card.y - cy);
   const ux = d < 1 ? 0 : (card.x - cx) / d;
@@ -304,7 +389,7 @@ export function outward(layout: Layout, card: Placed) {
   const reach = Math.max(
     0,
     Math.min(
-      DRIFT_OUT,
+      limit,
       room(8, W - 8, card.x, (w * s) / 2, ux),
       room(0, H - 8, card.y, (h * s) / 2, uy),
     ),
@@ -317,42 +402,98 @@ function FieldCard({
   layout,
   index,
   progress,
+  elapsed,
 }: {
   card: Placed;
   layout: Layout;
   index: number;
-  progress: MotionValue<number>;
+  progress: MotionValue<number> | null;
+  elapsed: number;
 }) {
   const { ux, uy, reach } = outward(layout, card);
-  const x = useTransform(progress, [0, FIELD_GONE], [0, ux * reach]);
-  const y = useTransform(progress, [0, FIELD_GONE], [0, uy * reach]);
-  const style = {
-    left: card.x,
-    top: card.y,
-    "--in": `${120 + index * 45}ms`,
-  } as React.CSSProperties;
+  const drift = driftFor(card.role.id, card.depth, layout.W < 640);
+  const inner = (
+    <div
+      className="lp-drift"
+      style={
+        {
+          "--ax": `${drift.ax.toFixed(2)}px`,
+          "--ay": `${drift.ay.toFixed(2)}px`,
+          "--rot": `${drift.rotate.toFixed(3)}deg`,
+          animationDuration: `${drift.seconds.toFixed(2)}s`,
+          animationDelay: `${drift.phase.toFixed(2)}s`,
+        } as CSSProperties
+      }
+    >
+      <div
+        className="lp-enter"
+        style={{
+          animationDelay: `${Math.round(entranceDelay(card.depth, index, elapsed))}ms`,
+        }}
+      >
+        <RoleCard role={card.role} />
+      </div>
+    </div>
+  );
   return (
     <div
       className={card.depth === "mid" ? "lp-slot lp-slot--soft" : "lp-slot"}
-      style={style}
+      style={{ left: card.x, top: card.y }}
     >
-      <motion.div style={{ x, y }}>
-        <div className="lp-enter">
-          <RoleCard role={card.role} />
+      {progress ? (
+        <SpreadFallback
+          progress={progress}
+          to={{ x: ux * reach, y: uy * reach }}
+          gone={SPREAD[card.depth].gone}
+        >
+          {inner}
+        </SpreadFallback>
+      ) : (
+        <div
+          className="lp-spread"
+          style={
+            {
+              "--sx": `${(ux * reach).toFixed(1)}px`,
+              "--sy": `${(uy * reach).toFixed(1)}px`,
+              "--gone": `${SPREAD[card.depth].gone * 100}%`,
+            } as CSSProperties
+          }
+        >
+          {inner}
         </div>
-      </motion.div>
+      )}
     </div>
   );
+}
+
+/** The spread as framer-motion values, where CSS scroll timelines are missing. */
+function SpreadFallback({
+  progress,
+  to,
+  gone,
+  children,
+}: {
+  progress: MotionValue<number>;
+  to: { x: number; y: number };
+  gone: number;
+  children: React.ReactNode;
+}) {
+  const x = useTransform(progress, [0, gone], [0, to.x]);
+  const y = useTransform(progress, [0, gone], [0, to.y]);
+  const opacity = useTransform(progress, [0, gone], [1, 0]);
+  return <motion.div style={{ x, y, opacity }}>{children}</motion.div>;
 }
 
 function Layer({
   depth,
   layout,
   progress,
+  elapsed,
 }: {
   depth: Depth;
   layout: Layout;
-  progress: MotionValue<number>;
+  progress: MotionValue<number> | null;
+  elapsed: number;
 }) {
   return (
     <div className={`lp-layer lp-layer--${depth}`}>
@@ -365,6 +506,7 @@ function Layer({
             layout={layout}
             index={i}
             progress={progress}
+            elapsed={elapsed}
           />
         ))}
     </div>
@@ -372,61 +514,166 @@ function Layer({
 }
 
 /**
- * The hero's scroll fade: the field's cards drift outward and fade out, with
- * the rings, by the time 70% of the hero has scrolled past; the hero's copy
- * fades and lifts 16px a little earlier. Everything is a framer-motion value
- * derived from useScroll on the hero: the field through motion components,
- * the copy (static HTML painted before this chunk loads) through
- * styleEffect. No scroll listener, no React state. Under reduced motion
+ * The rings, all on one layer that turns once in 120s. A whole circle that
+ * turns looks still, so the solid rings carry four short breaks and every
+ * second ring is dotted: the turn can be seen. Rings past the farthest
+ * corner are never seen and are left out, so the layer is only as large as
+ * the field needs.
+ */
+function Rings({ layout }: { layout: Layout }) {
+  const { W, H, cx, cy } = layout;
+  const reach = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy));
+  const rings = layout.rings.filter((r) => r <= reach);
+  const R = Math.ceil(Math.max(0, ...rings)) + 2;
+  return (
+    <div
+      className="lp-rings-spin"
+      style={{ left: cx - R, top: cy - R, width: R * 2, height: R * 2 }}
+    >
+      <svg
+        className="lp-rings"
+        aria-hidden="true"
+        viewBox={`${-R} ${-R} ${R * 2} ${R * 2}`}
+        width="100%"
+        height="100%"
+      >
+        {rings.map((r, i) => {
+          const quarter = (Math.PI * r) / 2;
+          return (
+            <circle
+              key={r}
+              cx={0}
+              cy={0}
+              r={r}
+              className={i % 2 === 1 ? "lp-ring--dotted" : undefined}
+              strokeDasharray={
+                i % 2 === 1 ? undefined : `${(quarter - 10).toFixed(1)} 10`
+              }
+              style={{ opacity: Math.max(0.25, 1 - i * 0.16) }}
+            />
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * The hero's field. Its scroll spread runs on a CSS scroll timeline where
+ * the browser has one (the hero's `view-timeline: --hero`, landing.css), so
+ * nothing in this component follows the scroll; elsewhere framer-motion
+ * `useScroll` on the hero drives the same values (cards through motion
+ * components, the copy, painted before this chunk, through styleEffect).
+ * No scroll listener and no React state either way. Under reduced motion
  * nothing moves.
  */
 export function HeroField({
   heroRef,
   textRef,
   fieldRef,
+  bornAt,
 }: {
   heroRef: RefObject<HTMLElement | null>;
   textRef: RefObject<HTMLElement | null>;
   fieldRef: RefObject<HTMLDivElement | null>;
+  /** performance.now() when the hero first rendered: the entrance's zero. */
+  bornAt: number;
 }) {
   const layout = useLayout(fieldRef, textRef);
   const reduced = Boolean(useReducedMotion());
+  // Measured when the field is first placed, which is when its cards mount.
+  const placed = layout !== null;
+  const elapsed = useMemo(
+    () => (placed ? performance.now() - bornAt : 0),
+    [placed, bornAt],
+  );
+  if (!layout) return null;
+  if (SCROLL_TIMELINE || reduced) {
+    return <FieldBody layout={layout} elapsed={elapsed} progress={null} />;
+  }
+  return (
+    <FieldScrollFallback
+      layout={layout}
+      elapsed={elapsed}
+      heroRef={heroRef}
+      textRef={textRef}
+    />
+  );
+}
+
+/** Where CSS scroll timelines are missing: the same spread and fade from useScroll. */
+function FieldScrollFallback({
+  layout,
+  elapsed,
+  heroRef,
+  textRef,
+}: {
+  layout: Layout;
+  elapsed: number;
+  heroRef: RefObject<HTMLElement | null>;
+  textRef: RefObject<HTMLElement | null>;
+}) {
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const still = useMotionValue(0);
-  const progress = reduced ? still : scrollYProgress;
-  const fieldOpacity = useTransform(progress, [0, FIELD_GONE], [1, 0]);
-  const copyOpacity = useTransform(progress, [0, COPY_GONE], [1, 0]);
-  const copyY = useTransform(progress, [0, COPY_GONE], [0, -COPY_LIFT]);
+  const ringsOpacity = useTransform(scrollYProgress, [0, FIELD_GONE], [1, 0]);
+  const copyOpacity = useTransform(scrollYProgress, [0, COPY_GONE], [1, 0]);
+  const copyY = useTransform(scrollYProgress, [0, COPY_GONE], [0, -COPY_LIFT]);
 
   useEffect(() => {
     const text = textRef.current;
-    if (!text || reduced) return;
+    if (!text) return;
     return styleEffect(text, { opacity: copyOpacity, y: copyY });
-  }, [textRef, reduced, copyOpacity, copyY]);
+  }, [textRef, copyOpacity, copyY]);
 
-  if (!layout) return null;
   return (
-    <motion.div className="lp-field__in" style={{ opacity: fieldOpacity }}>
+    <FieldBody
+      layout={layout}
+      elapsed={elapsed}
+      progress={scrollYProgress}
+      ringsOpacity={ringsOpacity}
+    />
+  );
+}
+
+function FieldBody({
+  layout,
+  elapsed,
+  progress,
+  ringsOpacity,
+}: {
+  layout: Layout;
+  elapsed: number;
+  progress: MotionValue<number> | null;
+  ringsOpacity?: MotionValue<number>;
+}) {
+  return (
+    <div className="lp-field__in">
       <div className="lp-field__deep">
-        <svg className="lp-rings" aria-hidden="true" width="100%" height="100%">
-          {layout.rings.map((r, i) => (
-            <circle
-              key={r}
-              cx={layout.cx}
-              cy={layout.cy}
-              r={r}
-              style={{ opacity: Math.max(0.25, 1 - i * 0.16) }}
-            />
-          ))}
-        </svg>
+        <motion.div
+          className="lp-rings-fade"
+          style={ringsOpacity ? { opacity: ringsOpacity } : undefined}
+        >
+          <Rings layout={layout} />
+        </motion.div>
         {(["far", "mid"] as const).map((d) => (
-          <Layer key={d} depth={d} layout={layout} progress={progress} />
+          <Layer
+            key={d}
+            depth={d}
+            layout={layout}
+            progress={progress}
+            elapsed={elapsed}
+          />
         ))}
       </div>
-      <Layer depth="near" layout={layout} progress={progress} />
-    </motion.div>
+      <div className="lp-field__fade" />
+      <Layer
+        depth="near"
+        layout={layout}
+        progress={progress}
+        elapsed={elapsed}
+      />
+    </div>
   );
 }

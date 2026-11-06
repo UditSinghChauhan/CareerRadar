@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { Monogram } from "./role-card";
 import { RANKED } from "./sample-roles";
 import { Reveal } from "./motion/reveal";
+import { Settle } from "./motion/scroll-motion";
 import { Statement } from "./statement";
 
 const ROW = RANKED[0];
@@ -18,8 +19,8 @@ export const PARTS = [
 
 /**
  * The three fragments are still: each shows the product's end state, and
- * the step it sits in rises in with the page's one reveal. DESIGN.md,
- * Motion: no other motion on the page.
+ * the step it sits in rises in with the page's reveal and lifts on hover
+ * (the fragment is inert, so the step takes the hover).
  */
 function Ranked() {
   return (
@@ -122,9 +123,9 @@ export function HowItWorks() {
   return (
     <section id="how" className="lp-section lp-how" aria-labelledby="how-head">
       <div className="lp-container">
-        <Reveal as="h2" id="how-head" className="lp-h2">
+        <Settle as="h2" id="how-head" className="lp-h2">
           How it works
-        </Reveal>
+        </Settle>
         <Statement
           lead="One short list, every morning."
           rest="CareerRadar ranks every open role you can apply to, says why each pick is there, and keeps your applications in one place."
