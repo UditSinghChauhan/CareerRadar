@@ -51,7 +51,7 @@ Measured with `node docs/screenshots/landing-v3/contrast.mjs` (WCAG 2.x):
 | monogram ink on its tint (sky, sand, rose) | 4.5 | 7.82, 6.42, 7.21 |
 
 - No glows, gradients or grain on the light page. Lime never sits on the light canvas as text.
-- The "Live" mark's dot is green, still. Rank tags in the hero's field all take lime-tint, rank 1 included, so the queue's rank 1 is the only lime on screen.
+- The "Live" mark's dot is green; it breathes with a soft lime halo (Motion). Rank tags in the hero's field all take lime-tint, rank 1 included, so the queue's rank 1 is the only lime on screen.
 - One hairline colour (hairline) on the light page; no element carries two shadows.
 - Monogram tiles take one of six soft tints (sky, sage, sand, rose, stone, teal) with a dark ink of the same hue. They stand in for logos; no real logo is shown.
 
@@ -94,25 +94,46 @@ The app uses the same two families (`--app-font-sans`, `--app-font-mono` in `src
 
 ## Motion
 
-Built with framer-motion and CSS. Native scroll only, no scroll-jacking. One easing everywhere: `cubic-bezier(0.16, 1, 0.3, 1)` (`--lp-ease`, `EASE_OUT`).
+Built with framer-motion and native CSS; no other animation library. Native scroll only, no scroll-jacking. Transform, opacity and filter only. One easing for entrances and settles: `cubic-bezier(0.16, 1, 0.3, 1)` (`--lp-ease`, `EASE_OUT`); `ease-in-out` for things already on screen that move (the nav marker, the Live dot); `linear` for loops and scroll-linked motion.
 
-The page has three motions and no others:
+The page is calm but never still. Four layers, and nothing outside them:
 
-1. **The reveal.** Content entering rises and fades in once, when it comes into view (`Reveal`; opacity 0 to 1, y 12 to 0, 500ms, siblings 70ms apart). "Today's ten" plays its own version when a quarter of the card is in view: the card fades and rises 12px over 500ms, starting with row 1, so the frame is never seen empty; its ten rows rise 8px and fade in over 400ms, 45ms apart; after the last lands, rank 1's lime tag pulses once (one soft halo, 900ms). The field's cards enter on load the same way.
-2. **The hero's scroll fade.** framer-motion `useScroll` on the hero, through `useTransform` motion values only. Each field card drifts straight out from the centre, at most 60px and never past the hero's edge, and the cards and rings fade to 0 by 70% of the hero scrolled; the copy fades and lifts 16px by 50%, so a little earlier. The copy is static HTML painted before the motion chunk loads, so its values are bound with `styleEffect`. Cards only move away from the text, so none ever crosses the headline, lead or button.
-3. **The radar sweep** in the dark band, at 30fps, only after the band has faded in, while on screen and not paused. The icon-only pause button ("Pause the radar sweep") sits in the band's bottom-right corner.
+1. **Ambient: alive at rest, never distracting.**
+   - *The field.* Every sample card drifts on its own loop: an ellipse of 3 to 5px either side (6 to 10px of travel; 3px on phones, whose cards sit 10px apart), a tilt of at most 0.6deg, 8 to 10.5s per turn for near cards, 10.5 to 13s for mid, 13 to 16s for far, each with its own phase (`driftFor` in `field.tsx`, seeded by the card, so every visitor sees the same field). Far cards move less and slower than near ones, for depth. Two neighbours never come within 4px.
+   - *The rings* turn once in 120s, all on one layer. A whole circle that turns looks still, so the solid rings carry four short breaks and every second ring is dotted.
+   - *The stats band's "Live" dot* breathes: the green dot swells to 1.15 and a soft lime halo behind it brightens, 2.4s each way. The dot stays green so it reads on the canvas (lime alone is 1.2:1); lime appears only as the halo.
+   - *The final band's radar sweep*, at 30fps, only after the band has faded in, while on screen and not paused (the icon-only pause button, "Pause the radar sweep", sits in the band's bottom-right corner).
+   - Every loop pauses while its section is off screen or the tab is hidden (`usePauseOffscreen`: an IntersectionObserver and `visibilitychange` set `data-paused`, and CSS pauses the animation), and never starts under reduced motion.
+2. **Scroll-driven, on the compositor.** CSS scroll-driven animations where the browser has them (`animation-timeline: view()` with `animation-range`, detected once as `SCROLL_TIMELINE` to match the `@supports` block in `landing.css`); framer-motion `useScroll`/`useTransform` values elsewhere.
+   - *The hero* names its own view timeline (`--hero`, `exit-crossing`). As it leaves, each card spreads straight out from the centre and fades: near cards up to 60px and gone by 50% of the hero, mid 65% of that by 60%, far 40% by 70%, so the field parts with depth; the rings fade by 70%; the copy lifts 16px and fades by 50%, a little earlier. Cards only move away from the text, so none ever crosses the headline, lead or button.
+   - *Section headings and statements* settle: from 12px below and opacity 0.4 as their top enters the viewport to rest by 35% of their view (`cover 0%` to `cover 35%`, `Settle`), so content arrives instead of popping.
+   - *The dashboard capture* tilts from `rotateX(8deg)` and scale 0.96 to flat by the time its middle reaches the middle of the viewport (`Tilt`, a layer of its own, so it never shares a transform with the reveal).
+   - *The stats* count up from zero once, when half a column is in view (1.2s; a later live figure eases from the shown one in 0.6s), written by a framer-motion value, in tabular figures. The screen-reader sentence always carries the final figure.
+3. **Interaction: everything answers.**
+   - Buttons: background shade on hover (150ms), `scale(0.97)` on press, the green `:focus-visible` ring.
+   - Cards (the hero's sample cards, the feature cards, the how-it-works steps, the queue's rows): lift 2px with a deeper soft shadow on hover (200ms). A one-line queue row trades its title, in place, for its reason chips, so the list never changes height. Hover effects apply only to fine pointers.
+   - Links: a full-strength underline grows from left to right (`scaleX`, 200ms). Links inside text keep a resting underline at 45%, so they never rely on colour alone.
+   - The nav: a short ink line under the section links slides to the section being read (an IntersectionObserver picks the section; the line moves by one transform). Hover darkens a link; there is never a second line under the nav.
+   - The FAQ: the answer's height and opacity open over 300ms and close over 240ms; the plus turns 45deg into a cross.
+4. **Entrances, staged, within 1.2s, never blocking.**
+   - On first load: the nav fades in (320ms); the headline lifts 10px line by line, 60ms apart (`--line`, numbered before the first paint); the lead at 240ms and the button at 300ms rise and fade in; then the field's cards come out of an 8px blur to their depth's blur, near cards first, then mid, then far, 18ms apart (`entranceDelay`). Measured at 1440x900: the last card is in 1.15 to 1.18s after the first paint. Links and buttons work from the first frame.
+   - The headline moves by transform alone. Opacity, blur or a mask on it made the browser measure its first paint smaller than the copy React renders over it, which then counted as a later Largest Contentful Paint (measured with a PerformanceObserver and Lighthouse; 2026-11-06).
+   - The clock starts when `index.html` paints its pre-rendered hero (`window.__lpBorn`); React's hero, which replaces it, sets `--since` to the time already spent, so the entrance never restarts.
+   - Below the fold, content rises and fades in once as it comes into view (`Reveal`; 12px, 500ms, siblings 70ms apart). "Today's ten" plays its own version when a quarter of the card is in view: the card fades and rises 12px, its ten rows rise 8px and fade in, 45ms apart, and rank 1's lime tag pulses once (900ms).
 
-Plus interaction feedback, which is not decoration: hover and press (150ms, `scale(0.98)`), the nav's background (250ms), the FAQ accordion's height, and section cards lifting 2px on hover with a deeper shadow (200ms).
+**No scroll listener positions anything.** No element on the landing is positioned or transformed from a `scroll` event. Scroll-linked motion is CSS scroll-driven animation where supported and framer-motion motion values (no React state, no hand-written style writes) as the fallback. The nav's scroll listener only toggles its background class; its section marker follows an IntersectionObserver. Nothing is sticky except the FAQ heading.
 
-**No scroll listener positions anything.** No element on the landing is positioned or transformed from a `scroll` event. Scroll-linked motion is either framer-motion `useScroll`/`useTransform` motion values (no React state, no hand-written style writes) or CSS scroll-driven animation (`animation-timeline: view()`/`scroll()`) with the still end state as its fallback. The nav's listener only toggles a class. Nothing is sticky except the FAQ heading. `e2e-landing/smooth-scroll.spec.ts` wheel-scrolls 0 to 1600px and back at 1440x900 and fails if the statement moves at all, if the hero copy or the card moves outside its declared motion, or if a flying or duplicate card exists.
+**Budget.** At most 40 time-based animations running in the viewport at rest (measured: 20 at 1440x900, 14 at 768x1024, 12 at 390x844); scroll-driven animations only advance while the page scrolls. No `will-change`: the browser promotes running transform animations itself, and nothing that is still holds a layer. At least 15 things visibly move in the hero over 1.5s with no input (measured: 24 at 1440, 17 at 768, 16 at 390) and none under reduced motion.
 
-- Still on purpose: the stat numbers (printed, not counted), the How it works fragments, the board, the reminder, the dream list and the app crop all show their end state; the step or card they sit in takes the reveal. No idle drift, marquee or repeating pulse.
+**Tests.** `e2e-landing/smooth-scroll.spec.ts` wheel-scrolls 0 to 1600px and back at 1440x900 and fails if the statement's column moves, if the statement, the hero copy or the card moves outside its declared motion, or if a flying or duplicate card exists. `e2e-landing/motion.spec.ts` fails if fewer than 15 things move in the hero at rest at 1440 or 390, if anything moves under reduced motion, if the loops keep running off screen or in a hidden tab, if the entrance runs past 1.2s, or if more than 40 animations run in view at rest.
+
+- Still on purpose: the How it works fragments, the board, the reminder, the dream list and the app crop show their end state; the card they sit in reveals, lifts and (the crop) tilts.
 - Anchor links scroll natively and smoothly (off under reduced motion), and each section stops 24px under the nav.
-- **Reduced motion:** nothing moves. The field and the copy stay put, every row and card is shown in place, no pulse, no sweep, no hover lift.
+- **Reduced motion:** nothing moves. No entrance, drift, ring turn, breathing, count, settle, tilt, spread, sweep, hover lift or press scale; every row and card is shown in place and every figure printed.
 
 ## Navigation
 
-A plain transparent bar, 64px tall: the logo, "How it works", "Features", "FAQ" (anchors, hidden under 768px), "Sign in", and "Get started" as an ink pill. After 24px of scroll it takes the canvas colour and a bottom hairline. No theme toggle on the landing.
+A plain transparent bar, 64px tall: the logo, "How it works", "Features", "FAQ" (anchors, hidden under 768px), "Sign in", and "Get started" as an ink pill. After 24px of scroll it takes the canvas colour and a bottom hairline. A 1.5px ink line under the section links marks the section being read and slides between them (Motion). No theme toggle on the landing.
 
 ## Sections
 
@@ -153,6 +174,8 @@ The app's light theme uses the landing's tokens (canvas, white cards, hairline, 
 - **Clerk** (sign-in, sign-up): Geist, the 14px card with the landing's shadow on the canvas, the ink pill, "Continue with Google" first as a full-width block button, subtitle "Ten roles worth applying to, every morning."
 
 ## Decisions
+
+- **2026-11-06: four motion layers.** The page declared 19 animations and nothing visibly moved at rest (0 elements over 1.5s at 1440 and 390, measured with `e2e-landing/motion.spec.ts`), so it read as static next to its references (lightspark.com, skydive.com). Added the four layers in Motion: ambient drift, turning rings and a breathing Live dot, all paused off screen; CSS scroll-driven spread, settle and tilt with framer-motion fallbacks; hover, press, underline and a sliding nav marker; a staged entrance under 1.2s. Now 24 things move in the hero at rest at 1440 and 16 at 390, none under reduced motion. The stat numbers now count up once (they were printed). The queue card is `aria-hidden` instead of `inert`, so its rows can answer hover; it holds nothing focusable either way. The hero's far layers now fade toward its foot under a still canvas-coloured overlay instead of a `mask-image`, which made the browser recomposite the whole field every frame once the cards drifted (26 to 28fps idle at 1440x900 on a software compositor with the mask; 60 on a GPU compositor without it).
 
 - **2026-11-06: the scroll fade and the row reveal replace the flight.** The statement beside "Today's ten" shook on scroll: `useCentredBeside()` wrote a transform from a window scroll listener onto an element inside a CSS-sticky stage. The browser moves sticky content on the compositor at once and the script's correction lands a frame later, so the two fought; on production the offset swung from -296px to +57px in one scroll, with 15 of 43 frames jumping over 12px. The flight had the same weakness (an overlay placed from scroll every frame) and made the focus section a 115vh sticky hold. Both are gone. The hero's field now drifts outward and fades with the scroll (motion values only), "Today's ten" reveals its rows once in a plain grid section, and the rule is written down: no scroll listener positions anything (Motion). `e2e-landing/smooth-scroll.spec.ts` fails on the old page (the statement jumps 297px in one frame, flying and duplicate cards) and passes on the new one. The same pass cut the motion to three (reveal, scroll fade, sweep), set one easing, one 128/80px section rhythm, one lime mark per viewport, and a softer foot on the app crop. Before and after: `docs/screenshots/smooth-premium/`.
 
