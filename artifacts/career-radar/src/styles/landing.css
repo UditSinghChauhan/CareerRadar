@@ -243,7 +243,7 @@ html:has(.lp) {
   }
 }
 .lp-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 .lp-btn:focus-visible {
   outline-offset: 3px;
@@ -263,19 +263,45 @@ html:has(.lp) {
   background: var(--lp-lime);
   color: var(--lp-ink);
 }
+/* Links. A full-strength underline grows from left to right on hover
+   (transform: scaleX, 200ms). A link inside text also keeps a resting
+   underline at 45%, so it never relies on colour alone. */
+.lp-link,
+.lp-footer__link {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+}
 .lp-link {
   color: var(--lp-green);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-  text-underline-offset: 3px;
-  transition: text-decoration-color var(--lp-micro) var(--lp-ease);
 }
-/* Hover on the landing's few remaining quiet controls: the underline of a
-   text link fills in, the logo dims a touch, a question's plus darkens. */
+.lp-link::before,
+.lp-link::after,
+.lp-footer__link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  pointer-events: none;
+}
+.lp-link::before {
+  opacity: 0.45;
+}
+.lp-link::after,
+.lp-footer__link::after {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 200ms var(--lp-ease);
+}
+/* Hover on the landing's quiet controls: a link's underline grows, the
+   logo dims a touch, a question's plus darkens. */
 @media (hover: hover) and (pointer: fine) {
-  .lp-link:hover {
-    text-decoration-color: currentColor;
+  .lp-link:hover::after,
+  .lp-footer__link:hover::after {
+    transform: scaleX(1);
   }
   a.lp-word:hover {
     opacity: 0.72;
@@ -325,26 +351,46 @@ a.lp-word {
   height: 22px;
 }
 .lp-nav__r {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 28px;
 }
+/* Hover darkens a link; the one line under the nav is the section marker. */
 .lp-nav__link {
   color: var(--lp-grey);
   font-size: 15px;
   text-decoration: none;
   transition: color var(--lp-micro) var(--lp-ease);
 }
+.lp-nav__link.is-active {
+  color: var(--lp-ink);
+}
 @media (hover: hover) and (pointer: fine) {
   .lp-nav__link:hover {
     color: var(--lp-ink);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 4px;
   }
 }
+/* The section marker: a 1px-wide ink line that nav.tsx moves and stretches
+   under the active link with one transform, sliding between links. */
+.lp-nav__bar {
+  position: absolute;
+  left: 0;
+  bottom: 12px;
+  width: 1px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: var(--lp-ink);
+  opacity: 0;
+  transform-origin: left center;
+  pointer-events: none;
+  transition:
+    transform 320ms cubic-bezier(0.645, 0.045, 0.355, 1),
+    opacity 200ms var(--lp-ease);
+}
 @media (max-width: 767px) {
-  .lp-nav__link--wide {
+  .lp-nav__link--wide,
+  .lp-nav__bar {
     display: none;
   }
   .lp-nav__r {
@@ -394,18 +440,24 @@ a.lp-word {
   pointer-events: none;
 }
 /* The rings and the two far layers fade out toward the hero's foot, so
-   nothing is ever cut by its edge as it scrolls away. The near layer is not
-   masked: its cards stay sharp to the last. */
+   nothing is ever cut by its edge as it scrolls away: a still overlay in the
+   canvas colour lies over them (the near layer sits above it, sharp to the
+   last). It replaced a mask-image on their container, which made the
+   browser recomposite the whole masked field every frame once the cards
+   drifted: 26 to 28fps at 1440x900 on a software compositor, 60 without. */
 .lp-field__deep {
   position: absolute;
   inset: 0;
-  -webkit-mask-image: linear-gradient(
+}
+.lp-field__fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
     180deg,
-    #000 0%,
-    #000 55%,
-    transparent 96%
+    rgb(246 246 243 / 0%) 55%,
+    var(--lp-canvas) 96%
   );
-  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 96%);
+  pointer-events: none;
 }
 .lp-rings circle {
   fill: none;
@@ -413,18 +465,212 @@ a.lp-word {
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
+/* Every second ring is dotted (field.tsx, Rings). */
+.lp-rings .lp-ring--dotted {
+  stroke: #d6d6d0;
+  stroke-dasharray: 1 9;
+  stroke-linecap: round;
+}
+.lp-rings-fade {
+  position: absolute;
+  inset: 0;
+}
+.lp-rings-spin {
+  position: absolute;
+}
 .lp-slot {
   position: absolute;
   transform: translate(-50%, -50%);
 }
-/* The field's cards enter with the page's reveal, a few at a time. */
-.lp-enter {
-  animation: lp-in 500ms var(--lp-ease) var(--in, 0ms) both;
+/* The headline's words are boxes, so each line can lift on its own. */
+.lp-w {
+  display: inline-block;
 }
-@keyframes lp-in {
+
+/* ─── Motion: entrance, ambient and scroll-driven (DESIGN.md, Motion) ──── */
+
+/* Entrance, on first load, within 1.2s, pure CSS: the nav fades in; the
+   headline lifts line by line, 60ms apart (pages/landing.tsx and
+   index.html number the lines); then the lead and the button; then the field's cards come out of
+   an 8px blur to their depth's blur, near cards first (field.tsx sets each
+   card's delay). Opacity, transform and filter only; nothing waits on it,
+   so links work from the first frame. The clock starts when index.html
+   paints its pre-rendered hero; React's hero, which replaces it, sets
+   --since to the time already spent, so the entrance never restarts. */
+@media (prefers-reduced-motion: no-preference) {
+  .lp-nav__in {
+    animation: lp-fade 320ms var(--lp-ease) both;
+    animation-delay: calc(0ms - var(--since, 0ms));
+  }
+  .lp-hero .lp-w {
+    animation: lp-lift 560ms var(--lp-ease) both;
+    animation-delay: calc(80ms + var(--line, 0) * 60ms - var(--since, 0ms));
+  }
+  .lp-hero__text .lp-lead {
+    animation: lp-rise 520ms var(--lp-ease) both;
+    animation-delay: calc(240ms - var(--since, 0ms));
+  }
+  .lp-hero__act {
+    animation: lp-rise 520ms var(--lp-ease) both;
+    animation-delay: calc(300ms - var(--since, 0ms));
+  }
+  .lp-enter {
+    animation: lp-focus-in 420ms var(--lp-ease) both;
+  }
+
+  /* Ambient: each card's own slow loop (field.tsx, driftFor sets its
+     ellipse, tilt, length and phase); the dotted rings turn once in 120s.
+     Paused while the hero is off screen or the tab hidden (data-paused,
+     usePauseOffscreen). */
+  .lp-drift {
+    animation: lp-drift 10s linear infinite;
+  }
+  .lp-rings-spin {
+    animation: lp-spin 120s linear infinite;
+  }
+  .lp-hero[data-paused] .lp-drift,
+  .lp-hero[data-paused] .lp-rings-spin,
+  .lp-stats[data-paused] .lp-live__dot,
+  .lp-stats[data-paused] .lp-live__dot::before {
+    animation-play-state: paused;
+  }
+}
+@keyframes lp-fade {
   from {
     opacity: 0;
+  }
+}
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+/* The headline lifts 10px line by line, by transform alone: no opacity,
+   blur or mask, which would make the browser measure its first paint as
+   smaller than the copy React renders over it, so that copy would become a
+   later Largest Contentful Paint (measured; DESIGN.md, Motion). */
+@keyframes lp-lift {
+  from {
+    transform: translateY(10px);
+  }
+}
+@keyframes lp-focus-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
+/* An ellipse in eight steps, linear, so the speed never stops; the tilt
+   follows the vertical. 0.7071 is cos 45deg. */
+@keyframes lp-drift {
+  0%,
+  100% {
+    transform: translate(var(--ax), 0) rotate(0deg);
+  }
+  12.5% {
+    transform: translate(calc(var(--ax) * 0.7071), calc(var(--ay) * 0.7071))
+      rotate(calc(var(--rot) * 0.7071));
+  }
+  25% {
+    transform: translate(0, var(--ay)) rotate(var(--rot));
+  }
+  37.5% {
+    transform: translate(calc(var(--ax) * -0.7071), calc(var(--ay) * 0.7071))
+      rotate(calc(var(--rot) * 0.7071));
+  }
+  50% {
+    transform: translate(calc(var(--ax) * -1), 0) rotate(0deg);
+  }
+  62.5% {
+    transform: translate(calc(var(--ax) * -0.7071), calc(var(--ay) * -0.7071))
+      rotate(calc(var(--rot) * -0.7071));
+  }
+  75% {
+    transform: translate(0, calc(var(--ay) * -1)) rotate(calc(var(--rot) * -1));
+  }
+  87.5% {
+    transform: translate(calc(var(--ax) * 0.7071), calc(var(--ay) * -0.7071))
+      rotate(calc(var(--rot) * -0.7071));
+  }
+}
+@keyframes lp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Scroll-driven, on the compositor. Where the browser has CSS scroll
+   timelines, CSS drives every scroll-linked motion: the hero names its own
+   view timeline, its copy lifts 16px and fades by 50% of it, each card
+   spreads out (--sx, --sy) and fades by its depth's --gone (near 50%, mid
+   60%, far 70%), and the rings fade by 70%. Headings and statements settle
+   from 12px below and opacity 0.4 by 35% into view; the dashboard capture
+   tilts flat by 50%. Elsewhere framer-motion scroll values do the same
+   (field.tsx, motion/scroll-motion.tsx). No scroll listener moves
+   anything. */
+@supports (animation-timeline: view()) and (animation-range: cover) {
+  @media (prefers-reduced-motion: no-preference) {
+    .lp-hero {
+      view-timeline: --hero block;
+    }
+    .lp-hero__text {
+      animation: lp-copy-out linear both;
+      animation-timeline: --hero;
+      animation-range: exit-crossing 0% exit-crossing 50%;
+    }
+    .lp-spread {
+      animation: lp-spread linear both;
+      animation-timeline: --hero;
+      animation-range: exit-crossing 0% exit-crossing var(--gone, 60%);
+    }
+    .lp-rings-fade {
+      animation: lp-fade-out linear both;
+      animation-timeline: --hero;
+      animation-range: exit-crossing 0% exit-crossing 70%;
+    }
+    .lp-settle {
+      animation: lp-settle linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 35%;
+    }
+    .lp-tilt {
+      transform-origin: 50% 100%;
+      animation: lp-tilt linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 50%;
+    }
+  }
+}
+@keyframes lp-copy-out {
+  to {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+@keyframes lp-spread {
+  to {
+    opacity: 0;
+    transform: translate(var(--sx, 0), var(--sy, 0));
+  }
+}
+@keyframes lp-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes lp-settle {
+  from {
+    opacity: 0.4;
     transform: translateY(12px);
+  }
+}
+@keyframes lp-tilt {
+  from {
+    transform: perspective(1400px) rotateX(8deg) scale(0.96);
+  }
+  to {
+    transform: perspective(1400px) rotateX(0deg) scale(1);
   }
 }
 
@@ -438,14 +684,23 @@ a.lp-word {
    individual translate property composes with the transform framer-motion
    writes for reveals, so neither overrides the other. */
 .lp-feature,
-.lp-vig {
+.lp-vig,
+.lp-rolecard,
+.lp-qrow {
   transition:
     translate 200ms var(--lp-ease),
     box-shadow 200ms var(--lp-ease);
 }
+/* The how-it-works fragment is inert, so its step takes the hover. The
+   field is aria-hidden and pointer-transparent, except its cards. */
 @media (hover: hover) and (pointer: fine) {
+  .lp-field .lp-rolecard {
+    pointer-events: auto;
+  }
   .lp-feature:hover,
-  .lp-vig:hover {
+  .lp-step:hover .lp-vig,
+  .lp-field .lp-rolecard:hover,
+  .lp-qrow:hover {
     translate: 0 -2px;
     box-shadow:
       0 2px 4px rgb(0 0 0 / 5%),
@@ -692,6 +947,46 @@ a.lp-word {
 .lp-qrow--compact .lp-qrow__title {
   font-size: 13px;
 }
+/* A one-line row's title and its reasons share one line: on hover (desktop)
+   the title lifts away and the chips rise into its place, so the list never
+   changes height. */
+.lp-qrow__swap {
+  position: relative;
+  min-width: 0;
+}
+/* .lp-chips comes later in this file; the compound selector keeps this
+   row's chips off its margin. */
+.lp-chips.lp-qrow__reasons {
+  position: absolute;
+  inset: 50% 0 auto;
+  flex-wrap: nowrap;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+  translate: 0 calc(-50% + 6px);
+  -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent);
+  mask-image: linear-gradient(90deg, #000 85%, transparent);
+  pointer-events: none;
+}
+.lp-qrow__reasons .lp-chip {
+  height: 22px;
+}
+.lp-qrow__swap > .lp-qrow__title,
+.lp-qrow__reasons {
+  transition:
+    opacity 200ms var(--lp-ease),
+    translate 200ms var(--lp-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .lp-qrow--compact:hover .lp-qrow__swap > .lp-qrow__title {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+  .lp-qrow--compact:hover .lp-qrow__reasons {
+    opacity: 1;
+    translate: 0 -50%;
+  }
+}
 .lp-score {
   font-family: var(--lp-mono);
   font-size: 13px;
@@ -767,13 +1062,46 @@ a.lp-word {
   gap: 6px;
   color: var(--lp-ink);
 }
-/* A still green dot: "Live" is a state, not an event, and lime belongs to
-   rank 1 in the same viewport. */
+/* A green dot that breathes while the band is on screen: the dot swells to
+   1.15 and a soft lime halo behind it brightens, 2.4s each way. Green keeps
+   the mark readable on the canvas (lime alone is 1.2:1); lime appears only
+   as the halo's motion. */
 .lp-live__dot {
+  position: relative;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--lp-green);
+}
+.lp-live__dot::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--lp-lime);
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-live__dot {
+    animation: lp-breathe 2.4s ease-in-out infinite alternate;
+  }
+  .lp-live__dot::before {
+    animation: lp-halo 2.4s ease-in-out infinite alternate;
+  }
+}
+@keyframes lp-breathe {
+  to {
+    transform: scale(1.15);
+  }
+}
+@keyframes lp-halo {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 0.9;
+  }
 }
 .lp-stat__value {
   display: grid;
@@ -1293,17 +1621,21 @@ a.lp-word {
 @keyframes lp-acc-open {
   from {
     height: 0;
+    opacity: 0;
   }
   to {
     height: var(--radix-accordion-content-height);
+    opacity: 1;
   }
 }
 @keyframes lp-acc-close {
   from {
     height: var(--radix-accordion-content-height);
+    opacity: 1;
   }
   to {
     height: 0;
+    opacity: 0;
   }
 }
 .lp-faq__a p {
@@ -1418,13 +1750,6 @@ a.lp-word {
 .lp-footer__link {
   color: var(--lp-ink);
   font-size: 14px;
-  text-decoration: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .lp-footer__link:hover {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
 }
 .lp-footer__credit {
   grid-column: 1 / -1;
@@ -1439,24 +1764,36 @@ a.lp-word {
 
 /* ─── Reduced motion: every loop and entrance shows its end state. ──────── */
 
+/* The entrance, the ambient loops and the scroll-driven motion are written
+   inside prefers-reduced-motion: no-preference, so they never start here. */
 @media (prefers-reduced-motion: reduce) {
-  .lp-enter,
   .lp-faq__a[data-state],
   .lp-queue.is-in .lp-rank--top::after {
     animation: none;
   }
   .lp-nav,
+  .lp-nav__bar,
   .lp-btn,
-  .lp-link,
+  .lp-link::after,
+  .lp-footer__link::after,
   a.lp-word,
   .lp-faq__trigger svg,
   .lp-feature,
   .lp-vig,
+  .lp-rolecard,
+  .lp-qrow,
+  .lp-qrow__swap > .lp-qrow__title,
+  .lp-qrow__reasons,
   .lp-band__in {
     transition: none;
   }
   .lp-feature:hover,
-  .lp-vig:hover {
+  .lp-step:hover .lp-vig,
+  .lp-field .lp-rolecard:hover,
+  .lp-qrow:hover {
     translate: none;
+  }
+  .lp-btn:active {
+    transform: none;
   }
 }

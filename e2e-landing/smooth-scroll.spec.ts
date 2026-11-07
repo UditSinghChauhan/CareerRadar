@@ -10,8 +10,12 @@ import { expect, test, type Page } from "@playwright/test";
  *   - the hero copy (.lp-hero__text, in .lp-hero): its one declared motion is
  *     the scroll fade, a lift of at most 16px that follows the scroll, so it
  *     stays within 16px of rest and never moves against the scroll direction;
- *   - the statement (.lp-focus__text, in .lp-focus): no declared motion, so it
- *     never moves more than 1px between two frames;
+ *   - the statement's column (.lp-focus__text, in .lp-focus): no declared
+ *     motion, so it never moves more than 1px between two frames;
+ *   - the statement itself (.lp-statement, in .lp-focus): its one declared
+ *     motion is the settle, a scroll-linked rise of at most 12px, so it
+ *     stays within 12px below rest, moves up only while the page scrolls
+ *     down, down only while it scrolls up, and never at rest;
  *   - the "Today's ten" card (.lp-queue, in .lp-focus): its one declared
  *     motion is the reveal, a 12px rise played once, so it stays within 12px
  *     below rest and never moves down.
@@ -27,6 +31,7 @@ import { expect, test, type Page } from "@playwright/test";
 const TOL = 1;
 const LIFT = 16;
 const RISE = 12;
+const SETTLE = 12;
 
 type Box = { x: number; y: number };
 type Sample = {
@@ -34,6 +39,7 @@ type Sample = {
   scrollY: number;
   hero: Box | null;
   text: Box | null;
+  statement: Box | null;
   queue: Box | null;
   flights: number;
   duplicate: string | null;
@@ -95,6 +101,7 @@ async function startSampling(page: Page) {
         scrollY: Math.round(window.scrollY),
         hero: rel(".lp-hero__text", ".lp-hero"),
         text: rel(".lp-focus__text", ".lp-focus"),
+        statement: rel(".lp-focus .lp-statement", ".lp-focus"),
         queue: rel(".lp-queue", ".lp-focus"),
         flights: document.querySelectorAll('[class*="lp-flight"]').length,
         duplicate,
@@ -170,6 +177,11 @@ test("the landing does not shake while it scrolls", async ({ page }) => {
     if (s.emptyFrame) fault("empty frame", `${at(s)}: card frame shown empty`);
   }
 
+  const statementYs = samples.flatMap((s) =>
+    s.statement ? [s.statement.y] : [],
+  );
+  const settled = statementYs.length ? Math.min(...statementYs) : null;
+
   for (let i = 1; i < samples.length; i++) {
     const a = samples[i - 1];
     const b = samples[i];
@@ -183,6 +195,37 @@ test("the landing does not shake while it scrolls", async ({ page }) => {
         fault(
           "statement",
           `${at(b)}: statement moved ${dx.toFixed(1)},${dy.toFixed(1)}px in one frame`,
+        );
+    }
+
+    // The statement: settles with the scroll, within 12px, never against
+    // it. Its rest is where it has settled, the highest it ever sits: the
+    // final sample, at the top of the page, has it still below the fold
+    // and so 12px down.
+    if (a.statement && b.statement && settled !== null) {
+      const dy = b.statement.y - a.statement.y;
+      if (Math.abs(b.statement.x - a.statement.x) > TOL)
+        fault("statement", `${at(b)}: statement moved sideways`);
+      if (dir > 0 && dy > TOL)
+        fault(
+          "statement",
+          `${at(b)}: statement fell ${dy.toFixed(1)}px on scroll down`,
+        );
+      if (dir < 0 && dy < -TOL)
+        fault(
+          "statement",
+          `${at(b)}: statement rose ${(-dy).toFixed(1)}px on scroll up`,
+        );
+      if (dir === 0 && Math.abs(dy) > TOL)
+        fault(
+          "statement",
+          `${at(b)}: statement moved ${dy.toFixed(1)}px at rest`,
+        );
+      const off = b.statement.y - settled;
+      if (off > SETTLE + TOL)
+        fault(
+          "statement",
+          `${at(b)}: statement ${off.toFixed(1)}px below rest`,
         );
     }
 

@@ -102,7 +102,11 @@
             <div class="lp-field" aria-hidden="true"></div>
             <div class="lp-container lp-hero__text">
               <h1 id="hero-head" class="lp-display">
-                Ten roles worth applying to, every morning.
+                <span class="lp-w">Ten</span> <span class="lp-w">roles</span>
+                <span class="lp-w">worth</span>
+                <span class="lp-w">applying</span> <span class="lp-w">to,</span>
+                <span class="lp-w">every</span>
+                <span class="lp-w">morning.</span>
               </h1>
               <p class="lp-lead">
                 A ranked shortlist of SDE roles for Indian CS freshers, with the
@@ -125,6 +129,24 @@
           .appendChild(
             document.getElementById("lp-pre").content.cloneNode(true),
           );
+        // The entrance's zero (landing.css, Motion): React's hero, which
+        // replaces this one, continues the same entrance from this moment.
+        window.__lpBorn = performance.now();
+        // Number each headline word with its line, as landing.tsx does, so
+        // the headline lifts line by line from the first paint. (In a
+        // function: a global `top` would be the read-only window.top.)
+        (function () {
+          var words = document.querySelectorAll("#root .lp-w");
+          var line = -1;
+          var lineTop = -Infinity;
+          for (var i = 0; i < words.length; i++) {
+            if (Math.abs(words[i].offsetTop - lineTop) > 2) {
+              line++;
+              lineTop = words[i].offsetTop;
+            }
+            words[i].style.setProperty("--line", line);
+          }
+        })();
       }
     </script>
     <script type="module" src="/src/main.tsx"></script>

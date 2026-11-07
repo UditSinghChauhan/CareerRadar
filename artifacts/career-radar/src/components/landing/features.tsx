@@ -2,6 +2,7 @@ import { Bell, Bookmark, BookmarkCheck } from "lucide-react";
 import { Monogram } from "./role-card";
 import { RANKED, type SampleRole } from "./sample-roles";
 import { Reveal } from "./motion/reveal";
+import { Settle, Tilt } from "./motion/scroll-motion";
 import { SOURCE_NAMES } from "./sources";
 import captures from "./captures.json";
 
@@ -128,49 +129,53 @@ function Dream() {
  * Today's queue from the real app, cropped to the part that matters and
  * shown large enough to read: the crops are captured so the app's smallest
  * text lands at 14px or more here. Its foot fades out through a mask, so
- * the crop never ends on a cut row. Enters with the page's reveal.
+ * the crop never ends on a cut row. Enters with the page's reveal, and
+ * tilts from rotateX(8deg) and scale 0.96 to flat as it crosses the
+ * viewport (Tilt, a separate layer so the two never write one transform).
  */
 function Capture() {
   const { queue, "queue-sm": small } = captures;
   return (
-    <Reveal as="figure" className="lp-browser lp-browser--crop">
-      <div className="lp-browser__bar" aria-hidden="true">
-        <span className="lp-browser__url">
-          careerradar-34ec.onrender.com/dashboard
-        </span>
-      </div>
-      <picture>
-        {/* Each source carries its own size, so the phone crop reserves its
+    <Tilt>
+      <Reveal as="figure" className="lp-browser lp-browser--crop">
+        <div className="lp-browser__bar" aria-hidden="true">
+          <span className="lp-browser__url">
+            careerradar-34ec.onrender.com/dashboard
+          </span>
+        </div>
+        <picture>
+          {/* Each source carries its own size, so the phone crop reserves its
             own height and nothing shifts when it loads. */}
-        <source
-          media="(max-width: 639px)"
-          srcSet={small.avif}
-          type="image/avif"
-          width={small.width}
-          height={small.height}
-        />
-        <source
-          media="(max-width: 639px)"
-          srcSet={small.webp}
-          type="image/webp"
-          width={small.width}
-          height={small.height}
-        />
-        <source srcSet={queue.avif} type="image/avif" />
-        <img
-          src={queue.webp}
-          width={queue.width}
-          height={queue.height}
-          alt="Today's ten in the real CareerRadar app: ranked roles, each with its rank, score, short reasons and an Apply button, and the day's progress."
-          loading="lazy"
-          decoding="async"
-          style={{ backgroundImage: `url(${queue.placeholder})` }}
-        />
-      </picture>
-      <figcaption className="lp-caption">
-        Today’s ten in the real app, on an invented demo account.
-      </figcaption>
-    </Reveal>
+          <source
+            media="(max-width: 639px)"
+            srcSet={small.avif}
+            type="image/avif"
+            width={small.width}
+            height={small.height}
+          />
+          <source
+            media="(max-width: 639px)"
+            srcSet={small.webp}
+            type="image/webp"
+            width={small.width}
+            height={small.height}
+          />
+          <source srcSet={queue.avif} type="image/avif" />
+          <img
+            src={queue.webp}
+            width={queue.width}
+            height={queue.height}
+            alt="Today's ten in the real CareerRadar app: ranked roles, each with its rank, score, short reasons and an Apply button, and the day's progress."
+            loading="lazy"
+            decoding="async"
+            style={{ backgroundImage: `url(${queue.placeholder})` }}
+          />
+        </picture>
+        <figcaption className="lp-caption">
+          Today’s ten in the real app, on an invented demo account.
+        </figcaption>
+      </Reveal>
+    </Tilt>
   );
 }
 
@@ -183,9 +188,9 @@ export function Features() {
       aria-labelledby="features-head"
     >
       <div className="lp-container">
-        <Reveal as="h2" id="features-head" className="lp-h2">
+        <Settle as="h2" id="features-head" className="lp-h2">
           Everything after the shortlist
-        </Reveal>
+        </Settle>
 
         <Reveal className="lp-card lp-feature lp-feature--board">
           <div className="lp-feature__text">

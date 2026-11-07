@@ -40,15 +40,29 @@ function FullRow({ role }: { role: SampleRole }) {
   );
 }
 
+/**
+ * A one-line row. On hover (desktop) its title gives way, in place, to its
+ * reason chips, so every one of the ten can say why it is there without
+ * the list changing height.
+ */
 function CompactRow({ role }: { role: SampleRole }) {
   return (
     <div className="lp-qrow lp-qrow--compact">
       <RankTag rank={role.rank} />
       <Monogram role={role} size="sm" />
-      <p className="lp-qrow__title">
-        {role.title}
-        <span className="lp-qrow__co"> · {role.company}</span>
-      </p>
+      <div className="lp-qrow__swap">
+        <p className="lp-qrow__title">
+          {role.title}
+          <span className="lp-qrow__co"> · {role.company}</span>
+        </p>
+        <ul className="lp-chips lp-qrow__reasons">
+          {role.reasons.map((r) => (
+            <li key={r} className="lp-chip">
+              {r}
+            </li>
+          ))}
+        </ul>
+      </div>
       <span className="lp-score" aria-label={`Score ${role.score} of 100`}>
         {role.score}
       </span>
@@ -69,6 +83,11 @@ const ROW_RISE = 8;
  * so its frame is never seen empty; the ten rows rise in one after another;
  * once the last has landed, rank 1's lime tag pulses once (landing.css,
  * .lp-queue.is-in). Under reduced motion everything is simply there.
+ *
+ * The card is a picture of the product, hidden from assistive tech (the
+ * section's heading and caption name it) but not inert, so its rows can
+ * answer the pointer: each lifts on hover, and a one-line row shows its
+ * reasons.
  */
 export function Focus() {
   const ref = useRef<HTMLDivElement>(null);
@@ -95,7 +114,7 @@ export function Focus() {
         <motion.div
           ref={ref}
           className={shown ? "lp-card lp-queue is-in" : "lp-card lp-queue"}
-          inert
+          aria-hidden="true"
           initial={from}
           animate={to}
           variants={{ hidden: REVEAL_FROM, shown: REVEAL_TO }}
