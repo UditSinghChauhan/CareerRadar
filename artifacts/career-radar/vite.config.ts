@@ -118,8 +118,10 @@ export default defineConfig({
             return "react-vendor";
           }
           if (id.includes("@clerk")) return "clerk";
-          // Recharts drags in the whole d3 family; on this app it is used by
-          // the dashboard alone, so it is worth isolating.
+          // Recharts drags in the whole d3 family. No page imports it since
+          // the funnel became plain HTML (2026-11-21); the rule stays so
+          // components/ui/chart.tsx, if used again, cannot land in a shared
+          // chunk the landing loads.
           if (
             id.includes("recharts") ||
             id.includes("victory-vendor") ||
