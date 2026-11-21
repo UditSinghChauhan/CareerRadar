@@ -33,6 +33,8 @@ import type {
   CompanyListResponse,
   DailyQueue,
   DashboardSummary,
+  DemoSession,
+  DemoStatus,
   DismissJobInput,
   GetDailyQueueParams,
   GetJobsClosingSoonParams,
@@ -254,6 +256,154 @@ export function useGetPublicStats<TData = Awaited<ReturnType<typeof getPublicSta
 
 
 
+
+export const getGetDemoUrl = () => {
+
+
+
+
+  return `/api/demo`
+}
+
+/**
+ * No session needed. `enabled` is false unless the server names a demo account. `active` is true when the current session is the demo account, whose writes the server refuses with 403 `demo_read_only`.
+ * @summary Whether a read-only demo exists, and whether this session is it
+ */
+export const getDemo = async ( options?: RequestInit): Promise<DemoStatus> => {
+
+  return customFetch<DemoStatus>(getGetDemoUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDemoQueryKey = () => {
+    return [
+    `/api/demo`
+    ] as const;
+    }
+
+
+export const getGetDemoQueryOptions = <TData = Awaited<ReturnType<typeof getDemo>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDemo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDemoQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDemo>>> = ({ signal }) => getDemo({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDemo>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDemoQueryResult = NonNullable<Awaited<ReturnType<typeof getDemo>>>
+export type GetDemoQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Whether a read-only demo exists, and whether this session is it
+ */
+
+export function useGetDemo<TData = Awaited<ReturnType<typeof getDemo>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDemo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDemoQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateDemoSessionUrl = () => {
+
+
+
+
+  return `/api/demo/session`
+}
+
+/**
+ * @summary A one-time Clerk sign-in ticket for the read-only demo account
+ */
+export const createDemoSession = async ( options?: RequestInit): Promise<DemoSession> => {
+
+  return customFetch<DemoSession>(getCreateDemoSessionUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateDemoSessionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDemoSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDemoSession>>, TError,void, TContext> => {
+
+const mutationKey = ['createDemoSession'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDemoSession>>, void> = () => {
+
+
+          return  createDemoSession(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDemoSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createDemoSession>>>
+
+    export type CreateDemoSessionMutationError = ErrorType<void>
+
+    /**
+ * @summary A one-time Clerk sign-in ticket for the read-only demo account
+ */
+export const useCreateDemoSession = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDemoSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDemoSession>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCreateDemoSessionMutationOptions(options));
+    }
 
 export const getGetProfileUrl = () => {
 

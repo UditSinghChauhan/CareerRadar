@@ -14,6 +14,7 @@ import express, {
 } from "express";
 import router from "../routes";
 import { CAPTURE_CLERK_ID } from "./capture-seed-id";
+import { demoReadOnly } from "../demo/demo";
 
 const url = new URL(process.env.DATABASE_URL ?? "");
 if (!["localhost", "127.0.0.1"].includes(url.hostname)) {
@@ -36,6 +37,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   Object.assign(req, { auth });
   next();
 });
+// As in app.ts: a no-op unless DEMO_CLERK_USER_ID names the session user.
+app.use("/api", demoReadOnly);
 app.use("/api", router);
 
 const port = Number(process.env.CAPTURE_API_PORT ?? 8099);

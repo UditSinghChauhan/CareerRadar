@@ -17,6 +17,16 @@ export interface PublicStats {
   lastSyncedAt: string | null;
 }
 
+export interface DemoStatus {
+  enabled: boolean;
+  active: boolean;
+}
+
+export interface DemoSession {
+  /** Single use, valid for two minutes. */
+  ticket: string;
+}
+
 export interface AIStatus {
   available: boolean;
   /** The Gemini model this deployment calls. */

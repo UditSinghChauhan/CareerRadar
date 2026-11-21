@@ -16,6 +16,7 @@ import catalogRouter from "./catalog";
 import sourcesRouter from "./sources";
 import aiRouter from "./ai";
 import adminRouter from "./admin";
+import demoRouter from "../demo/demo";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use(catalogRouter);
 router.use(sourcesRouter);
 router.use(aiRouter);
 router.use(adminRouter);
+router.use(demoRouter);
 
 export default router;

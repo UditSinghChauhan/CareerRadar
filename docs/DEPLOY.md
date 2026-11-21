@@ -256,6 +256,13 @@ Render → the service → **Environment**. Replace, do not add alongside:
 | `CLERK_SECRET_KEY` | `sk_live_…` from Clerk → API keys | at run time, by the API |
 | `VITE_CLERK_PUBLISHABLE_KEY` | the same `pk_live_…` | **at build time**, baked into the frontend bundle |
 | `VITE_CLERK_PROXY_URL` | unset (see step 2) | at build time |
+| `DEMO_CLERK_USER_ID` | the demo account's `user_…` id, from Clerk → Users (optional) | at run time, by the API |
+
+`DEMO_CLERK_USER_ID` turns on "Explore the demo": visitors are signed in to that
+account with a one-time ticket and every write they make is refused with 403
+`demo_read_only` on the server. Use an invented account with no personal data,
+and recreate it under the production instance when the keys change, since user
+ids differ between Clerk instances.
 
 Because `VITE_CLERK_PUBLISHABLE_KEY` is read at build time, changing it needs
 a new build: use **Manual Deploy → Clear build cache & deploy**, not a restart.

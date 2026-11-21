@@ -63,6 +63,24 @@ export const GetPublicStatsResponse = zod.object({
 
 
 /**
+ * No session needed. `enabled` is false unless the server names a demo account. `active` is true when the current session is the demo account, whose writes the server refuses with 403 `demo_read_only`.
+ * @summary Whether a read-only demo exists, and whether this session is it
+ */
+export const GetDemoResponse = zod.object({
+  "enabled": zod.boolean(),
+  "active": zod.boolean()
+})
+
+
+/**
+ * @summary A one-time Clerk sign-in ticket for the read-only demo account
+ */
+export const CreateDemoSessionResponse = zod.object({
+  "ticket": zod.string().describe('Single use, valid for two minutes.')
+})
+
+
+/**
  * @summary Get current user's profile
  */
 export const GetProfileResponse = zod.object({
