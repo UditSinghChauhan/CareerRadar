@@ -1,5 +1,6 @@
 import { useGetProfile } from "@workspace/api-client-react";
-import { useLocation } from "wouter";
+import { Redirect, useLocation } from "wouter";
+import { useDemoStatus } from "@/lib/demo";
 import { LogoMark } from "@/components/logo-mark";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -17,6 +18,10 @@ export function WelcomePage() {
   const [, setLocation] = useLocation();
   const { data: profile, isLoading } = useGetProfile();
   const { save, pending, error } = useSavePreferences();
+  const demo = useDemoStatus();
+
+  // The read-only demo cannot save these answers; it has them already.
+  if (demo.active) return <Redirect to="/dashboard" replace />;
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">

@@ -5,6 +5,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Redirect } from "wouter";
+import { useDemoStatus } from "@/lib/demo";
 
 import { Greeting } from "@/components/dashboard/greeting";
 import { TodaysQueue } from "@/components/dashboard/todays-queue";
@@ -24,10 +25,13 @@ export function DashboardPage() {
     refetch,
   } = useGetDashboardSummary();
   const { data: profile } = useGetProfile();
+  const demo = useDemoStatus();
 
   // An account that has not answered the onboarding question yet: an older
-  // account, or one that left /welcome. The answer is one click away.
-  if (profile && profile.rolePreference == null) {
+  // account, or one that left /welcome. The answer is one click away. Never
+  // the read-only demo: it cannot save an answer, so /welcome would be a
+  // dead end (the server fills its answer in; api-server demo-seed.ts).
+  if (profile && profile.rolePreference == null && demo.known && !demo.active) {
     return <Redirect to="/welcome" replace />;
   }
 

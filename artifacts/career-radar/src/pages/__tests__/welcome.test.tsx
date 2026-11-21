@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Router } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import {
+  getGetDemoQueryKey,
   getGetProfileQueryKey,
   type Profile,
 } from "@workspace/api-client-react";
@@ -28,11 +29,17 @@ const newProfile = {
   createdAt: "2026-11-03T03:30:00.000Z",
 } as unknown as Profile;
 
-function setup(ui: React.ReactNode, path: string, profile = newProfile) {
+function setup(
+  ui: React.ReactNode,
+  path: string,
+  profile = newProfile,
+  demo = { enabled: true, active: false },
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   });
   client.setQueryData(getGetProfileQueryKey(), profile);
+  client.setQueryData(getGetDemoQueryKey(), demo);
   const loc = memoryLocation({ path, record: true });
   render(
     <QueryClientProvider client={client}>
@@ -90,7 +97,9 @@ describe("onboarding, /welcome", () => {
     await user.click(screen.getByRole("button", { name: "Show my ten" }));
 
     await waitFor(() => expect(loc.history.at(-1)).toBe("/dashboard"));
-    const [url, init] = fetchMock.mock.calls[0]!;
+    const [url, init] = fetchMock.mock.calls.find(
+      ([, i]) => i?.method === "PUT",
+    )!;
     expect(String(url)).toContain("/api/profile");
     expect(init?.method).toBe("PUT");
     expect(JSON.parse(String(init?.body))).toEqual({
@@ -138,5 +147,47 @@ describe("the dashboard sends an account that has not answered to /welcome", () 
     } as Profile);
     await screen.findByTestId("todays-queue");
     expect(loc.history.at(-1)).toBe("/dashboard");
+  });
+});
+
+describe("the read-only demo never lands on /welcome", () => {
+  const demo = { enabled: true, active: true };
+
+  it("is not sent there by the dashboard, though it has no answer", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>(() => {})),
+    );
+    const { loc } = setup(<DashboardPage />, "/dashboard", newProfile, demo);
+    await screen.findByTestId("todays-queue");
+    expect(loc.history.at(-1)).toBe("/dashboard");
+  });
+
+  it("is sent on to the dashboard if it opens /welcome", async () => {
+    const { loc } = setup(<WelcomePage />, "/welcome", newProfile, demo);
+    await waitFor(() => expect(loc.history.at(-1)).toBe("/dashboard"));
+  });
+
+  it("is told the truth if a save is refused", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ error: "demo_read_only" }), {
+            status: 403,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    const user = userEvent.setup();
+    // Demo status not yet known: the form shows, and the save is refused.
+    setup(<WelcomePage />, "/welcome", newProfile, {
+      enabled: true,
+      active: false,
+    });
+    await user.click(screen.getByRole("button", { name: "Show my ten" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "This demo is read-only",
+    );
   });
 });
