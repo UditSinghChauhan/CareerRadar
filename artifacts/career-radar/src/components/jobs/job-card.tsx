@@ -23,6 +23,11 @@ import {
 } from "@/components/ui/tooltip";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import type { Job } from "@workspace/api-client-react";
+import {
+  deadlineInfo,
+  URGENCY_TEXT,
+  type DeadlineUrgency,
+} from "@/lib/deadline";
 
 interface JobCardProps {
   job: Job;
@@ -92,21 +97,14 @@ function formatCompensation(job: Job): string | null {
   return null;
 }
 
-type DeadlineUrgency = "critical" | "soon" | "normal" | "expired";
-
+/** The card's deadline line, counted as everywhere else (lib/deadline.ts). */
 function parseDeadline(deadline: string | null | undefined): {
   text: string;
   urgency: DeadlineUrgency | "none";
 } {
   if (!deadline) return { text: "", urgency: "none" };
-  const diffMs = new Date(deadline).getTime() - Date.now();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return { text: "Expired", urgency: "expired" };
-  if (diffDays === 0) return { text: "Closes today", urgency: "critical" };
-  if (diffDays === 1) return { text: "1d left", urgency: "critical" };
-  if (diffDays <= 3) return { text: `${diffDays}d left`, urgency: "critical" };
-  if (diffDays <= 7) return { text: `${diffDays}d left`, urgency: "soon" };
-  return { text: `${diffDays}d left`, urgency: "normal" };
+  const { label, urgency } = deadlineInfo(deadline);
+  return { text: label, urgency };
 }
 
 function formatDate(iso: string | null | undefined): string {
@@ -118,11 +116,9 @@ function formatDate(iso: string | null | undefined): string {
   });
 }
 
-const deadlineColors: Record<string, string> = {
-  critical: "text-red-500 dark:text-red-400",
-  soon: "text-amber-500 dark:text-amber-400",
-  normal: "text-emerald-600 dark:text-emerald-400",
-  expired: "text-muted-foreground line-through",
+const deadlineColors: Record<DeadlineUrgency | "none", string> = {
+  ...URGENCY_TEXT,
+  closed: "text-muted-foreground line-through",
   none: "text-muted-foreground",
 };
 
@@ -137,24 +133,15 @@ const workModeLabels: Record<string, string> = {
  * when the user has chosen "Show everything", and there the reason it was
  * ruled out is exactly what they want to see on hover.
  */
+// One quiet chip for the track; colour stays for state (deadlines, match).
+// The classifier's score and signals are in the chip's tooltip.
 const trackBadge: Record<string, { label: string; className: string }> = {
-  internship: {
-    label: "Internship",
-    className:
-      "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-  },
-  new_grad: {
-    label: "New Grad",
-    className: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30",
-  },
-  early_career: {
-    label: "Early Career",
-    className:
-      "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30",
-  },
+  internship: { label: "Internship", className: "" },
+  new_grad: { label: "New grad", className: "" },
+  early_career: { label: "Early career", className: "" },
   not_relevant: {
     label: "Not for freshers",
-    className: "bg-muted text-muted-foreground border-border",
+    className: "text-muted-foreground",
   },
 };
 
@@ -235,7 +222,7 @@ function JobCardImpl({
             />
           ) : (
             <div className="w-10 h-10 rounded-lg bg-secondary border border-border flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">
+              <span className="text-xs font-semibold text-foreground">
                 {getInitials(company?.name ?? job.title)}
               </span>
             </div>
@@ -276,45 +263,24 @@ function JobCardImpl({
               )}
             </p>
           )}
-          {/* Phase 2.0: what the normaliser made of the raw string above, so a
-              wrong bucket is visible on the card rather than only in the DB. */}
-          {(job.locationMetro ||
-            job.isRemote ||
-            job.isIndia === true ||
-            job.isIndia === null) && (
+          {/* Phase 2.0's normaliser, shown only where it adds something the
+              location line above does not: a city-less India posting, or a
+              location it could not place. The metro and "Remote" chips
+              repeated the line above and the work-mode chip below. */}
+          {((job.isIndia === true && !job.locationMetro && !job.isRemote) ||
+            (job.isIndia === null && job.location)) && (
             <div
               className="mt-1 flex items-center gap-1 flex-wrap"
               data-testid="location-badges"
             >
-              {job.locationMetro && (
-                <Badge
-                  variant="secondary"
-                  className="text-[10px] px-1.5 py-0 h-4 font-medium"
-                  data-location-metro={job.locationMetro}
-                >
-                  {job.locationMetro === "NCR"
-                    ? "Delhi NCR"
-                    : job.locationMetro === "MMR"
-                      ? "Mumbai"
-                      : job.locationMetro}
-                </Badge>
-              )}
-              {job.isIndia === true && !job.locationMetro && (
+              {job.isIndia === true && !job.locationMetro && !job.isRemote && (
                 <Badge
                   variant="secondary"
                   className="text-[10px] px-1.5 py-0 h-4 font-medium"
                   data-location-bucket-badge="india_unspecified"
                   title="The posting says India but names no city"
                 >
-                  India (city unstated)
-                </Badge>
-              )}
-              {job.isRemote && (
-                <Badge
-                  variant="secondary"
-                  className="text-[10px] px-1.5 py-0 h-4 font-medium"
-                >
-                  Remote
+                  City not stated
                 </Badge>
               )}
               {job.isIndia === null && job.location && (
@@ -334,7 +300,7 @@ function JobCardImpl({
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {jobIsNewToday && (
             <Badge className="text-[10px] px-1.5 py-0 h-4 bg-secondary text-foreground border-0 font-semibold">
-              New Today
+              New today
             </Badge>
           )}
           <Tooltip>
@@ -375,11 +341,6 @@ function JobCardImpl({
                 data-relevance-score={job.relevanceScore ?? ""}
               >
                 {trackBadge[job.relevanceTrack]!.label}
-                {job.relevanceScore != null && (
-                  <span className="ml-1 opacity-70 tabular-nums">
-                    {job.relevanceScore}
-                  </span>
-                )}
               </Badge>
             </TooltipTrigger>
             <TooltipContent
@@ -425,9 +386,14 @@ function JobCardImpl({
             </TooltipContent>
           </Tooltip>
         )}
-        <Badge variant="secondary" className="text-xs font-medium">
-          {job.jobType === "internship" ? "Internship" : "Full Time"}
-        </Badge>
+        {/* The track chip already says "Internship" for an internship. */}
+        {!(
+          job.jobType === "internship" && job.relevanceTrack === "internship"
+        ) && (
+          <Badge variant="secondary" className="text-xs font-medium">
+            {job.jobType === "internship" ? "Internship" : "Full time"}
+          </Badge>
+        )}
         <Badge variant="outline" className="text-xs">
           {workModeLabels[job.workMode] ?? job.workMode}
         </Badge>
@@ -463,14 +429,6 @@ function JobCardImpl({
               {branches.slice(3).join(", ")}
             </TooltipContent>
           </Tooltip>
-        )}
-        {batches.length === 0 && branches.length === 0 && (
-          <Badge
-            variant="outline"
-            className="text-xs text-muted-foreground/60 italic"
-          >
-            Open to all
-          </Badge>
         )}
       </div>
 

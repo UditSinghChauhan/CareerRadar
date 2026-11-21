@@ -2,26 +2,26 @@ import { useGetJobsClosingSoon } from "@workspace/api-client-react";
 import type { Job } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, parseISO, differenceInDays } from "date-fns";
-import { Building2, ExternalLink } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { ExternalLink } from "lucide-react";
+import { CompanyMark } from "@/components/company-mark";
+import {
+  deadlineInfo,
+  URGENCY_TEXT,
+  type DeadlineUrgency,
+} from "@/lib/deadline";
 
-function urgencyColor(days: number): string {
-  if (days <= 1) return "bg-destructive";
-  if (days <= 3) return "bg-destructive/70";
-  if (days <= 7) return "bg-yellow-500";
-  return "bg-primary/50";
-}
-
-function urgencyTextColor(days: number): string {
-  if (days <= 3) return "text-destructive";
-  if (days <= 7) return "text-yellow-600 dark:text-yellow-400";
-  return "text-muted-foreground";
-}
+const DOT: Record<DeadlineUrgency, string> = {
+  closed: "bg-muted-foreground/40",
+  critical: "bg-destructive",
+  soon: "bg-amber-500",
+  normal: "bg-foreground/30",
+};
 
 function TimelineItem({ job }: { job: Job }) {
   if (!job.deadline) return null;
   const deadlineDate = parseISO(job.deadline);
-  const days = differenceInDays(deadlineDate, new Date());
+  const left = deadlineInfo(deadlineDate);
   const company = job.company;
 
   return (
@@ -29,7 +29,7 @@ function TimelineItem({ job }: { job: Job }) {
       {/* Timeline dot + line */}
       <div className="flex flex-col items-center">
         <div
-          className={`h-2.5 w-2.5 rounded-full mt-1 shrink-0 ${urgencyColor(days)}`}
+          className={`h-2.5 w-2.5 rounded-full mt-1 shrink-0 ${DOT[left.urgency]}`}
         />
         <div className="flex-1 w-px bg-border mt-1" />
       </div>
@@ -38,17 +38,11 @@ function TimelineItem({ job }: { job: Job }) {
       <div className="pb-4 flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            {company?.logoUrl ? (
-              <img
-                src={company.logoUrl}
-                alt={company.name}
-                className="h-5 w-5 rounded object-contain bg-white border border-border shrink-0 p-0.5"
-              />
-            ) : (
-              <div className="h-5 w-5 rounded bg-secondary flex items-center justify-center shrink-0">
-                <Building2 className="h-3 w-3 text-muted-foreground" />
-              </div>
-            )}
+            <CompanyMark
+              name={company?.name ?? job.title}
+              logoUrl={company?.logoUrl}
+              size="xs"
+            />
             <div className="min-w-0">
               <p className="text-sm font-medium leading-snug truncate">
                 {job.title}
@@ -63,7 +57,7 @@ function TimelineItem({ job }: { job: Job }) {
               href={job.applyUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground mt-0.5 shrink-0"
+              className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-muted-foreground hover:text-foreground mt-0.5 shrink-0"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
@@ -73,8 +67,10 @@ function TimelineItem({ job }: { job: Job }) {
           <span className="text-xs text-muted-foreground">
             {format(deadlineDate, "d MMM yyyy")}
           </span>
-          <span className={`text-xs font-semibold ${urgencyTextColor(days)}`}>
-            {days <= 0 ? "Due today" : `${days}d to go`}
+          <span
+            className={`text-xs font-semibold ${URGENCY_TEXT[left.urgency]}`}
+          >
+            {left.label}
           </span>
         </div>
       </div>

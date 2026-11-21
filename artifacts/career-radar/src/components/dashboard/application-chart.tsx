@@ -16,22 +16,27 @@ interface ApplicationChartProps {
   isLoading: boolean;
 }
 
+// One ink, deepening stage by stage, and green only for the offer: the
+// stages are an order, not five categories, so they share a hue (amber
+// and two greens read as warnings and successes that were not there).
+const ink = (pct: number) =>
+  `color-mix(in oklab, var(--foreground) ${pct}%, transparent)`;
 const STATUS_STAGES = [
-  { key: "saved", label: "Saved", color: "var(--muted-foreground)" },
-  { key: "applied", label: "Applied", color: "var(--primary)" },
+  { key: "saved", label: "Saved", color: ink(22) },
+  { key: "applied", label: "Applied", color: ink(40) },
   {
     key: "assessment",
     label: "Assessment",
-    color: "hsl(38 92% 50%)",
+    color: ink(58),
     keys: ["oa_pending", "oa_completed"],
   },
   {
     key: "interview",
     label: "Interview",
-    color: "hsl(142 72% 42%)",
+    color: ink(78),
     keys: ["interview_pending", "interview_completed"],
   },
-  { key: "offered", label: "Offered", color: "hsl(142 70% 32%)" },
+  { key: "offered", label: "Offered", color: "var(--primary)" },
 ] as const;
 
 export function ApplicationChart({

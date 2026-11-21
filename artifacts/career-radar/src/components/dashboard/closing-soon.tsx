@@ -2,80 +2,51 @@ import { useGetJobsClosingSoon } from "@workspace/api-client-react";
 import type { Job } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-function deadlineBadge(deadline: string) {
-  const days = Math.ceil(
-    (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-  );
-  if (days <= 1)
-    return {
-      label: "Closing today",
-      className: "bg-destructive/10 text-destructive border-destructive/20",
-    };
-  if (days <= 3)
-    return {
-      label: `${days}d left`,
-      className: "bg-destructive/10 text-destructive border-destructive/20",
-    };
-  if (days <= 7)
-    return {
-      label: `${days}d left`,
-      className:
-        "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
-    };
-  return {
-    label: `${days}d left`,
-    className: "bg-secondary text-muted-foreground border-border",
-  };
-}
+import { CompanyMark } from "@/components/company-mark";
+import { deadlineInfo, URGENCY_TEXT } from "@/lib/deadline";
 
 function ClosingSoonCard({ job }: { job: Job }) {
   const company = job.company;
-  const badge = job.deadline ? deadlineBadge(job.deadline) : null;
+  const left = job.deadline ? deadlineInfo(job.deadline) : null;
 
+  // The deadline sits on the company line, so a narrow card keeps the
+  // whole title instead of clipping it beside a badge.
   return (
     <div className="group flex items-center gap-3 py-3 border-b border-border last:border-0">
-      {company?.logoUrl ? (
-        <img
-          src={company.logoUrl}
-          alt={company.name}
-          className="h-8 w-8 rounded-md object-contain shrink-0 bg-white p-0.5 border border-border"
-        />
-      ) : (
-        <div className="h-8 w-8 rounded-md bg-secondary flex items-center justify-center shrink-0">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
-        </div>
-      )}
+      <CompanyMark
+        name={company?.name ?? job.title}
+        logoUrl={company?.logoUrl}
+        size="md"
+      />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium leading-tight truncate">
           {job.title}
         </p>
-        <p className="text-xs text-muted-foreground truncate">
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {company?.name}
+          {left && (
+            <>
+              <span className="mx-1.5 opacity-40">·</span>
+              <span className={`font-medium ${URGENCY_TEXT[left.urgency]}`}>
+                {left.label}
+              </span>
+            </>
+          )}
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {badge && (
-          <span
-            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${badge.className}`}
-          >
-            {badge.label}
-          </span>
-        )}
-        {job.applyUrl && (
-          <a
-            href={job.applyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary transition-opacity md:opacity-0 md:group-hover:opacity-100"
-            aria-label={`Apply for ${job.title}`}
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        )}
-      </div>
+      {job.applyUrl && (
+        <a
+          href={job.applyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 text-primary transition-opacity md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+          aria-label={`Apply for ${job.title}`}
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      )}
     </div>
   );
 }

@@ -3,8 +3,9 @@ import type { Application } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Building2 } from "lucide-react";
+
 import { formatDistanceToNow, parseISO } from "date-fns";
+import { CompanyMark } from "@/components/company-mark";
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
   saved: {
@@ -63,17 +64,11 @@ function ApplicationRow({ application }: { application: Application }) {
 
   return (
     <div className="flex items-center gap-3 py-3 border-b border-border last:border-0">
-      {company?.logoUrl ? (
-        <img
-          src={company.logoUrl}
-          alt={company.name}
-          className="h-8 w-8 rounded-md object-contain shrink-0 bg-white p-0.5 border border-border"
-        />
-      ) : (
-        <div className="h-8 w-8 rounded-md bg-secondary flex items-center justify-center shrink-0">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
-        </div>
-      )}
+      <CompanyMark
+        name={company?.name ?? job?.title}
+        logoUrl={company?.logoUrl}
+        size="md"
+      />
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium leading-tight truncate">

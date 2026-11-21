@@ -22,7 +22,7 @@ function StatCard({ label, value, highlight, sub }: StatCard) {
           {label}
         </p>
         <p
-          className={`text-3xl font-bold tabular-nums ${
+          className={`text-3xl font-medium tracking-tight tabular-nums ${
             highlight ? "text-primary" : ""
           }`}
         >
