@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { LogoMark } from "@/components/logo-mark";
+import { ThemeSwitch } from "./theme-switch";
 import {
   AUTHOR_NAME,
   AUTHOR_URL,
@@ -39,6 +40,8 @@ export function LandingFooter({ signInHref }: { signInHref: string }) {
             </a>
           )}
           <span className="lp-small">MIT licence</span>
+          {/* On phones the nav has no room for it. */}
+          <ThemeSwitch className="lp-theme--footer" />
         </nav>
         <p className="lp-small lp-footer__credit">
           Designed and built by{" "}

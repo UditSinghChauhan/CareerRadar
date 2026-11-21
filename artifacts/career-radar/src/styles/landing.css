@@ -1,7 +1,9 @@
 /* CareerRadar landing, "Field to focus". Tokens, scale and sections:
    DESIGN.md. Everything is scoped to .lp so none of it reaches the app's
-   Tailwind screens. The landing is light only; its one dark band is the
-   closing radar. Geist and Geist Mono come from styles/fonts.css. */
+   Tailwind screens. Light by default, dark when the visitor picks it
+   (html.dark, set by next-themes and before first paint by index.html);
+   the dark values follow the app's night palette. Geist and Geist Mono
+   come from styles/fonts.css. */
 
 /* ─── Tokens ─────────────────────────────────────────────────────────────── */
 
@@ -21,6 +23,17 @@
   --lp-band: #0c0d0b;
   --lp-band-ink: #f5f5f3;
   --lp-band-grey: #a3a39e;
+  /* Text on an ink fill (the primary pill), and on lime. */
+  --lp-on-ink: #ffffff;
+  --lp-ink-hover: #2b2b29;
+  --lp-on-lime: #111111;
+  --lp-lime-tint: #eef8d8;
+  --lp-ring-dotted: #d6d6d0;
+  --lp-bar-fill: rgb(17 17 17 / 85%);
+  --lp-chrome: #fafaf8;
+  --lp-selection: rgb(49 107 23 / 18%);
+  --lp-shadow-lift:
+    0 2px 4px rgb(0 0 0 / 5%), 0 24px 48px -20px rgb(0 0 0 / 20%);
 
   --lp-font: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --lp-mono:
@@ -62,11 +75,73 @@
     --lp-gutter: 20px;
   }
 }
-/* The landing is light whatever the app's theme, from the first paint. */
+/* The page behind the landing, from the first paint, in either theme. */
 html.lp-pre,
 html:has(.lp) {
   background: #f6f6f3;
   color-scheme: light;
+}
+html.dark.lp-pre,
+html.dark:has(.lp) {
+  background: oklch(13.5% 0.012 235);
+  color-scheme: dark;
+}
+
+/* ─── Dark ───────────────────────────────────────────────────────────────
+   The app's night (index.css .dark): a blue-black ground, cards a step
+   lighter on a hairline instead of a shadow, and lime for links and focus
+   because the light page's green is 2.6:1 here. Ratios on the canvas:
+   ink 16.9, grey 7.0, grey-lg 4.9, lime 13.3. */
+html.dark .lp {
+  --lp-canvas: oklch(13.5% 0.012 235);
+  --lp-surface: oklch(17% 0.014 235);
+  --lp-wash: oklch(21% 0.016 235);
+  --lp-hairline: oklch(27% 0.014 235);
+  --lp-ink: oklch(95% 0.006 230);
+  --lp-ink-2: oklch(82% 0.012 230);
+  --lp-grey: oklch(72% 0.016 230);
+  --lp-grey-lg: oklch(64% 0.016 230);
+  --lp-green: oklch(89% 0.19 126);
+  --lp-band: oklch(9.5% 0.01 235);
+  --lp-on-ink: oklch(13.5% 0.012 235);
+  --lp-ink-hover: oklch(85% 0.008 230);
+  --lp-lime-tint: oklch(30% 0.06 126);
+  --lp-ring-dotted: oklch(30% 0.014 235);
+  --lp-bar-fill: oklch(90% 0.008 230);
+  --lp-chrome: oklch(19% 0.015 235);
+  --lp-selection: oklch(89% 0.19 126 / 25%);
+  --lp-shadow: 0 0 0 0 transparent;
+  --lp-shadow-lift: 0 18px 40px -24px rgb(0 0 0 / 70%);
+  color-scheme: dark;
+}
+/* Monogram tiles: the same six hues, dark ground, light ink (≥ 7:1). */
+html.dark .lp-mono-tile[data-tint="sky"] {
+  background: oklch(28% 0.04 245);
+  color: oklch(88% 0.05 245);
+}
+html.dark .lp-mono-tile[data-tint="sage"] {
+  background: oklch(28% 0.04 140);
+  color: oklch(88% 0.06 140);
+}
+html.dark .lp-mono-tile[data-tint="sand"] {
+  background: oklch(29% 0.04 75);
+  color: oklch(89% 0.06 75);
+}
+html.dark .lp-mono-tile[data-tint="rose"] {
+  background: oklch(28% 0.045 20);
+  color: oklch(88% 0.05 20);
+}
+html.dark .lp-mono-tile[data-tint="stone"] {
+  background: oklch(27% 0.01 100);
+  color: oklch(88% 0.01 100);
+}
+html.dark .lp-mono-tile[data-tint="teal"] {
+  background: oklch(28% 0.04 190);
+  color: oklch(88% 0.05 190);
+}
+/* The closing band sits a step below the dark canvas, with a hairline. */
+html.dark .lp-band {
+  border-top: 1px solid var(--lp-hairline);
 }
 /* Anchor links glide, natively; each section stops clear of the nav. */
 @media (prefers-reduced-motion: no-preference) {
@@ -83,7 +158,7 @@ html:has(.lp) {
   box-sizing: border-box;
 }
 .lp ::selection {
-  background: rgb(49 107 23 / 18%);
+  background: var(--lp-selection);
   color: var(--lp-ink);
 }
 /* A ring for the keyboard, never for a click. */
@@ -128,7 +203,7 @@ html:has(.lp) {
   padding: 10px 16px;
   border-radius: 999px;
   background: var(--lp-ink);
-  color: #fff;
+  color: var(--lp-on-ink);
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
@@ -224,7 +299,7 @@ html:has(.lp) {
   padding: 0 24px;
   border-radius: 999px;
   background: var(--lp-ink);
-  color: #fff;
+  color: var(--lp-on-ink);
   font-size: 16px;
   font-weight: 500;
   line-height: 1;
@@ -236,7 +311,10 @@ html:has(.lp) {
 }
 @media (hover: hover) and (pointer: fine) {
   .lp-btn:hover {
-    background: #2b2b29;
+    background: var(--lp-ink-hover);
+  }
+  .lp-btn--quiet:hover {
+    background: var(--lp-wash);
   }
   .lp-btn--lime:hover {
     background: #c9f56e;
@@ -261,7 +339,63 @@ html:has(.lp) {
 }
 .lp-btn--lime {
   background: var(--lp-lime);
+  color: var(--lp-on-lime);
+}
+/* The second action: the same pill in outline, ink on the canvas. */
+.lp-btn--quiet {
+  background: transparent;
   color: var(--lp-ink);
+  box-shadow: inset 0 0 0 1px var(--lp-hairline);
+}
+/* Light and dark: an icon button that shows the icon of the theme it
+   switches to (theme-switch.tsx). */
+.lp-theme {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 -6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--lp-grey);
+  cursor: pointer;
+  transition:
+    color var(--lp-micro) var(--lp-ease),
+    background-color var(--lp-micro) var(--lp-ease),
+    transform var(--lp-micro) var(--lp-ease);
+}
+.lp-theme svg {
+  width: 18px;
+  height: 18px;
+}
+.lp-theme__sun,
+html.dark .lp-theme__moon {
+  display: none;
+}
+html.dark .lp-theme__sun {
+  display: block;
+}
+.lp-theme:active {
+  transform: scale(0.94);
+}
+@media (hover: hover) and (pointer: fine) {
+  .lp-theme:hover {
+    color: var(--lp-ink);
+    background: var(--lp-wash);
+  }
+}
+.lp-theme--footer {
+  display: none;
+}
+@media (max-width: 479px) {
+  .lp-theme--nav {
+    display: none;
+  }
+  .lp-theme--footer {
+    display: inline-grid;
+  }
 }
 /* Links. A full-strength underline grows from left to right on hover
    (transform: scaleX, 200ms). A link inside text also keeps a resting
@@ -431,6 +565,12 @@ a.lp-word {
   gap: 14px;
   margin-top: 32px;
 }
+.lp-hero__btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
 .lp-field,
 .lp-field__in,
 .lp-layer,
@@ -452,11 +592,7 @@ a.lp-word {
 .lp-field__fade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgb(246 246 243 / 0%) 55%,
-    var(--lp-canvas) 96%
-  );
+  background: linear-gradient(180deg, transparent 55%, var(--lp-canvas) 96%);
   pointer-events: none;
 }
 .lp-rings circle {
@@ -467,7 +603,7 @@ a.lp-word {
 }
 /* Every second ring is dotted (field.tsx, Rings). */
 .lp-rings .lp-ring--dotted {
-  stroke: #d6d6d0;
+  stroke: var(--lp-ring-dotted);
   stroke-dasharray: 1 9;
   stroke-linecap: round;
 }
@@ -702,9 +838,7 @@ a.lp-word {
   .lp-field .lp-rolecard:hover,
   .lp-qrow:hover {
     translate: 0 -2px;
-    box-shadow:
-      0 2px 4px rgb(0 0 0 / 5%),
-      0 24px 48px -20px rgb(0 0 0 / 20%);
+    box-shadow: var(--lp-shadow-lift);
   }
 }
 .lp-rolecard {
@@ -826,11 +960,12 @@ a.lp-word {
   display: inline-grid;
   flex: none;
   place-items: center;
-  min-width: 18px;
+  /* One width for 1 to 10, so the monograms after it stay in a column. */
+  width: 22px;
   height: 18px;
-  padding: 0 5px;
+  padding: 0;
   border-radius: 5px;
-  background: #eef8d8;
+  background: var(--lp-lime-tint);
   color: var(--lp-ink);
   font-family: var(--lp-mono);
   font-size: 11px;
@@ -841,6 +976,17 @@ a.lp-word {
 .lp-rank--top {
   position: relative;
   background: var(--lp-lime);
+  color: var(--lp-on-lime);
+}
+.lp-shot {
+  display: block;
+}
+.lp-shot--dark,
+html.dark .lp-shot--light {
+  display: none;
+}
+html.dark .lp-shot--dark {
+  display: block;
 }
 /* Once the ten rows of "Today's ten" have landed (9 x 45ms + 400ms), rank
    1's tag pulses once: a soft lime halo that grows and fades. Never again. */
@@ -1222,7 +1368,7 @@ a.lp-word {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: rgb(17 17 17 / 85%);
+  background: var(--lp-bar-fill);
   transform-origin: left center;
 }
 .lp-bars__v {
@@ -1291,6 +1437,9 @@ a.lp-word {
 }
 .lp-feature {
   display: grid;
+  /* One column no wider than the card: the board inside is wider than a
+     phone and must not widen the text above it (it ran off the card). */
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   padding: 28px;
   align-content: start;
@@ -1461,7 +1610,7 @@ a.lp-word {
   place-items: center;
   height: 40px;
   border-bottom: 1px solid var(--lp-hairline);
-  background: #fafaf8;
+  background: var(--lp-chrome);
 }
 .lp-browser__url {
   padding: 3px 14px;
@@ -1522,8 +1671,9 @@ a.lp-word {
     grid-template-columns: 1fr;
     gap: 6px;
   }
-  /* The board keeps its five columns and fades out at the edge. */
+  /* The board keeps its five columns and fades out at the card's edge. */
   .lp-board {
+    overflow: hidden;
     grid-template-columns: repeat(5, 156px);
     mask-image: linear-gradient(90deg, #000 78%, transparent);
   }
@@ -1716,6 +1866,27 @@ a.lp-word {
 }
 .lp-band :focus-visible {
   outline-color: var(--lp-lime);
+}
+/* Beside the button from 640px, so the band is no taller than before. */
+.lp-band__act {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 24px;
+}
+.lp-band__link {
+  color: var(--lp-band-grey);
+  font-size: 15px;
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 30%);
+  text-underline-offset: 4px;
+  transition: color var(--lp-micro) var(--lp-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .lp-band__link:hover {
+    color: var(--lp-band-ink);
+  }
 }
 @media (max-width: 767px) {
   .lp-band__radar {

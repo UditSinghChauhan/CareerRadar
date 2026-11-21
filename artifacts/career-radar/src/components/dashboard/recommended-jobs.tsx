@@ -3,16 +3,14 @@ import type { Job, ListJobsParams } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, MapPin, Clock, ExternalLink } from "lucide-react";
+import { MapPin, Clock, ExternalLink } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
+import { CompanyMark } from "@/components/company-mark";
+import { deadlineInfo, URGENCY_TEXT } from "@/lib/deadline";
 
 function JobCard({ job }: { job: Job }) {
   const company = job.company;
-  const daysLeft = job.deadline
-    ? Math.ceil(
-        (new Date(job.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-      )
-    : null;
+  const deadline = job.deadline ? deadlineInfo(job.deadline) : null;
 
   const salary =
     job.jobType === "internship" && job.stipend
@@ -25,17 +23,11 @@ function JobCard({ job }: { job: Job }) {
     <div className="group flex flex-col gap-2.5 p-4 rounded-lg border border-border bg-card hover:bg-secondary/40 transition-colors">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
-          {company?.logoUrl ? (
-            <img
-              src={company.logoUrl}
-              alt={company.name}
-              className="h-7 w-7 rounded-md object-contain shrink-0 bg-white p-0.5 border border-border"
-            />
-          ) : (
-            <div className="h-7 w-7 rounded-md bg-secondary flex items-center justify-center shrink-0">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </div>
-          )}
+          <CompanyMark
+            name={company?.name ?? job.title}
+            logoUrl={company?.logoUrl}
+            size="sm"
+          />
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-tight truncate">
               {job.title}
@@ -76,18 +68,12 @@ function JobCard({ job }: { job: Job }) {
       </div>
 
       <div className="flex items-center justify-between mt-0.5">
-        {daysLeft !== null ? (
+        {deadline ? (
           <span
-            className={`text-xs font-medium ${
-              daysLeft <= 3
-                ? "text-destructive"
-                : daysLeft <= 7
-                  ? "text-yellow-600 dark:text-yellow-400"
-                  : "text-muted-foreground"
-            }`}
+            className={`text-xs font-medium ${URGENCY_TEXT[deadline.urgency]}`}
           >
             <Clock className="inline h-3 w-3 mr-0.5" />
-            {daysLeft <= 0 ? "Closing today" : `${daysLeft}d left`}
+            {deadline.label}
           </span>
         ) : (
           <span className="text-xs text-muted-foreground">No deadline</span>
@@ -97,7 +83,7 @@ function JobCard({ job }: { job: Job }) {
             href={job.applyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-primary flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+            className="text-xs text-primary flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
           >
             Apply
             <ExternalLink className="h-3 w-3" />

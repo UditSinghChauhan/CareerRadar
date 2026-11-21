@@ -2,7 +2,8 @@ import { useListBookmarks, useListJobs } from "@workspace/api-client-react";
 import type { Company } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { CompanyMark } from "@/components/company-mark";
 
 function CompanyCard({
   company,
@@ -13,17 +14,7 @@ function CompanyCard({
 }) {
   return (
     <div className="group flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-secondary/40 transition-colors">
-      {company.logoUrl ? (
-        <img
-          src={company.logoUrl}
-          alt={company.name}
-          className="h-9 w-9 rounded-lg object-contain shrink-0 bg-white p-1 border border-border"
-        />
-      ) : (
-        <div className="h-9 w-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-          <Building2 className="h-5 w-5 text-muted-foreground" />
-        </div>
-      )}
+      <CompanyMark name={company.name} logoUrl={company.logoUrl} size="lg" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium leading-tight">{company.name}</p>
         <p className="text-xs text-muted-foreground">
@@ -35,7 +26,7 @@ function CompanyCard({
           href={company.website}
           target="_blank"
           rel="noopener noreferrer"
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
         >
           <ExternalLink className="h-3.5 w-3.5" />
         </a>

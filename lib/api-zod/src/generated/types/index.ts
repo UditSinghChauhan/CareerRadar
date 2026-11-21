@@ -32,6 +32,8 @@ export * from './dailyQueue';
 export * from './dailyQueueWeights';
 export * from './dashboardSummary';
 export * from './dashboardSummaryByStatus';
+export * from './demoSession';
+export * from './demoStatus';
 export * from './dismissJobInput';
 export * from './getDailyQueueParams';
 export * from './getJobsClosingSoonParams';

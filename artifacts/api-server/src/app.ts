@@ -14,6 +14,7 @@ import {
   getClerkProxyHost,
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
+import { demoReadOnly } from "./demo/demo";
 import { logger } from "./lib/logger";
 import { corsOrigin, parseAllowedOrigins } from "./lib/allowed-origins";
 
@@ -40,9 +41,17 @@ const enforceRateLimit =
   process.env["NODE_ENV"] === "production" ||
   process.env["RATE_LIMIT_ENFORCE"] === "true";
 
+// Render puts one proxy in front of the app. Without this, req.ip is the
+// proxy's address, so every visitor would share one bucket.
+app.set("trust proxy", 1);
+
+// Measured locally (2026-11-21): one pass over dashboard, jobs, applications,
+// profile and settings makes 28 API calls, and every filter or search on
+// Jobs makes one more. 100 per 15 minutes ran out within a few minutes of
+// ordinary use; 600 is about 40 a minute per visitor.
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  max: 600, // 600 requests per window
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later" },
@@ -132,6 +141,8 @@ app.get("/api/docs/openapi.yaml", (_req, res) => {
   res.sendFile(specPath);
 });
 
+// The demo account reads everything and writes nothing (demo/demo.ts).
+app.use("/api", demoReadOnly);
 app.use("/api", router);
 
 // Serve static React frontend in production

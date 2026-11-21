@@ -346,39 +346,8 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
         </FilterSection>
       )}
 
-      {/* Job Type */}
-      <FilterSection title="Job Type">
-        <div className="flex flex-col gap-2">
-          {[
-            { value: "all", label: "All" },
-            { value: "internship", label: "Internship" },
-            { value: "full_time", label: "Full Time" },
-          ].map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() =>
-                set("jobType", value as JobFiltersState["jobType"])
-              }
-              className={`flex items-center gap-2 text-sm rounded px-2 py-1 transition-colors w-full text-left ${
-                filters.jobType === value
-                  ? "bg-secondary text-foreground font-medium"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <span
-                className={`inline-block w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${
-                  filters.jobType === value
-                    ? "border-foreground bg-foreground"
-                    : "border-muted-foreground/40"
-                }`}
-              />
-              {label}
-            </button>
-          ))}
-        </div>
-      </FilterSection>
-
-      <Separator />
+      {/* Job type lives in the chips above the results (All, Internship,
+          Full time); a second control for it here only took space. */}
 
       {/* Relevance — Phase 2.1. The classifier's verdict, filtered on the
           server. fresherOnly is the default view; "Show everything" is the

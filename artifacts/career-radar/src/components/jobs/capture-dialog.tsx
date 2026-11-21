@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { isDemoReadOnly } from "@/lib/demo";
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
@@ -242,7 +243,8 @@ export function CaptureDialog({
       );
       onOpenChange(false);
       onSaved?.(result.job.id, markApplied);
-    } catch {
+    } catch (err) {
+      if (isDemoReadOnly(err)) return;
       toast.error("Could not save that job");
     }
   }

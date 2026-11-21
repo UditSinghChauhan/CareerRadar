@@ -9,7 +9,6 @@ import { Redirect } from "wouter";
 import { Greeting } from "@/components/dashboard/greeting";
 import { TodaysQueue } from "@/components/dashboard/todays-queue";
 import { StatCards } from "@/components/dashboard/stat-cards";
-import { NewOpportunities } from "@/components/dashboard/new-opportunities";
 import { RecommendedJobs } from "@/components/dashboard/recommended-jobs";
 import { ClosingSoon } from "@/components/dashboard/closing-soon";
 import { DreamCompanies } from "@/components/dashboard/dream-companies";
@@ -61,15 +60,10 @@ export function DashboardPage() {
           history. ──────────────────────────────────────────────────── */}
       <TodaysQueue />
 
-      {/* ── New Opportunities + Stats ─────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 xl:grid-cols-5 gap-3">
-        <div className="sm:col-span-1">
-          <NewOpportunities />
-        </div>
-        <div className="sm:col-span-3 xl:col-span-4">
-          <StatCards summary={summary} isLoading={summaryLoading} />
-        </div>
-      </div>
+      {/* ── Stats ─────────────────────────────────────────────────────
+          One row of five. "New opportunities" used to sit beside it with
+          the same number as "Jobs found", in a taller card. ─────────── */}
+      <StatCards summary={summary} isLoading={summaryLoading} />
 
       {/* ── Recommended + Closing Soon ────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CareerRadar</title>
+    <title>CareerRadar · Ten SDE roles worth applying to, every morning</title>
     <meta
       name="description"
       content="Ten SDE roles worth applying to every morning, ranked for Indian CS freshers with the reason for each rank."
@@ -35,13 +35,14 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f6f6f3" />
     <!-- Sets the theme before first paint, from the same localStorage key
-         next-themes uses, so neither the landing nor the app flashes. -->
+         next-themes uses, so neither the landing nor the app flashes. Light
+         until the visitor picks dark (or "system") with a theme toggle. -->
     <script>
       try {
         var t = localStorage.getItem("theme");
         var d =
           t === "dark" ||
-          ((!t || t === "system") &&
+          (t === "system" &&
             matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.classList.add(d ? "dark" : "light");
         document.documentElement.style.colorScheme = d ? "dark" : "light";
@@ -92,6 +93,37 @@
               ><a href="#features" class="lp-nav__link lp-nav__link--wide"
                 >Features</a
               ><a href="#faq" class="lp-nav__link lp-nav__link--wide">FAQ</a
+              ><button
+                type="button"
+                class="lp-theme lp-theme--nav"
+                aria-label="Switch theme"
+              >
+                <svg
+                  class="lp-theme__moon"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg
+                ><svg
+                  class="lp-theme__sun"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <path
+                    d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+                  ></path>
+                </svg></button
               ><a href="/sign-in" class="lp-nav__link">Sign in</a
               ><a href="/sign-up" class="lp-btn lp-btn--nav">Get started</a>
             </nav>
@@ -113,8 +145,15 @@
                 reason for each pick.
               </p>
               <div class="lp-hero__act">
-                <a href="/sign-up" class="lp-btn">Get started</a>
-                <p class="lp-quiet">Free and open source</p>
+                <div class="lp-hero__btns">
+                  <a href="/sign-up" class="lp-btn">Get started</a
+                  ><a href="/demo" class="lp-btn lp-btn--quiet"
+                    >Explore the demo</a
+                  >
+                </div>
+                <p class="lp-quiet">
+                  Free and open source. The demo needs no account.
+                </p>
               </div>
             </div>
           </section>

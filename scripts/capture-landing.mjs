@@ -11,9 +11,10 @@
  *   2. Serves the real API router with a fixed demo session
  *      (capture-server.ts) and the real app with Clerk stubbed out
  *      (career-radar/capture/vite.config.ts).
- *   3. Captures a crop of Today's queue at 2x, in the light theme: one at
- *      a width the landing shows 1.19x larger (so the app's 12px meta text
- *      reads at 14px), and one for phones.
+ *   3. Captures a crop of Today's queue at 2x, in the light and the dark
+ *      theme (the landing shows the one for its theme): one at a width the
+ *      landing shows 1.19x larger (so the app's 12px meta text reads at
+ *      14px), and one for phones.
  *   4. Writes AVIF and WebP files to career-radar/public/landing/captures/
  *      and their dimensions and blurred placeholders to
  *      career-radar/src/components/landing/captures.json.
@@ -169,18 +170,28 @@ async function main() {
     // The landing shows the desktop crop 880px wide and the phone crop
     // about 350px wide; each is captured 1.19x narrower than that, so the
     // app's smallest text (12px) lands at 14px.
-    const crops = [
+    const sizes = [
       { name: "queue", viewport: { width: 1060, height: 900 }, height: 520 },
       { name: "queue-sm", viewport: { width: 330, height: 900 }, height: 560 },
     ];
+    const crops = ["light", "dark"].flatMap((theme) =>
+      sizes.map((s) => ({
+        ...s,
+        theme,
+        name: theme === "light" ? s.name : `${s.name}-dark`,
+      })),
+    );
     for (const crop of crops) {
       const ctx = await browser.newContext({
         viewport: crop.viewport,
         deviceScaleFactor: 2,
-        colorScheme: "light",
+        colorScheme: crop.theme,
         reducedMotion: "reduce",
       });
-      await ctx.addInitScript(() => localStorage.setItem("theme", "light"));
+      await ctx.addInitScript(
+        (theme) => localStorage.setItem("theme", theme),
+        crop.theme,
+      );
       const p = await ctx.newPage();
       // A morning, so the queue reads as the day's.
       await p.clock.setFixedTime(new Date(new Date().setUTCHours(3, 30, 0, 0)));

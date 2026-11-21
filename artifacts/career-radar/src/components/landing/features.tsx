@@ -133,8 +133,50 @@ function Dream() {
  * tilts from rotateX(8deg) and scale 0.96 to flat as it crosses the
  * viewport (Tilt, a separate layer so the two never write one transform).
  */
+function Shot({
+  large,
+  small,
+  theme,
+}: {
+  large: (typeof captures)["queue"];
+  small: (typeof captures)["queue"];
+  theme: "light" | "dark";
+}) {
+  return (
+    // Both themes' crops are in the page; CSS shows the one for <html>'s
+    // theme, and a lazy image that is not displayed is never fetched.
+    <picture className={`lp-shot lp-shot--${theme}`}>
+      {/* Each source carries its own size, so the phone crop reserves its
+        own height and nothing shifts when it loads. */}
+      <source
+        media="(max-width: 639px)"
+        srcSet={small.avif}
+        type="image/avif"
+        width={small.width}
+        height={small.height}
+      />
+      <source
+        media="(max-width: 639px)"
+        srcSet={small.webp}
+        type="image/webp"
+        width={small.width}
+        height={small.height}
+      />
+      <source srcSet={large.avif} type="image/avif" />
+      <img
+        src={large.webp}
+        width={large.width}
+        height={large.height}
+        alt="Today's ten in the real CareerRadar app: ranked roles, each with its rank, score, short reasons and an Apply button, and the day's progress."
+        loading="lazy"
+        decoding="async"
+        style={{ backgroundImage: `url(${large.placeholder})` }}
+      />
+    </picture>
+  );
+}
+
 function Capture() {
-  const { queue, "queue-sm": small } = captures;
   return (
     <Tilt>
       <Reveal as="figure" className="lp-browser lp-browser--crop">
@@ -143,34 +185,16 @@ function Capture() {
             careerradar-34ec.onrender.com/dashboard
           </span>
         </div>
-        <picture>
-          {/* Each source carries its own size, so the phone crop reserves its
-            own height and nothing shifts when it loads. */}
-          <source
-            media="(max-width: 639px)"
-            srcSet={small.avif}
-            type="image/avif"
-            width={small.width}
-            height={small.height}
-          />
-          <source
-            media="(max-width: 639px)"
-            srcSet={small.webp}
-            type="image/webp"
-            width={small.width}
-            height={small.height}
-          />
-          <source srcSet={queue.avif} type="image/avif" />
-          <img
-            src={queue.webp}
-            width={queue.width}
-            height={queue.height}
-            alt="Today's ten in the real CareerRadar app: ranked roles, each with its rank, score, short reasons and an Apply button, and the day's progress."
-            loading="lazy"
-            decoding="async"
-            style={{ backgroundImage: `url(${queue.placeholder})` }}
-          />
-        </picture>
+        <Shot
+          large={captures.queue}
+          small={captures["queue-sm"]}
+          theme="light"
+        />
+        <Shot
+          large={captures["queue-dark"]}
+          small={captures["queue-sm-dark"]}
+          theme="dark"
+        />
         <figcaption className="lp-caption">
           Today’s ten in the real app, on an invented demo account.
         </figcaption>

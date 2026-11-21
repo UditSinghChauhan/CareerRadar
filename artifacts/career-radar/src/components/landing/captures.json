@@ -4,13 +4,27 @@
     "height": 520,
     "avif": "/landing/captures/queue.avif",
     "webp": "/landing/captures/queue.webp",
-    "placeholder": "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAQBACdASoYABEAPu1gp06ppSMiMBgMATAdiWkAACnSD0KDfiJ1xhegAAD+7+LrIuXoktroghQ6DGveH8G3+bJa7jtgnqVnic3f/lFW/PXKCanW5OAiIP0v0OHdgAAA"
+    "placeholder": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAACwAwCdASoYABEAPu1ipk4ppaMiMBgMATAdiWkAADpy/Dh4+b8l0AD+8IFIgdfsNRWVOcos4U/LzdfCE+Kjt1vpUrPE5u6pLzlin4UJYwQAAAAA"
   },
   "queue-sm": {
     "width": 298,
     "height": 560,
     "avif": "/landing/captures/queue-sm.avif",
     "webp": "/landing/captures/queue-sm.webp",
-    "placeholder": "data:image/webp;base64,UklGRrAAAABXRUJQVlA4IKQAAADQBQCdASoYAC0APuVmpU2pJiOiMBqtUSAciWkAAJ/bRtcvoPemCrHTH6pAa/oJwUlqAPjxgYMAAP7zyIyme0YQqLYxVLrV6lRlp3k1LM5rRJ1A7P1RbD+qfjcXlNq9TrbmDtLXpBH6yfMLmn9kelACo2kO/if/3QJ3EE6rPE6B25g4f9Vdi4iNKLXnm2iH2S0QQZgEgo9B3cpW8qi0123yAXIAAA=="
+    "placeholder": "data:image/webp;base64,UklGRrAAAABXRUJQVlA4IKQAAACwBQCdASoYAC0APu1opU2ppiMiMBVdUTAdiWkAAH22ja5fQe9MGJkCelP92gqaPHbrtM+WEQAA/vPIjKZ5oo5lnxmKFlRJHv0/UF7gqZomOiFRjk2TNBUNDCMmsEQfuuWj2KF5HJib56EYqccnpbRePgHLQUrWjaucw3ECZOOKW5cePQ3TeekwwV9ouKX2pNZaFYEIsgZWJqR6CiNu9alwbCAAAA=="
+  },
+  "queue-dark": {
+    "width": 740,
+    "height": 520,
+    "avif": "/landing/captures/queue-dark.avif",
+    "webp": "/landing/captures/queue-dark.webp",
+    "placeholder": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAAAwBACdASoYABEAPu1kqlAppSOisBgIATAdiWkAxkAPR6Cz8/mHPe0vSoAA/u6xYw+XKHxKlb/SK6g6RVEDBE1+kn+0XJ+vxqPwa1JLJ7Z+X79dpKKDfrKQAAA="
+  },
+  "queue-sm-dark": {
+    "width": 298,
+    "height": 560,
+    "avif": "/landing/captures/queue-sm-dark.avif",
+    "webp": "/landing/captures/queue-sm-dark.webp",
+    "placeholder": "data:image/webp;base64,UklGRsQAAABXRUJQVlA4ILgAAAAQBgCdASoYAC0APu1qp06ppqMiMBqoATAdiWkAxcg6un0OWT5AHbO7epGTka50gM/FIsoaxjVTAgAA/vM03Tosa8ku+kjk5LIot/aDzzjxTEpKYSnZzgi95/yzmfCnoTdsBR4YQiFokNoCTnMo1wV4ToES91WRMz5piDPi78YnN2+n3X8jiAKco6xN+eYEb1jRvRzPU/mk+i/YIpmM8ex3FCM4N2h6cd7yenqq9lvFXs1hAI99AAAA"
   }
 }

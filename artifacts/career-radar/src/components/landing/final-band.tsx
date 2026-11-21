@@ -100,6 +100,7 @@ function Radar({ paused, entered }: { paused: boolean; entered: boolean }) {
  * clear of the radar's circle.
  */
 export function FinalBand({ signUpHref }: { signUpHref: string }) {
+  const demoHref = `${import.meta.env.BASE_URL.replace(/\/$/, "")}/demo`;
   const ref = useRef<HTMLElement>(null);
   const reduced = Boolean(useReducedMotion());
   const seen = useInView(ref, { once: true, amount: 0.35 });
@@ -122,9 +123,14 @@ export function FinalBand({ signUpHref }: { signUpHref: string }) {
         <h2 id="band-head" className="lp-h2 lp-band__h">
           Tomorrow’s ten are already being ranked.
         </h2>
-        <Link href={signUpHref} className="lp-btn lp-btn--lime">
-          Get started
-        </Link>
+        <div className="lp-band__act">
+          <Link href={signUpHref} className="lp-btn lp-btn--lime">
+            Get started
+          </Link>
+          <Link href={demoHref} className="lp-band__link">
+            or explore the demo
+          </Link>
+        </div>
       </div>
       {!reduced && (
         <button

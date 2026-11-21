@@ -63,7 +63,7 @@ describe("LandingPage", () => {
     for (const link of links) expect(link).toHaveAttribute("href", "/sign-up");
   });
 
-  it("links the nav to its sections, and offers sign-in, with no theme toggle or design notes", async () => {
+  it("links the nav to its sections, offers sign-in and a theme switch, with no design notes", async () => {
     const { container } = await renderLanding();
     const header = within(screen.getByRole("banner"));
     for (const s of NAV_SECTIONS) {
@@ -77,8 +77,18 @@ describe("LandingPage", () => {
       "href",
       "/sign-in",
     );
-    expect(screen.queryByRole("button", { name: /theme/i })).toBeNull();
+    // DESIGN.md, 2026-11-21: the theme is the visitor's choice.
+    expect(
+      header.getByRole("button", { name: /switch to (dark|light) theme/i }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /design notes/i })).toBeNull();
+  });
+
+  it("opens the read-only demo from the hero, without an account", async () => {
+    await renderLanding();
+    expect(
+      screen.getAllByRole("link", { name: "Explore the demo" })[0],
+    ).toHaveAttribute("href", "/demo");
   });
 
   it("credits the designer, links the source and the licence, with no empty portfolio links", async () => {

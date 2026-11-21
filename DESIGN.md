@@ -2,7 +2,7 @@
 
 The visual source of truth. Change it on purpose; this file is the rule.
 
-Scope: the landing page (`/`) in full, and the brand rules the app shares with it (logo, type, light-theme tokens). The app keeps both themes; the landing is light only.
+Scope: the landing page (`/`) in full, and the brand rules the app shares with it (logo, type, tokens). Landing and app are light by default and dark when the visitor chooses it; one choice, kept on the device, covers both (see "Theme").
 
 ## Direction
 
@@ -133,17 +133,28 @@ The page is calm but never still. Four layers, and nothing outside them:
 
 ## Navigation
 
-A plain transparent bar, 64px tall: the logo, "How it works", "Features", "FAQ" (anchors, hidden under 768px), "Sign in", and "Get started" as an ink pill. After 24px of scroll it takes the canvas colour and a bottom hairline. A 1.5px ink line under the section links marks the section being read and slides between them (Motion). No theme toggle on the landing.
+A plain transparent bar, 64px tall: the logo, "How it works", "Features", "FAQ" (anchors, hidden under 768px), a light/dark switch (an icon button; under 480px it moves to the footer), "Sign in", and "Get started" as an ink pill. After 24px of scroll it takes the canvas colour and a bottom hairline. A 1.5px ink line under the section links marks the section being read and slides between them (Motion).
 
 ## Sections
 
-1. **Hero, "Field to focus."** Centred h1 "Ten roles worth applying to, every morning.", a one-line lead, Get started, "Free and open source". Around it, rings and sample cards: 24 at 1440 in three depths (8 near, 8 mid, 8 far), 18 at 768 (8, 6, 4), 12 at 390 in two depths (6 near, 6 mid). On phones and tablets the text spans the width, so the cards sit in rows above and below it; the hero is at least 1080px tall at 640 to 1023 and 920px on phones to fit all ten.
+1. **Hero, "Field to focus."** Centred h1 "Ten roles worth applying to, every morning.", a one-line lead, Get started (ink pill) beside Explore the demo (the same pill in outline), then "Free and open source. The demo needs no account." Around it, rings and sample cards: 24 at 1440 in three depths (8 near, 8 mid, 8 far), 18 at 768 (8, 6, 4), 12 at 390 in two depths (6 near, 6 mid). On phones and tablets the text spans the width, so the cards sit in rows above and below it; the hero is at least 1080px tall at 640 to 1023 and 920px on phones to fit all ten.
 2. **Focus.** A plain two-column section from 1024px (statement 4fr, card 7fr), the statement centred beside the card by the grid; stacked below. The statement "Ten, not ten thousand. Ranked by fit, how soon it closes, how fresh it is and the companies you care about.", the caption "Sample roles. Ranking from the real scoring code.", and the "Today's ten" card: four full rows (16px padding top and bottom) with reasons and an Apply on row 1, six one-line rows.
 3. **Stats.** Three columns 240px tall with a hairline left rule: "Tracked" {activePostings} open roles, "Open to you" {openToFreshers} open to freshers, "Your queue" 10 ranked each morning; mono index 01 to 03; a green "Live" dot on the first. Rows with a top rule under 768px.
 4. **How it works.** A statement, then three cards of equal height with their content set from the top: Ranked (four 4px bars: ink at 85% on a hairline track, rounded, values in tabular figures), Explained (reason chips), Tracked (the next pick with Apply, and the first, checked, on the Applied column, as in the real queue). All three are still.
 5. **Features.** The board (Saved, Applied, Online assessment, Interview, Offer) with a referral chip on one card and an interview day on another; deadline reminders (a reminder as the app writes it, flat, no shadow inside its card); dream companies (the bookmarked row sits ten points up, on top); a crop of the real app's Today's ten, 880px wide at most, captured so its smallest text shows at 14px or more, its last 200px fading into the frame through a mask so it ends in white, never on a cut row, with the caption below and no rule between, in a light browser frame with no window dots; the sources as wordmarks.
 6. **Questions.** Five, in an accordion of hairline rows with a height animation. At 1024px and wider, two columns: "Questions" and "Something else? Read the code on GitHub" on the left, sticky; the accordion on the right.
-7. **The dark band.** The lit radar centred above "Tomorrow's ten are already being ranked.", Get started in lime. Then the footer on the canvas: logo, one line, Sign in, Source on GitHub, MIT licence, "Designed and built by Udit Singh Chauhan".
+7. **The dark band.** The lit radar centred above "Tomorrow's ten are already being ranked.", Get started in lime with "or explore the demo" beside it (below it on phones). Then the footer on the canvas: logo, one line, Sign in, Source on GitHub, MIT licence, "Designed and built by Udit Singh Chauhan".
+
+## Theme
+
+- Light is the default for a first visit, whatever the device prefers: it is the brand's canvas. The visitor can switch to dark from the landing's nav (footer on phones), the app's header, or Settings → Appearance (Light, Dark, Match my device). next-themes keeps the choice in localStorage `theme`; `index.html` applies it before the first paint, so neither page flashes.
+- The landing's dark values follow the app's night (`index.css` `.dark`): canvas oklch(13.5% 0.012 235), cards a step lighter on a hairline with no shadow, ink oklch(95%), grey oklch(72%) under 24px and oklch(64%) above, and lime for links and focus (the light page's green is 2.6:1 on the night canvas). The closing band sits a step darker, oklch(9.5%), under a hairline. Monogram tiles keep their six hues on dark grounds.
+- The dashboard crop has a light and a dark capture; the page shows the one for the theme (`scripts/capture-landing.mjs` makes both).
+
+## Demo
+
+- "Explore the demo" opens an invented student's account without sign-up (`/demo`). The server issues a one-time Clerk ticket for `DEMO_CLERK_USER_ID` and refuses every write from that account with 403 `demo_read_only` (`api-server/src/demo/demo.ts`), except paste-to-parse, which stores nothing.
+- In the app, a 40px band above the header says "Demo account. Nothing you do is saved." with "Create your own" and "Exit demo". A refused write rolls back and shows one toast, "This demo is read-only", with Sign up; never an error.
 
 ## Content
 
@@ -174,6 +185,8 @@ The app's light theme uses the landing's tokens (canvas, white cards, hairline, 
 - **Clerk** (sign-in, sign-up): Geist, the 14px card with the landing's shadow on the canvas, the ink pill, "Continue with Google" first as a full-width block button, subtitle "Ten roles worth applying to, every morning."
 
 ## Decisions
+
+- **2026-11-21: theme choice, a read-only demo, one way to count days.** A review of the live site as a recruiter found: the landing stayed light while sign-in followed the device into dark, so a dark-mode visitor went from cream to near-black in one click; the only way to see the app was to create an account; Clerk's orange "Development mode" label sat under every sign-in card; the 404 was the template's ("Did you forget to add the page to the router?") on a different grey; on phones the board's paragraph was 676px wide in a 375px card; and one posting read "Closes tomorrow", "2d left" and "1d to go" on the same dashboard. Now: light by default and dark by choice everywhere (Theme); an "Explore the demo" path that is read-only on the server (Demo); the label hidden until the app has its own domain and production keys; an on-brand 404 with the two ways on; one column per feature card; and `lib/deadline.ts`, which counts days like the server's queue reasons. In the app: ten ink Apply pills became one (rank 1) and nine outline ones; the "New opportunities" card that repeated "Jobs found" is gone; every list shows the company's initials (or logo) instead of a generic building icon or a broken image; the funnel is one ink deepening to green; job cards no longer repeat the location, the track or "Open to all". Every page names itself in the tab.
 
 - **2026-11-06: four motion layers.** The page declared 19 animations and nothing visibly moved at rest (0 elements over 1.5s at 1440 and 390, measured with `e2e-landing/motion.spec.ts`), so it read as static next to its references (lightspark.com, skydive.com). Added the four layers in Motion: ambient drift, turning rings and a breathing Live dot, all paused off screen; CSS scroll-driven spread, settle and tilt with framer-motion fallbacks; hover, press, underline and a sliding nav marker; a staged entrance under 1.2s. Now 24 things move in the hero at rest at 1440 and 16 at 390, none under reduced motion. The stat numbers now count up once (they were printed). The queue card is `aria-hidden` instead of `inert`, so its rows can answer hover; it holds nothing focusable either way. The hero's far layers now fade toward its foot under a still canvas-coloured overlay instead of a `mask-image`, which made the browser recomposite the whole field every frame once the cards drifted (26 to 28fps idle at 1440x900 on a software compositor with the mask; 60 on a GPU compositor without it).
 

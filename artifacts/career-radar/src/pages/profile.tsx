@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { isDemoReadOnly } from "@/lib/demo";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -138,6 +139,7 @@ export function ProfilePage() {
           queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey() });
         },
         onError: (err) => {
+          if (isDemoReadOnly(err)) return;
           toast.error("Failed to update profile", {
             description:
               err instanceof Error ? err.message : "Unknown error occurred",

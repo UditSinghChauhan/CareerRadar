@@ -60,6 +60,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
+import { isDemoReadOnly } from "@/lib/demo";
+import { CompanyMark } from "@/components/company-mark";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -123,53 +125,6 @@ function RankingNote() {
   );
 }
 
-function initials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-}
-
-/**
- * The company logo, falling back to initials when the URL does not resolve.
- * Not defensive padding: several seeded `logo_url` values point at
- * cdn.simpleicons.org paths that have since been removed upstream and now
- * 404, so without the fallback the queue renders broken-image glyphs. Same
- * pattern as job-card.tsx.
- */
-function CompanyLogo({
-  logoUrl,
-  name,
-  fallbackName,
-}: {
-  logoUrl: string | null | undefined;
-  name: string;
-  fallbackName: string;
-}) {
-  const [failed, setFailed] = useState(false);
-
-  if (!logoUrl || failed) {
-    return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-secondary">
-        <span className="text-xs font-bold text-foreground">
-          {initials(fallbackName)}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={logoUrl}
-      alt={name}
-      className="h-8 w-8 shrink-0 rounded-md border border-border bg-background object-contain p-0.5"
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
 // ─── One row ──────────────────────────────────────────────────────────────────
 
 function QueueRow({
@@ -197,10 +152,12 @@ function QueueRow({
       className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-secondary/30 sm:flex-row sm:items-start sm:gap-4"
     >
       {/* Rank */}
-      <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:gap-1">
+      {/* A fixed-width column, so "10" lines up with "1" to "9" and every
+          row's logo starts at the same x. */}
+      <div className="flex shrink-0 items-center gap-3 sm:w-6 sm:flex-col sm:gap-1">
         {/* The landing's rank tag: ink on pale lime, full lime on rank 1. */}
         <span
-          className={`inline-grid h-[18px] min-w-[18px] place-items-center rounded-[5px] px-[5px] font-mono text-[11px] font-medium tabular-nums ${
+          className={`inline-grid h-[18px] w-[22px] place-items-center rounded-[5px] font-mono text-[11px] font-medium tabular-nums ${
             rank === 1
               ? "bg-signal text-signal-ink"
               : "bg-signal-tint text-foreground"
@@ -245,10 +202,9 @@ function QueueRow({
       {/* Body */}
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex items-start gap-2.5">
-          <CompanyLogo
+          <CompanyMark
             logoUrl={company?.logoUrl}
-            name={company?.name ?? ""}
-            fallbackName={company?.name ?? job.title}
+            name={company?.name ?? job.title}
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold leading-tight">
@@ -324,6 +280,9 @@ function QueueRow({
           <Button
             size="sm"
             data-testid="queue-apply"
+            // One ink pill per screen: the top pick's. The other nine are the
+            // same action, quieter, so ten black buttons don't compete.
+            variant={rank === 1 ? "default" : "outline"}
             className="h-8 gap-1 px-3 text-xs"
             disabled={isPending}
             onClick={() => onApply(job.id, job.applyUrl as string)}
@@ -419,7 +378,7 @@ export function TodaysQueue() {
               appliedDate: new Date().toISOString(),
             },
           });
-        } catch {
+        } catch (err) {
           // The tab is already open and must not be undone; put the row back
           // so the user can retry logging it.
           setRemovedIds((prev) => {
@@ -428,6 +387,7 @@ export function TodaysQueue() {
             return next;
           });
           markPending(jobId, false);
+          if (isDemoReadOnly(err)) return;
           toast.error("Opened the posting, but could not log the application");
           return;
         }
@@ -445,13 +405,14 @@ export function TodaysQueue() {
         setRemovedIds((prev) => new Set(prev).add(jobId));
         try {
           await dismissJob({ id: jobId, data: {} });
-        } catch {
+        } catch (err) {
           setRemovedIds((prev) => {
             const next = new Set(prev);
             next.delete(jobId);
             return next;
           });
           markPending(jobId, false);
+          if (isDemoReadOnly(err)) return;
           toast.error("Could not dismiss that job");
           return;
         }

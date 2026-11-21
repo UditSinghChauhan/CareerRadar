@@ -45,6 +45,7 @@ import {
   STATUS_ORDER,
   type BoardStatus,
 } from "@/components/applications/status";
+import { isDemoReadOnly } from "@/lib/demo";
 
 // ─── View persistence ─────────────────────────────────────────────────────────
 
@@ -238,9 +239,10 @@ export function ApplicationsPage() {
 
       try {
         await updateApplication({ id, data: patch });
-      } catch {
+      } catch (err) {
         // Roll back to exactly what was on screen before the drag/edit.
         if (previous) queryClient.setQueryData(listQueryKey, previous);
+        if (isDemoReadOnly(err)) return;
         toast.error("Could not save that change", {
           action: {
             label: "Retry",
@@ -321,6 +323,11 @@ export function ApplicationsPage() {
       invalidateAll();
       setSelectedIds(new Set());
 
+      if (
+        results.some((r) => r.status === "rejected" && isDemoReadOnly(r.reason))
+      ) {
+        return;
+      }
       if (failed > 0) {
         toast.error(
           `${failed} of ${ids.length} could not be moved to ${STATUS_LABELS[status]}`,
@@ -342,6 +349,11 @@ export function ApplicationsPage() {
     invalidateAll();
     setSelectedIds(new Set());
 
+    if (
+      results.some((r) => r.status === "rejected" && isDemoReadOnly(r.reason))
+    ) {
+      return;
+    }
     if (failed > 0) {
       toast.error(`${failed} of ${ids.length} could not be deleted`);
     } else {

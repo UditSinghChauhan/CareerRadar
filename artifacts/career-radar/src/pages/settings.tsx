@@ -44,6 +44,7 @@ import {
   preferencesFrom,
 } from "@/components/onboarding/preferences-form";
 import { useSavePreferences } from "@/components/onboarding/use-save-preferences";
+import { isDemoReadOnly } from "@/lib/demo";
 
 /** The onboarding answer, editable later with the same control. */
 function QueuePreferencesCard() {
@@ -94,7 +95,11 @@ const settingsSchema = z.object({
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 export function SettingsPage() {
-  const { setTheme } = useTheme();
+  // The theme is this device's choice (next-themes, localStorage), applied
+  // the moment it is picked, like the toggle in the header and on the
+  // landing. It is no longer read back from the server on load, which
+  // overwrote whatever the visitor had just chosen with the toggle.
+  const { theme = "light", setTheme } = useTheme();
   const queryClient = useQueryClient();
   const { data: settings, isLoading, isError, refetch } = useGetSettings();
   const updateSettings = useUpdateSettings();
@@ -105,7 +110,7 @@ export function SettingsPage() {
       emailNotifications: true,
       deadlineAlertDays: 3,
       dailyApplicationTarget: 10,
-      theme: "system",
+      theme: "light",
       timezone: "Asia/Kolkata",
     },
   });
@@ -116,13 +121,11 @@ export function SettingsPage() {
         emailNotifications: settings.emailNotifications,
         deadlineAlertDays: settings.deadlineAlertDays || 3,
         dailyApplicationTarget: settings.dailyApplicationTarget || 10,
-        theme: (settings.theme as "light" | "dark" | "system") || "system",
+        theme: (settings.theme as "light" | "dark" | "system") || "light",
         timezone: settings.timezone || "Asia/Kolkata",
       });
-      // Sync theme with next-themes on load if it differs
-      setTheme(settings.theme);
     }
-  }, [settings, form, setTheme]);
+  }, [settings, form]);
 
   const onSubmit = (data: SettingsFormValues) => {
     updateSettings.mutate(
@@ -131,17 +134,17 @@ export function SettingsPage() {
           emailNotifications: data.emailNotifications,
           deadlineAlertDays: data.deadlineAlertDays,
           dailyApplicationTarget: data.dailyApplicationTarget,
-          theme: data.theme,
+          theme: theme as "light" | "dark" | "system",
           timezone: data.timezone,
         },
       },
       {
         onSuccess: () => {
           toast.success("Settings updated successfully");
-          setTheme(data.theme);
           queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
         },
         onError: (err) => {
+          if (isDemoReadOnly(err)) return;
           toast.error("Failed to update settings", {
             description:
               err instanceof Error ? err.message : "Unknown error occurred",
@@ -217,35 +220,33 @@ export function SettingsPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="theme"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col justify-between rounded-lg border p-4 sm:flex-row sm:items-center">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Appearance</FormLabel>
-                        <FormDescription>
-                          Select the theme for the dashboard.
-                        </FormDescription>
-                      </div>
-                      <FormControl className="mt-2 sm:mt-0 w-[180px]">
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select theme" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="light">Light</SelectItem>
-                            <SelectItem value="dark">Dark</SelectItem>
-                            <SelectItem value="system">System</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                <div className="flex flex-col justify-between gap-2 rounded-lg border p-4 sm:flex-row sm:items-center">
+                  <div className="space-y-0.5">
+                    <p
+                      id="appearance-label"
+                      className="text-base font-medium leading-none"
+                    >
+                      Appearance
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Applies at once, on this device, here and on the home
+                      page.
+                    </p>
+                  </div>
+                  <Select value={theme} onValueChange={setTheme}>
+                    <SelectTrigger
+                      className="w-[180px]"
+                      aria-labelledby="appearance-label"
+                    >
+                      <SelectValue placeholder="Select theme" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="system">Match my device</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <FormField
                   control={form.control}

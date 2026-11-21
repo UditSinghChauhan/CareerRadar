@@ -22,6 +22,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
 import { LogoMark } from "@/components/logo-mark";
+import { DemoBanner } from "@/components/demo-mode";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -90,6 +91,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
+        <DemoBanner />
         <header className="flex h-16 items-center justify-between px-4 md:px-8 border-b border-border bg-card">
           <div className="flex items-center md:hidden">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

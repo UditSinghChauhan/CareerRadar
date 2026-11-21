@@ -67,6 +67,7 @@ import type {
 } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { isDemoReadOnly } from "@/lib/demo";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -475,12 +476,13 @@ export function JobsPage() {
             ...(status === "applied" ? { appliedDate } : {}),
           },
         });
-      } catch {
+      } catch (err) {
         if (previous) queryClient.setQueryData(statusMapQueryKey, previous);
         else queryClient.removeQueries({ queryKey: statusMapQueryKey });
 
         clearPending(jobId);
 
+        if (isDemoReadOnly(err)) return;
         toast.error(
           status === "applied"
             ? "Opened the posting, but could not log the application"
@@ -612,7 +614,9 @@ export function JobsPage() {
       <div className="flex gap-6 min-h-0 flex-1">
         {/* Desktop filter sidebar */}
         <aside className="hidden lg:flex w-64 flex-shrink-0 flex-col">
-          <div className="sticky top-0 overflow-y-auto max-h-[calc(100vh-10rem)] pr-1">
+          {/* Scrolls on its own when taller than the screen; the foot fades
+              so a cut-off row reads as "more below", not as a broken edge. */}
+          <div className="sticky top-0 overflow-y-auto max-h-[calc(100vh-10rem)] pr-1 pb-8 [mask-image:linear-gradient(to_bottom,black_calc(100%-40px),transparent)]">
             <JobFilters
               filters={filters}
               onChange={setFilters}
@@ -709,11 +713,13 @@ export function JobsPage() {
                 [
                   { value: "all", label: "All" },
                   { value: "internship", label: "Internship" },
-                  { value: "full_time", label: "Full-Time" },
+                  { value: "full_time", label: "Full time" },
                 ] as const
               ).map(({ value, label }) => (
                 <button
                   key={value}
+                  type="button"
+                  aria-pressed={filters.jobType === value}
                   onClick={() => setFilters((f) => ({ ...f, jobType: value }))}
                   className={`px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors ${
                     filters.jobType === value
