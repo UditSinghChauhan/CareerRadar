@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Clock, GripVertical } from "lucide-react";
 import type { Application } from "@workspace/api-client-react";
-import { Badge } from "@/components/ui/badge";
+import { CompanyMark } from "@/components/company-mark";
 import {
+  BOARD_STAGES,
   STATUS_ORDER,
   STATUS_LABELS,
+  stageOf,
+  type BoardStage,
   DEADLINE_CLASSES,
   deadlineUrgency,
   formatDate,
@@ -32,15 +35,6 @@ export function groupByStatus(
     else groups.saved.push(app);
   }
   return groups;
-}
-
-function initials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
 }
 
 function BoardCard({
@@ -81,40 +75,44 @@ function BoardCard({
         isDragging ? "opacity-40" : ""
       }`}
     >
-      <div className="flex items-start gap-2">
-        {company?.logoUrl ? (
-          <img
-            src={company.logoUrl}
-            alt=""
-            className="h-6 w-6 shrink-0 rounded border border-border bg-background object-contain"
-          />
-        ) : (
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-secondary">
-            <span className="text-[9px] font-bold text-primary">
-              {initials(company?.name ?? job?.title ?? "?")}
-            </span>
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] text-muted-foreground">
-            {company?.name ?? "—"}
-          </p>
-          <p className="line-clamp-2 text-xs font-medium leading-snug text-foreground">
-            {job?.title ?? "Untitled role"}
-          </p>
-        </div>
-        <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30 group-hover:text-muted-foreground/60" />
+      {/* The company on top, the title across the card's full width below:
+          beside the logo, titles clipped to a word at 150px columns. */}
+      <div className="flex items-center gap-2">
+        <CompanyMark
+          name={company?.name ?? job?.title}
+          logoUrl={company?.logoUrl}
+          size="xs"
+        />
+        <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+          {company?.name ?? "—"}
+        </p>
+        <GripVertical
+          aria-hidden="true"
+          className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30 group-hover:text-muted-foreground/60"
+        />
       </div>
+      <p className="mt-1.5 line-clamp-3 text-[13px] font-medium leading-snug text-foreground">
+        {job?.title ?? "Untitled role"}
+      </p>
 
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="text-[10px] text-muted-foreground">
+      {/* The finer status, where the column holds two (OA done in
+          Assessment, Interviewed in Interview, Withdrawn in Closed). */}
+      {application.status !== stageOf(application.status).drop && (
+        <span className="mt-2 inline-block rounded-full bg-secondary px-2 py-0.5 text-[11px] text-secondary-foreground">
+          {STATUS_LABELS[application.status as BoardStatus] ??
+            application.status}
+        </span>
+      )}
+
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <span className="text-[11px] text-muted-foreground">
           {application.appliedDate
             ? formatDate(application.appliedDate)
             : "Not applied"}
         </span>
         {urgency !== "none" && (
           <span
-            className={`flex items-center gap-0.5 text-[10px] ${DEADLINE_CLASSES[urgency]}`}
+            className={`flex items-center gap-0.5 text-[11px] ${DEADLINE_CLASSES[urgency]}`}
           >
             <Clock className="h-2.5 w-2.5" />
             {formatDate(job?.deadline)}
@@ -131,83 +129,89 @@ export function ApplicationBoard({
   onOpen,
 }: ApplicationBoardProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [dragOverStatus, setDragOverStatus] = useState<BoardStatus | null>(
-    null,
-  );
+  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
 
   const groups = groupByStatus(applications);
 
-  const handleDrop = (status: BoardStatus) => {
-    setDragOverStatus(null);
+  const handleDrop = (stage: BoardStage) => {
+    setDragOverStage(null);
     const id = draggingId;
     setDraggingId(null);
     if (!id) return;
 
     const current = applications.find((a) => a.id === id);
-    // Dropping a card back in its own column is a no-op, not a PUT.
-    if (!current || current.status === status) return;
-    onStatusChange(id, status);
+    // A card dropped back in its own stage keeps its status: no PUT.
+    if (!current || stageOf(current.status).key === stage.key) return;
+    onStatusChange(id, stage.drop);
   };
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-4">
-      {STATUS_ORDER.map((status) => {
-        const items = groups[status];
-        const isTarget = dragOverStatus === status;
-        return (
-          <div
-            key={status}
-            data-testid={`board-column-${status}`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "move";
-              setDragOverStatus(status);
-            }}
-            onDragLeave={(e) => {
-              // Ignore bubbling leaves from child cards.
-              if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-              setDragOverStatus((s) => (s === status ? null : s));
-            }}
-            onDrop={() => handleDrop(status)}
-            className={`flex w-60 shrink-0 flex-col rounded-lg border bg-muted/20 transition-colors ${
-              isTarget ? "border-primary bg-primary/5" : "border-border"
-            }`}
-          >
-            <div className="flex items-center justify-between border-b border-border px-3 py-2">
-              <span className="text-xs font-semibold text-foreground">
-                {STATUS_LABELS[status]}
-              </span>
-              <Badge
-                variant="secondary"
-                className="h-4 px-1.5 text-[10px] font-medium"
-              >
-                {items.length}
-              </Badge>
-            </div>
+    // Six columns that share the width once there is room for them (1240px:
+    // the sidebar, padding and six 140px columns). Narrower, they scroll
+    // sideways and snap column by column; on a phone each column is most of
+    // the screen, with the next one peeking in. The edge fades so a column
+    // past it reads as "more", not as cut off.
+    <div className="-mx-4 snap-x snap-mandatory overflow-x-auto px-4 pb-4 [mask-image:linear-gradient(90deg,black_calc(100%-24px),transparent)] md:mx-0 md:px-0 min-[1240px]:[mask-image:none]">
+      <div className="grid grid-cols-[repeat(6,82%)] items-start gap-3 sm:min-w-[900px] sm:grid-cols-6">
+        {BOARD_STAGES.map((stage) => {
+          const items = stage.statuses.flatMap((s) => groups[s]);
+          const isTarget = dragOverStage === stage.key;
+          return (
+            <section
+              key={stage.key}
+              aria-label={`${stage.label}, ${items.length}`}
+              // Named by the status a drop sets, as before the stages.
+              data-testid={`board-column-${stage.drop}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                setDragOverStage(stage.key);
+              }}
+              onDragLeave={(e) => {
+                // Ignore bubbling leaves from child cards.
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                setDragOverStage((s) => (s === stage.key ? null : s));
+              }}
+              onDrop={() => handleDrop(stage)}
+              className={`flex min-w-0 snap-start flex-col rounded-[14px] border transition-colors ${
+                isTarget
+                  ? "border-foreground/40 bg-secondary"
+                  : "border-border bg-secondary/40"
+              }`}
+            >
+              <header className="flex items-center justify-between px-3 pb-1 pt-3">
+                <h3 className="text-[13px] font-medium text-foreground">
+                  {stage.label}
+                </h3>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                  {items.length}
+                </span>
+              </header>
 
-            <div className="flex min-h-24 flex-col gap-2 p-2">
-              {items.map((app) => (
-                <BoardCard
-                  key={app.id}
-                  application={app}
-                  onOpen={onOpen}
-                  isDragging={draggingId === app.id}
-                  onDragStart={() => setDraggingId(app.id)}
-                  onDragEnd={() => {
-                    setDraggingId(null);
-                    setDragOverStatus(null);
-                  }}
-                />
-              ))}
-              {items.length === 0 && (
-                <p className="px-1 py-4 text-center text-[11px] text-muted-foreground/60">
-                  Drop here
-                </p>
-              )}
-            </div>
-          </div>
-        );
-      })}
+              <div className="flex min-h-24 flex-col gap-2 p-2">
+                {items.map((app) => (
+                  <BoardCard
+                    key={app.id}
+                    application={app}
+                    onOpen={onOpen}
+                    isDragging={draggingId === app.id}
+                    onDragStart={() => setDraggingId(app.id)}
+                    onDragEnd={() => {
+                      setDraggingId(null);
+                      setDragOverStage(null);
+                    }}
+                  />
+                ))}
+                {items.length === 0 && (
+                  <p className="rounded-lg border border-dashed border-border px-2 py-5 text-center text-xs text-muted-foreground">
+                    {draggingId ? "Drop here" : "Nothing here yet"}
+                  </p>
+                )}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
