@@ -77,6 +77,7 @@ export function LandingPage() {
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
   const signUpHref = `${basePath}/sign-up`;
   const signInHref = `${basePath}/sign-in`;
+  const demoHref = `${basePath}/demo`;
   const stats = usePublicStats();
   const belowFold = useAfterFirstPaint();
   const heroRef = useRef<HTMLElement>(null);
@@ -127,10 +128,17 @@ export function LandingPage() {
               reason for each pick.
             </p>
             <div className="lp-hero__act">
-              <Link href={signUpHref} className="lp-btn">
-                Get started
-              </Link>
-              <p className="lp-quiet">Free and open source</p>
+              <div className="lp-hero__btns">
+                <Link href={signUpHref} className="lp-btn">
+                  Get started
+                </Link>
+                <Link href={demoHref} className="lp-btn lp-btn--quiet">
+                  Explore the demo
+                </Link>
+              </div>
+              <p className="lp-quiet">
+                Free and open source. The demo needs no account.
+              </p>
             </div>
           </div>
         </section>

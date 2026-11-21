@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { LogoMark } from "@/components/logo-mark";
+import { ThemeSwitch } from "./theme-switch";
 
 /** The page's sections, in reading order. */
 export const NAV_SECTIONS = [
@@ -131,6 +132,7 @@ export function LandingNav({
             </a>
           ))}
           <span className="lp-nav__bar" ref={barRef} aria-hidden="true" />
+          <ThemeSwitch className="lp-theme--nav" />
           <Link href={signInHref} className="lp-nav__link">
             Sign in
           </Link>

@@ -29,6 +29,8 @@ import { LandingPage } from "@/pages/landing";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { ShellBoundary } from "@/components/shell-skeleton";
 import NotFound from "@/pages/not-found";
+import { titleFor } from "@/lib/page-title";
+import { DemoLink, DemoWriteNotice } from "@/components/demo-mode";
 
 // The signed-in app is split from the landing: a first-time visitor downloads
 // the landing alone, and the app's pages load when they are opened.
@@ -54,6 +56,9 @@ const SettingsPage = lazy(() =>
 );
 const WelcomePage = lazy(() =>
   import("@/pages/welcome").then((m) => ({ default: m.WelcomePage })),
+);
+const DemoPage = lazy(() =>
+  import("@/pages/demo").then((m) => ({ default: m.DemoPage })),
 );
 const ToolsCapturePage = lazy(() =>
   import("@/pages/tools-capture").then((m) => ({
@@ -176,6 +181,10 @@ const clerkAppearance = {
     // Continue with Google first and largest, above the email form.
     socialButtonsPlacement: "top" as const,
     socialButtonsVariant: "blockButton" as const,
+    // The instance runs on Clerk development keys until the app has a domain
+    // of its own (Clerk production keys need one; *.onrender.com cannot be
+    // used). The orange "Development mode" label told every visitor so.
+    unsafe_disableDevelopmentModeWarnings: true,
   },
   // Colours come from the shadcn theme, which reads the CSS tokens in
   // index.css, so the sign-in card follows light and dark mode with the rest
@@ -225,11 +234,14 @@ function SignInPage() {
   useWakeApi();
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 selection:bg-primary/20">
-      <SignIn
-        routing="path"
-        path={`${basePath}/sign-in`}
-        signUpUrl={`${basePath}/sign-up`}
-      />
+      <div className="flex w-full flex-col items-center gap-5">
+        <SignIn
+          routing="path"
+          path={`${basePath}/sign-in`}
+          signUpUrl={`${basePath}/sign-up`}
+        />
+        <DemoLink className="text-[14px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline" />
+      </div>
     </div>
   );
 }
@@ -238,11 +250,14 @@ function SignUpPage() {
   useWakeApi();
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 selection:bg-primary/20">
-      <SignUp
-        routing="path"
-        path={`${basePath}/sign-up`}
-        signInUrl={`${basePath}/sign-in`}
-      />
+      <div className="flex w-full flex-col items-center gap-5">
+        <SignUp
+          routing="path"
+          path={`${basePath}/sign-up`}
+          signInUrl={`${basePath}/sign-in`}
+        />
+        <DemoLink className="text-[14px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline" />
+      </div>
     </div>
   );
 }
@@ -304,6 +319,14 @@ function BareProtectedRoute({
   );
 }
 
+function DocumentTitle() {
+  const [location] = useLocation();
+  useEffect(() => {
+    document.title = titleFor(location);
+  }, [location]);
+  return null;
+}
+
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
   const queryClient = useQueryClient();
@@ -358,10 +381,17 @@ function ClerkProviderWithRoutes() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
+        <DemoWriteNotice />
+        <DocumentTitle />
         <Switch>
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/demo">
+            <Suspense fallback={null}>
+              <DemoPage />
+            </Suspense>
+          </Route>
           <Route path="/welcome">
             <BareProtectedRoute component={WelcomePage} />
           </Route>
@@ -391,8 +421,10 @@ function ClerkProviderWithRoutes() {
 }
 
 function App() {
+  // Light until the visitor picks otherwise; the choice is theirs and is
+  // kept on this device (localStorage "theme"), landing and app alike.
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
         <WouterRouter base={basePath}>
           <ClerkProviderWithRoutes />

@@ -98,6 +98,21 @@ export function SignUp() {
 export const useAuth = () => ({ isLoaded: true, isSignedIn: signedIn() });
 export const useUser = () => ({ isLoaded: true, isSignedIn: signedIn(), user });
 export const useClerk = () => ({
-  signOut: async () => {},
+  signOut: async (opts?: { redirectUrl?: string }) => {
+    localStorage.setItem("capture-signed-in", "0");
+    if (opts?.redirectUrl) window.location.assign(opts.redirectUrl);
+  },
   addListener: () => () => {},
+  // The demo's ticket sign-in (pages/demo.tsx), for local runs only.
+  client: {
+    signIn: {
+      create: async () => ({
+        status: "complete",
+        createdSessionId: "sess_capture_demo",
+      }),
+    },
+  },
+  setActive: async () => {
+    localStorage.setItem("capture-signed-in", "1");
+  },
 });
