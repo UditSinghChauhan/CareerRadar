@@ -229,7 +229,10 @@ export function ToolsCapturePage() {
           </li>
           <li>
             Prefer to paste by hand? The{" "}
-            <Link href="/jobs" className="text-primary hover:underline">
+            <Link
+              href="/jobs"
+              className="text-primary underline decoration-primary/45 underline-offset-2 hover:decoration-primary"
+            >
               Add job
             </Link>{" "}
             button on the Jobs page opens the same form.

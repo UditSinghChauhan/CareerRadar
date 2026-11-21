@@ -635,7 +635,8 @@ export function JobsPage() {
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   ref={searchInputRef}
-                  placeholder="Search roles, companies, skills..."
+                  placeholder="Search roles or companies"
+                  aria-label="Search jobs"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -666,7 +667,10 @@ export function JobsPage() {
 
               {/* Sort */}
               <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-                <SelectTrigger className="h-9 w-32 text-sm gap-1">
+                <SelectTrigger
+                  className="h-9 w-32 text-sm gap-1"
+                  aria-label="Sort by"
+                >
                   <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
                   <SelectValue />
                 </SelectTrigger>

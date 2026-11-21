@@ -62,8 +62,8 @@ export const TRACK_OPTIONS: Array<{
   label: string;
 }> = [
   { key: "internship", label: "Internship" },
-  { key: "new_grad", label: "New Grad" },
-  { key: "early_career", label: "Early Career" },
+  { key: "new_grad", label: "New grad" },
+  { key: "early_career", label: "Early career" },
 ];
 
 export const MIN_SCORE_OPTIONS: Array<{ value: number; label: string }> = [
@@ -308,7 +308,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
       <Separator />
 
       {/* My applications */}
-      <FilterSection title="My Applications">
+      <FilterSection title="My applications">
         <div className="flex items-center gap-2">
           <Checkbox
             id="filter-hide-applied"
@@ -331,7 +331,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
             value={filters.companyId || "all"}
             onValueChange={(v) => set("companyId", v === "all" ? "" : v)}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-8 text-xs" aria-label="Company">
               <SelectValue placeholder="All companies" />
             </SelectTrigger>
             <SelectContent>
@@ -364,7 +364,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
             className="text-xs font-normal cursor-pointer"
           >
             Fresher-eligible only
-            <span className="block text-[10px] text-muted-foreground/70">
+            <span className="block text-[11px] text-muted-foreground">
               Hides senior, level II+, and 2+ years roles
             </span>
           </Label>
@@ -384,7 +384,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
             className="text-xs font-normal cursor-pointer"
           >
             Show dismissed
-            <span className="block text-[10px] text-muted-foreground/70">
+            <span className="block text-[11px] text-muted-foreground">
               Jobs you dismissed from Today&apos;s ten
             </span>
           </Label>
@@ -504,7 +504,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
             className="text-xs font-normal cursor-pointer"
           >
             India only
-            <span className="block text-[10px] text-muted-foreground/70">
+            <span className="block text-[11px] text-muted-foreground">
               Hides jobs whose location couldn't be placed
             </span>
           </Label>
@@ -514,7 +514,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
       <Separator />
 
       {/* Work Mode */}
-      <FilterSection title="Work Mode">
+      <FilterSection title="Work mode">
         <div className="flex flex-col gap-2">
           {WORK_MODES.map(({ value, label }) => (
             <div key={value} className="flex items-center gap-2">
@@ -540,7 +540,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
       <Separator />
 
       {/* Batch Year */}
-      <FilterSection title="Batch Year">
+      <FilterSection title="Batch year">
         <div className="flex flex-wrap gap-2">
           {BATCH_YEARS.map((yr) => (
             <button
@@ -615,6 +615,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
             value={filters.deadlineBefore}
             min={new Date().toISOString().slice(0, 10)}
             onChange={(e) => set("deadlineBefore", e.target.value)}
+            aria-label="Closes before"
             className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
           />
           {filters.deadlineBefore && (
@@ -623,6 +624,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
               size="icon"
               className="h-8 w-8"
               onClick={() => set("deadlineBefore", "")}
+              aria-label="Clear the deadline filter"
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -638,7 +640,7 @@ export function JobFilters({ filters, onChange, companies }: JobFiltersProps) {
           value={filters.sourcePlatform || "all"}
           onValueChange={(v) => set("sourcePlatform", v === "all" ? "" : v)}
         >
-          <SelectTrigger className="h-8 text-xs">
+          <SelectTrigger className="h-8 text-xs" aria-label="Source">
             <SelectValue placeholder="All sources" />
           </SelectTrigger>
           <SelectContent>

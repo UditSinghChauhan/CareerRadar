@@ -309,6 +309,12 @@ function JobCardImpl({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-muted-foreground hover:text-primary"
+                aria-label={
+                  isBookmarked
+                    ? `Remove bookmark: ${job.title}`
+                    : `Bookmark ${job.title}`
+                }
+                aria-pressed={isBookmarked}
                 onClick={() => onBookmarkToggle(job.id, isBookmarked)}
                 disabled={isBookmarkPending}
               >
@@ -543,6 +549,7 @@ function JobCardImpl({
                 <Button
                   size="sm"
                   data-testid="apply-button"
+                  aria-label={`Apply to ${job.title} (opens the posting)`}
                   className="h-8 flex-shrink-0 gap-1 px-3 text-xs"
                   disabled={isApplyPending}
                   onClick={() => {

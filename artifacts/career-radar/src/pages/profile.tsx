@@ -254,7 +254,7 @@ export function ProfilePage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem className="sm:col-span-2">
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>Full name</FormLabel>
                       <FormControl>
                         <Input placeholder="John Doe" {...field} />
                       </FormControl>
@@ -310,7 +310,7 @@ export function ProfilePage() {
                   name="graduationYear"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Graduation Year</FormLabel>
+                      <FormLabel>Graduation year</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -369,7 +369,7 @@ export function ProfilePage() {
                   name="resumeUrl"
                   render={({ field }) => (
                     <FormItem className="sm:col-span-2">
-                      <FormLabel>Resume URL</FormLabel>
+                      <FormLabel>Resume link</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="https://drive.google.com/..."
@@ -386,7 +386,7 @@ export function ProfilePage() {
                   name="linkedinUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>LinkedIn URL</FormLabel>
+                      <FormLabel>LinkedIn profile</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="https://linkedin.com/in/..."
@@ -403,7 +403,7 @@ export function ProfilePage() {
                   name="githubUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GitHub URL</FormLabel>
+                      <FormLabel>GitHub profile</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="https://github.com/..."

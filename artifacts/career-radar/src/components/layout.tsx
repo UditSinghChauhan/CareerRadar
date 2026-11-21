@@ -53,6 +53,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
             onClick={() => setMobileMenuOpen(false)}
           >
             <div
@@ -73,6 +74,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-[100dvh] w-full bg-background text-foreground">
+      {/* Twelve controls sit before the page; the first Tab offers a way
+          past them. Hidden until focused. */}
+      <a
+        href="#app-main"
+        className="fixed left-3 top-3 z-50 -translate-y-20 rounded-full bg-action px-4 py-2 text-sm font-medium text-action-foreground transition-transform focus-visible:translate-y-0"
+      >
+        Skip to content
+      </a>
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card">
         <div className="flex h-16 items-center px-6 border-b border-border">
@@ -142,7 +151,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 md:p-8">
+        <main
+          id="app-main"
+          tabIndex={-1}
+          className="flex-1 overflow-auto p-4 outline-none md:p-8"
+        >
           {/* A 200ms fade on every page change; opacity only, so nothing
               moves. */}
           <div
