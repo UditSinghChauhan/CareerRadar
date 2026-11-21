@@ -16,6 +16,8 @@ const clerk = vi.hoisted(() => ({
   createSignInToken: vi.fn(),
 }));
 
+vi.mock("./demo-seed", () => ({ ensureDemoAccount: vi.fn() }));
+
 vi.mock("@clerk/express", () => ({
   getAuth: vi.fn(),
   createClerkClient: () => ({
@@ -25,6 +27,7 @@ vi.mock("@clerk/express", () => ({
 }));
 
 import { getAuth } from "@clerk/express";
+import { ensureDemoAccount } from "./demo-seed";
 import demoRouter, {
   DEMO_READ_ONLY_BODY,
   demoReadOnly,
@@ -159,6 +162,19 @@ describe("POST /api/demo/session", () => {
       deleteSelfEnabled: false,
       createOrganizationEnabled: false,
     });
+  });
+
+  it("fills the demo account before issuing the ticket", async () => {
+    vi.mocked(ensureDemoAccount).mockResolvedValue("seeded");
+    await call("POST", "/demo/session");
+    expect(ensureDemoAccount).toHaveBeenCalledWith(DEMO);
+  });
+
+  it("still opens the demo when filling it fails", async () => {
+    vi.mocked(ensureDemoAccount).mockRejectedValue(new Error("db busy"));
+    const res = await call("POST", "/demo/session");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ticket: "tkt_1" });
   });
 
   it("is 404 when no demo is configured", async () => {

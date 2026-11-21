@@ -32,12 +32,17 @@ export function showDemoReadOnlyToast(onSignUp: () => void) {
 
 /** Whether a demo exists, and whether this session is the demo account. */
 export function useDemoStatus() {
-  const { data } = useGetDemo({
+  const { data, isPending } = useGetDemo({
     query: {
       queryKey: getGetDemoQueryKey(),
       staleTime: Infinity,
       retry: false,
     },
   });
-  return { enabled: data?.enabled ?? false, active: data?.active ?? false };
+  return {
+    enabled: data?.enabled ?? false,
+    active: data?.active ?? false,
+    /** False until the server has answered; redirects wait for it. */
+    known: !isPending,
+  };
 }

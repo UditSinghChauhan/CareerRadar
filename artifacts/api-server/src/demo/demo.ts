@@ -23,6 +23,7 @@ import {
 import rateLimit from "express-rate-limit";
 import { createClerkClient, getAuth } from "@clerk/express";
 import { logger } from "../lib/logger";
+import { ensureDemoAccount } from "./demo-seed";
 
 /** The Clerk user id of the demo account, or null when no demo is set up. */
 export function demoUserId(): string | null {
@@ -116,6 +117,14 @@ router.post("/demo/session", sessionLimiter, async (req, res) => {
   }
   try {
     await hardenDemoUser(userId);
+    // The account cannot onboard or apply itself (it is read-only), so the
+    // server keeps it filled from the live postings. A failure here still
+    // opens the demo; the app does not send the demo to onboarding.
+    try {
+      await ensureDemoAccount(userId);
+    } catch (err) {
+      logger.error({ err, userId }, "demo seed failed");
+    }
     const token = await clerkClient.signInTokens.createSignInToken({
       userId,
       expiresInSeconds: TICKET_TTL_SECONDS,
