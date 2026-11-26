@@ -58,6 +58,7 @@ function TimelineItem({ job }: { job: Job }) {
               target="_blank"
               rel="noopener noreferrer"
               className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-muted-foreground hover:text-foreground mt-0.5 shrink-0"
+              aria-label={`Apply for ${job.title}`}
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>

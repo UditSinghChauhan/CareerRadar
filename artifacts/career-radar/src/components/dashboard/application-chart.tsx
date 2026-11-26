@@ -1,12 +1,3 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DashboardSummary } from "@workspace/api-client-react";
@@ -70,6 +61,7 @@ export function ApplicationChart({
   });
 
   const isEmpty = totalApplications === 0;
+  const max = Math.max(1, ...data.map((d) => d.count));
 
   return (
     <Card className="flex flex-col">
@@ -91,38 +83,33 @@ export function ApplicationChart({
             </p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart
-              data={data}
-              layout="vertical"
-              margin={{ top: 0, right: 16, bottom: 0, left: 0 }}
-            >
-              <XAxis type="number" hide />
-              <YAxis
-                type="category"
-                dataKey="label"
-                width={72}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                cursor={{ fill: "var(--muted)" }}
-                contentStyle={{
-                  background: "var(--card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "0.375rem",
-                  fontSize: "12px",
-                }}
-                formatter={(val: number) => [val, "applications"]}
-              />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]} minPointSize={2}>
-                {data.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          // Plain bars, not a chart library: five numbers read better as a
+          // labelled list with the count always shown than as a hover
+          // tooltip, and the dashboard no longer loads 102 KB (gzip) of
+          // charting code for them.
+          <ol className="space-y-2.5" aria-label="Applications by stage">
+            {data.map((stage) => (
+              <li
+                key={stage.label}
+                className="grid grid-cols-[5.5rem_minmax(0,1fr)_2rem] items-center gap-3 text-xs"
+              >
+                <span className="text-muted-foreground">{stage.label}</span>
+                <span className="h-2.5 overflow-hidden rounded-full bg-secondary">
+                  <span
+                    className="block h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none"
+                    style={{
+                      width: `${(stage.count / max) * 100}%`,
+                      minWidth: stage.count > 0 ? "0.5rem" : 0,
+                      background: stage.color,
+                    }}
+                  />
+                </span>
+                <span className="text-right font-medium tabular-nums text-foreground">
+                  {stage.count}
+                </span>
+              </li>
+            ))}
+          </ol>
         )}
       </CardContent>
     </Card>

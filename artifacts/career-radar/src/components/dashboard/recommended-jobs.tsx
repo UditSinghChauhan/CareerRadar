@@ -42,7 +42,7 @@ function JobCard({ job }: { job: Job }) {
             variant={job.jobType === "internship" ? "secondary" : "outline"}
             className="text-[10px] px-1.5 py-0 h-4"
           >
-            {job.jobType === "internship" ? "Intern" : "FTE"}
+            {job.jobType === "internship" ? "Internship" : "Full time"}
           </Badge>
         </div>
       </div>

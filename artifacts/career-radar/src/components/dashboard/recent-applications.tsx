@@ -6,57 +6,18 @@ import { Badge } from "@/components/ui/badge";
 
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { CompanyMark } from "@/components/company-mark";
-
-const STATUS_META: Record<string, { label: string; className: string }> = {
-  saved: {
-    label: "Saved",
-    className: "bg-secondary text-muted-foreground border-border",
-  },
-  applied: {
-    label: "Applied",
-    className: "bg-primary/10 text-primary border-primary/20",
-  },
-  oa_pending: {
-    label: "OA Pending",
-    className:
-      "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
-  },
-  oa_completed: {
-    label: "OA Done",
-    className:
-      "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
-  },
-  interview_pending: {
-    label: "Interview",
-    className:
-      "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
-  },
-  interview_completed: {
-    label: "Interviewed",
-    className:
-      "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
-  },
-  offered: {
-    label: "Offered",
-    className:
-      "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
-  },
-  rejected: {
-    label: "Rejected",
-    className: "bg-destructive/10 text-destructive border-destructive/20",
-  },
-  withdrawn: {
-    label: "Withdrawn",
-    className: "bg-secondary text-muted-foreground border-border",
-  },
-};
+import {
+  statusBadgeClass,
+  statusLabel,
+} from "@/components/applications/status";
 
 function ApplicationRow({ application }: { application: Application }) {
   const job = application.job;
   const company = job?.company;
-  const statusMeta = STATUS_META[application.status] ?? {
-    label: application.status,
-    className: "",
+  // The same label and colour as the board and the table (status.ts).
+  const statusMeta = {
+    label: statusLabel(application.status),
+    className: statusBadgeClass(application.status),
   };
   const timeAgo = formatDistanceToNow(parseISO(application.createdAt), {
     addSuffix: true,

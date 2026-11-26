@@ -67,8 +67,8 @@ import { CompanyMark } from "@/components/company-mark";
 
 const trackLabels: Record<string, string> = {
   internship: "Internship",
-  new_grad: "New Grad",
-  early_career: "Early Career",
+  new_grad: "New grad",
+  early_career: "Early career",
   not_relevant: "Not for freshers",
 };
 
@@ -149,12 +149,15 @@ function QueueRow({
       data-testid="queue-row"
       data-job-id={job.id}
       data-priority={item.priority}
-      className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-secondary/30 sm:flex-row sm:items-start sm:gap-4"
+      // One grid at every width. The rank and score share a fixed column, so
+      // "10" lines up with "1" and no row spends a line on them. The chips
+      // (track, work mode, then the reasons) wrap as one group, on one line
+      // at desktop widths. The actions take a column on the right from
+      // 640px, and a short line under the chips on phones.
+      className="grid grid-cols-[1.5rem_minmax(0,1fr)] sm:grid-cols-[1.5rem_minmax(0,1fr)_auto] gap-x-3 gap-y-2 rounded-lg border border-border bg-card p-3 transition-colors [grid-template-areas:'rank_title''rank_chips''rank_actions'] hover:bg-secondary/30 sm:gap-x-4 sm:[grid-template-areas:'rank_title_actions''rank_chips_actions']"
     >
       {/* Rank */}
-      {/* A fixed-width column, so "10" lines up with "1" to "9" and every
-          row's logo starts at the same x. */}
-      <div className="flex shrink-0 items-center gap-3 sm:w-6 sm:flex-col sm:gap-1">
+      <div className="flex flex-col items-start gap-1 [grid-area:rank]">
         {/* The landing's rank tag: ink on pale lime, full lime on rank 1. */}
         <span
           className={`inline-grid h-[18px] w-[22px] place-items-center rounded-[5px] font-mono text-[11px] font-medium tabular-nums ${
@@ -199,68 +202,67 @@ function QueueRow({
         </Tooltip>
       </div>
 
-      {/* Body */}
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex items-start gap-2.5">
-          <CompanyMark
-            logoUrl={company?.logoUrl}
-            name={company?.name ?? job.title}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold leading-tight">
-              {job.title}
-            </p>
-            <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
-              <span>{company?.name ?? "Unknown"}</span>
-              {job.location && (
-                <>
-                  <span className="opacity-40">·</span>
-                  <span className="flex items-center gap-0.5">
-                    <MapPin className="h-3 w-3" />
-                    {job.location}
-                  </span>
-                </>
-              )}
-            </p>
-          </div>
+      <div className="flex min-w-0 items-start gap-2.5 [grid-area:title]">
+        <CompanyMark
+          logoUrl={company?.logoUrl}
+          name={company?.name ?? job.title}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold leading-tight">
+            {job.title}
+          </p>
+          <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+            <span>{company?.name ?? "Unknown"}</span>
+            {job.location && (
+              <>
+                <span className="opacity-40">·</span>
+                <span className="flex items-center gap-0.5">
+                  <MapPin className="h-3 w-3" />
+                  {job.location}
+                </span>
+              </>
+            )}
+          </p>
         </div>
+      </div>
 
-        {/* Badges */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {job.relevanceTrack && (
-            <Badge variant="secondary" className="h-5 px-1.5 text-xs">
-              {trackLabels[job.relevanceTrack] ?? job.relevanceTrack}
-            </Badge>
-          )}
-          <Badge variant="outline" className="h-5 px-1.5 text-xs">
-            {workModeLabels[job.workMode] ?? job.workMode}
+      {/* Chips */}
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5 [grid-area:chips]">
+        {job.relevanceTrack && (
+          <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+            {trackLabels[job.relevanceTrack] ?? job.relevanceTrack}
           </Badge>
-          {/* §"Duplicates": say that rows were collapsed rather than silently
+        )}
+        <Badge variant="outline" className="h-5 px-1.5 text-xs">
+          {workModeLabels[job.workMode] ?? job.workMode}
+        </Badge>
+        {/* §"Duplicates": say that rows were collapsed rather than silently
               hiding them. */}
-          {item.duplicateCount > 1 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge
-                  variant="outline"
-                  data-testid="duplicate-badge"
-                  className="h-5 cursor-default gap-1 px-1.5 text-xs text-muted-foreground"
-                >
-                  <Layers className="h-3 w-3" />
-                  {item.duplicateCount} copies
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs text-xs">
-                This company posted {item.duplicateCount} identical listings
-                with different URLs. Only the highest-priority one is shown.
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
+        {item.duplicateCount > 1 && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="outline"
+                data-testid="duplicate-badge"
+                className="h-5 cursor-default gap-1 px-1.5 text-xs text-muted-foreground"
+              >
+                <Layers className="h-3 w-3" />
+                {item.duplicateCount} copies
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              This company posted {item.duplicateCount} identical listings with
+              different URLs. Only the highest-priority one is shown.
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         {/* §3.3: "Each row displays a plain-language reason for its rank."
-            Up to three short reasons from the server, on the row itself. */}
+            Up to three short reasons from the server, on the row itself.
+            `contents`, so they wrap with the chips before them; role="list"
+            keeps the list for screen readers. */}
         {item.reasons.length > 0 && (
-          <ul className="flex flex-wrap gap-1.5" aria-label="Why it is here">
+          <ul role="list" className="contents" aria-label="Why it is here">
             {item.reasons.map((reason) => (
               <li
                 key={reason}
@@ -275,7 +277,7 @@ function QueueRow({
       </div>
 
       {/* Actions */}
-      <div className="flex shrink-0 items-center gap-1.5 sm:flex-col sm:items-stretch">
+      <div className="flex shrink-0 items-center gap-1 [grid-area:actions] sm:flex-col sm:items-stretch sm:gap-1.5 sm:self-start">
         {job.applyUrl ? (
           <Button
             size="sm"
@@ -283,6 +285,7 @@ function QueueRow({
             // One ink pill per screen: the top pick's. The other nine are the
             // same action, quieter, so ten black buttons don't compete.
             variant={rank === 1 ? "default" : "outline"}
+            aria-label={`Apply to ${job.title} at ${company?.name ?? "this company"} (opens the posting)`}
             className="h-8 gap-1 px-3 text-xs"
             disabled={isPending}
             onClick={() => onApply(job.id, job.applyUrl as string)}
@@ -306,10 +309,12 @@ function QueueRow({
           data-testid="queue-dismiss"
           className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-destructive"
           disabled={isPending}
+          aria-label={`Dismiss ${job.title}`}
           onClick={() => onDismiss(job.id)}
         >
-          <X className="h-3.5 w-3.5" />
-          Dismiss
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
+          {/* On phones the icon alone; its name is in aria-label. */}
+          <span className="hidden sm:inline">Dismiss</span>
         </Button>
       </div>
     </li>
@@ -463,7 +468,11 @@ export function TodaysQueue() {
                 applications today
               </span>
             </div>
-            <Progress value={percent} className="h-1.5" />
+            <Progress
+              value={percent}
+              className="h-1.5"
+              aria-label="Applications today"
+            />
             <div className="flex items-center justify-between gap-2">
               <span
                 className="flex items-center gap-1 text-xs text-muted-foreground"

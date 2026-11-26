@@ -16,11 +16,57 @@ export const STATUS_ORDER = [
 
 export type BoardStatus = (typeof STATUS_ORDER)[number];
 
+/**
+ * The board's columns: six stages, each holding one or two statuses, so the
+ * whole pipeline fits on one screen (nine columns of 240px scrolled off the
+ * edge at 1280px). A card dropped on a column takes the column's `drop`
+ * status; a card already in that stage keeps its finer status.
+ */
+export const BOARD_STAGES = [
+  { key: "saved", label: "Saved", statuses: ["saved"], drop: "saved" },
+  { key: "applied", label: "Applied", statuses: ["applied"], drop: "applied" },
+  {
+    key: "assessment",
+    label: "Assessment",
+    statuses: ["oa_pending", "oa_completed"],
+    drop: "oa_pending",
+  },
+  {
+    key: "interview",
+    label: "Interview",
+    statuses: ["interview_pending", "interview_completed"],
+    drop: "interview_pending",
+  },
+  { key: "offer", label: "Offer", statuses: ["offered"], drop: "offered" },
+  {
+    key: "closed",
+    label: "Closed",
+    statuses: ["rejected", "withdrawn"],
+    drop: "rejected",
+  },
+] as const satisfies ReadonlyArray<{
+  key: string;
+  label: string;
+  statuses: readonly BoardStatus[];
+  drop: BoardStatus;
+}>;
+
+export type BoardStage = (typeof BOARD_STAGES)[number];
+
+/** The stage a status belongs to; an unknown status parks in Saved. */
+export function stageOf(status: string): BoardStage {
+  return (
+    BOARD_STAGES.find((s) =>
+      (s.statuses as readonly string[]).includes(status),
+    ) ?? BOARD_STAGES[0]
+  );
+}
+
 export const STATUS_LABELS: Record<BoardStatus, string> = {
   saved: "Saved",
   applied: "Applied",
-  oa_pending: "OA Pending",
-  oa_completed: "OA Done",
+  oa_pending: "OA pending",
+  oa_completed: "OA done",
   interview_pending: "Interview",
   interview_completed: "Interviewed",
   offered: "Offered",
@@ -28,21 +74,19 @@ export const STATUS_LABELS: Record<BoardStatus, string> = {
   withdrawn: "Withdrawn",
 };
 
-// Kept visually consistent with dashboard/recent-applications.tsx so the same
-// status reads the same everywhere in the app.
+// One status, one look, everywhere (board, table, drawer, the dashboard's
+// recent applications). Neutral while a search is in motion; colour only for
+// the two outcomes: green for an offer, red for a rejection.
 export const STATUS_BADGE_CLASSES: Record<BoardStatus, string> = {
   saved: "bg-secondary text-muted-foreground border-border",
-  applied: "bg-primary/10 text-primary border-primary/20",
-  oa_pending:
-    "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
-  oa_completed:
-    "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
+  applied: "bg-secondary text-foreground border-border",
+  oa_pending: "bg-transparent text-foreground border-foreground/25",
+  oa_completed: "bg-transparent text-foreground border-foreground/25",
   interview_pending:
-    "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+    "bg-foreground/[0.07] text-foreground border-foreground/25",
   interview_completed:
-    "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
-  offered:
-    "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+    "bg-foreground/[0.07] text-foreground border-foreground/25",
+  offered: "bg-primary/10 text-primary border-primary/25",
   rejected: "bg-destructive/10 text-destructive border-destructive/20",
   withdrawn: "bg-secondary text-muted-foreground border-border",
 };
@@ -89,8 +133,8 @@ export function deadlineUrgency(
 
 export const DEADLINE_CLASSES: Record<DeadlineUrgency, string> = {
   none: "text-muted-foreground",
-  expired: "text-red-500 dark:text-red-400 line-through",
-  critical: "text-red-500 dark:text-red-400 font-medium",
+  expired: "text-muted-foreground line-through",
+  critical: "text-destructive font-medium",
   soon: "text-amber-500 dark:text-amber-400",
   normal: "text-muted-foreground",
 };
