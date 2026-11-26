@@ -2,7 +2,7 @@
 
 CareerRadar ranks the ten SDE roles an Indian computer-science fresher should apply to each morning, and says why each one ranks where it does. I designed and built it end to end: the ranking rules, the data pipeline, the app and the landing page.
 
-This file lives in the repository only. It replaces the `/design-notes` page, which was removed from the site in the "Field to focus" landing (2026-11-03, `docs/LANDING_V3.md`). Engine detail that used to sit on the landing page (test counts, "no model decides what you see", where postings may not come from) is kept here instead.
+This file lives in the repository only. It replaces the `/design-notes` page, which was removed from the site in the "Field to focus" landing (2026-11-03, `docs/process/LANDING_V3.md`). Engine detail that used to sit on the landing page (test counts, "no model decides what you see", where postings may not come from) is kept here instead.
 
 | | |
 |---|---|
@@ -40,7 +40,7 @@ This file lives in the repository only. It replaces the `/design-notes` page, wh
    ![Before the revamp: claims as text](case-study/before-text.webp)
    ![The revamp bento of working tiles](case-study/after-bento.webp)
 
-4. **"Field to focus"** (2026-11-03, current): a light, quiet page of seven sections, at most 6,500px at 1440. See `docs/LANDING_V3.md` and `DESIGN.md`.
+4. **"Field to focus"** (2026-11-03, current): a light, quiet page of seven sections, at most 6,500px at 1440. See `docs/process/LANDING_V3.md` and `DESIGN.md`.
 
 ## Motion principles (kept)
 

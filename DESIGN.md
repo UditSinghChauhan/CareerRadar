@@ -15,7 +15,7 @@ Scope: the landing page (`/`) in full, and the brand rules the app shares with i
 
 Each visual idea appears once. The radar and the full queue are never shown twice. Fewer, better things.
 
-Techniques are borrowed from lightspark.com (canvas, depth field, two-tone statements, ruled stat columns, Swiss type, quiet spacing) and pacing from apple.com; see `docs/LANDING_V3.md`. Not used, so the page stays distinct from the owner's other product: rails, "+" marks, a hero card, a floating pill navigation.
+Techniques are borrowed from lightspark.com (canvas, depth field, two-tone statements, ruled stat columns, Swiss type, quiet spacing) and pacing from apple.com; see `docs/process/LANDING_V3.md`. Not used, so the page stays distinct from the owner's other product: rails, "+" marks, a hero card, a floating pill navigation.
 
 ## Colour
 
@@ -201,7 +201,7 @@ The app's light theme uses the landing's tokens (canvas, white cards, hairline, 
 
 - **2026-11-05 (superseded 2026-11-06): field to focus, one row at a time.** A frame-by-frame capture at 1440x900, every 50px from 0 to 1200, found faults in 12 of 25 frames: up to ten overlapping pairs of flying cards, cards over the headline and button, "Today's ten" shown empty, and the statement low beside a rising list. All ten had flown together from scattered places into one column, so their paths crossed. Now the copy leaves first, the field ranks from the bottom up, and rows land in turn as they come into view; the same capture finds 25 of 25 clean, and a 10px sweep at ten viewports from 375 to 2560 wide finds none. Before and after strips: `docs/screenshots/focus-frames/`.
 
-- **2026-11-03: light, "Field to focus."** The dark page was about 12,200px long at 1440, showed the radar full-size twice, ran a 3,600px pinned chapter, put lime glow on everything so nothing stood out, spoke in engine terms, and did not match the app (briefcase logo, Geologica, engine reasons in the real queue). Kept: Geist, the radar mark, lime as a signal, the real scoring code, live counts, the honesty rules. Changed: light canvas with one dark band; lime restricted to three uses; one field of cards instead of a canvas of points; a seven-section page under 6,500px; Geist Mono for labels; the app brought onto the same brand. Study and measurements: `docs/LANDING_V3.md`.
-- 2026-11-01 (superseded): dark stage, "From 4,512 to ten." References in `docs/REVAMP.md`.
+- **2026-11-03: light, "Field to focus."** The dark page was about 12,200px long at 1440, showed the radar full-size twice, ran a 3,600px pinned chapter, put lime glow on everything so nothing stood out, spoke in engine terms, and did not match the app (briefcase logo, Geologica, engine reasons in the real queue). Kept: Geist, the radar mark, lime as a signal, the real scoring code, live counts, the honesty rules. Changed: light canvas with one dark band; lime restricted to three uses; one field of cards instead of a canvas of points; a seven-section page under 6,500px; Geist Mono for labels; the app brought onto the same brand. Study and measurements: `docs/process/LANDING_V3.md`.
+- 2026-11-01 (superseded): dark stage, "From 4,512 to ten." References in `docs/process/REVAMP.md`.
 - 2026-10-31 (superseded): the Neutral chrome, Geist, light and dark themes, from three concept mockups (`docs/screenshots/landing-redesign/concepts/`).
 - 2026-10-31 (earlier, superseded): Vantage, with Geologica, dark only and no scroll reveals.
