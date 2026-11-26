@@ -1,9 +1,10 @@
 /**
- * README screenshot capture.
+ * README screenshot capture, against your own data.
  * ──────────────────────────
- * Not a test. This is the script that produced every image in
- * `docs/screenshots/`, kept in the repo so the next person to change the UI can
- * regenerate them in one command instead of hand-cropping browser windows:
+ * Not a test. The images committed in `docs/screenshots/` come from
+ * `scripts/capture-readme.mjs`, which uses invented data and needs no Clerk
+ * keys. This spec photographs the same pages from your local database with a
+ * real Clerk session, under the same file names:
  *
  *   CAPTURE_SCREENSHOTS=1 pnpm run test:e2e e2e/screenshots.spec.ts
  *
