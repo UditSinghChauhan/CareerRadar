@@ -212,7 +212,10 @@ async function main() {
     await pause(800);
 
     // 2. Sign up.
-    await click(page.locator(".lp-hero .lp-btn"));
+    // By name: the hero also has "Explore the demo", in the same style.
+    await click(
+      page.locator(".lp-hero").getByRole("link", { name: "Get started" }),
+    );
     await page.locator("[data-capture-standin=sign-up]").waitFor();
     mark("sign-up");
     await pause(1800);
