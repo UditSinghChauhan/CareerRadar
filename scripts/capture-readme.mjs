@@ -250,7 +250,8 @@ async function captureApp(browser, base) {
   page = await open("/applications", (p) =>
     p.getByTestId("board-card").first(),
   );
-  await shot(page, "applications");
+  // Full page, so every one of the six columns shows end to end.
+  await shot(page, "applications", { fullPage: true });
   await page.getByRole("button", { name: "Table" }).click();
   await page.getByTestId("application-row").first().waitFor();
   await shot(page, "applications-table");
