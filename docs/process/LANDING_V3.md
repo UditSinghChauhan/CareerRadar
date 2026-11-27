@@ -45,13 +45,13 @@ See the pull request for the full list. In short: Part A makes the app match (on
 | Page height at 1440 | 12,191px | 6,439px |
 | Page height at 768 | not measured | 7,082px |
 | Page height at 390 | 12,853px | 7,579px |
-| Lighthouse mobile (local production build) | 81 / 100 / 100 / 100 (`docs/screenshots/revamp/lighthouse-mobile.json`) | 92 / 100 / 96 / 100 |
+| Lighthouse mobile (local production build) | 81 / 100 / 100 / 100 (`lighthouse-mobile.json` in [PR #23](https://github.com/UditSinghChauhan/CareerRadar/pull/23)) | 92 / 100 / 96 / 100 |
 | CLS (Lighthouse) | 0.018 | 0.001 |
 
 Notes on the Lighthouse run: it was taken against `vite preview` of the production build on this machine, with a placeholder Clerk key, so clerk-js fails to load and logs console errors; that is the whole best-practices deduction and does not happen in production. Performance is held at 92 by first contentful paint (2.5s simulated): the landing still preloads the app's shared vendor chunks (React, Clerk, Radix, TanStack Query) before its stylesheet is used. That predates this change; splitting Clerk and Query out of the landing's first load is the next step to reach 95.
 
 Frame rate was not measured with a profiler. Everything that moves on scroll is transform or opacity on three layer elements, the idle loops are CSS transforms, and the radar canvas redraws at 30fps only while it is on screen.
 
-Contrast pairs: `node docs/screenshots/landing-v3/contrast.mjs` (all pass).
+Contrast pairs: `node scripts/check-contrast.mjs` (all pass).
 
-Screenshots: `docs/screenshots/landing-v3/before/` and `after/`, captured by `scripts/capture-landing-v3.mjs`. The landing captures are of the live site (before) and of the local production build against the local demo database (after), which is why the after stats read 63 and 53 with "Live": those are the demo database's counts, read from the same `/api/public/stats`.
+Screenshots: in [PR #24](https://github.com/UditSinghChauhan/CareerRadar/pull/24), captured by `scripts/capture-landing-v3.mjs`. The landing captures are of the live site (before) and of the local production build against the local demo database (after), which is why the after stats read 63 and 53 with "Live": those are the demo database's counts, read from the same `/api/public/stats`.
