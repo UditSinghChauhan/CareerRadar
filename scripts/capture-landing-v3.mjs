@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Before/after evidence for the "Field to focus" landing (docs/LANDING_V3.md).
+ * Before/after evidence for the "Field to focus" landing (docs/process/LANDING_V3.md).
  *
  *   node scripts/capture-landing-v3.mjs <before|after> <landing-url> [dashboard-url]
  *

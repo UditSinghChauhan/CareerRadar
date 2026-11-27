@@ -138,6 +138,11 @@ const ALLOWED: Array<{ path: string; reason: string }> = [
     reason:
       "The same fixture as e2e/capture.spec.ts, reused so the README screenshot shows the parse that suite asserts on. Typed into the dialog as a string; nothing fetches it.",
   },
+  {
+    path: "scripts/capture-readme.mjs",
+    reason:
+      "The same fixture as e2e/capture.spec.ts, for the README's capture screenshot. Typed into the dialog as a string against a local stubbed API; nothing fetches it.",
+  },
 ];
 
 const ALLOWED_PATHS = new Set(ALLOWED.map((entry) => entry.path));

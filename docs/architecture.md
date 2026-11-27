@@ -72,7 +72,7 @@ and deterministic, which is what lets the backfill recompute every row on every
 run instead of tracking what it has already done.
 
 `jobs.country` is **never** an input here. See
-[Decision 2](../README.md#decision-2--the-location-normalizer-and-why-jobscountry-is-unreliable) in the README for why that
+[Decision 2](../README.md#decision-2-the-location-normalizer-and-why-jobscountry-is-unreliable) in the README for why that
 column cannot be trusted.
 
 Six rules, in order: remote markers → state abbreviations → city aliases →
@@ -92,7 +92,7 @@ Current distribution over the 4,512 active rows: `not_relevant` 2,403,
 `internship` 1,226, `early_career` 500, `new_grad` 383.
 
 The rules and the test strategy are
-[Decision 1](../README.md#decision-1--the-relevance-classifier) in the README.
+[Decision 1](../README.md#decision-1-the-relevance-classifier) in the README.
 
 ## 5. Dedup — `providers/deduplication.ts`
 
@@ -178,7 +178,7 @@ listings collapsed" instead of silently hiding five jobs.
 `NOT EXISTS` rather than `NOT IN`, so a NULL can never swallow the predicate.
 
 The day-seeded rotation between `priority DESC` and `posted_date DESC, id` is
-[Decision 3](../README.md#decision-3--the-queues-day-seeded-rotation) in the README.
+[Decision 3](../README.md#decision-3-the-queues-day-seeded-rotation) in the README.
 
 ---
 

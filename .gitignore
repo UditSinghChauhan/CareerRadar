@@ -57,3 +57,7 @@ Thumbs.db
 
 # Hallmark design-tool workspace: before/after records, screenshots, build log
 .hallmark/
+
+# PR evidence (before/after captures, audits) belongs in the pull request,
+# not the repository. Scripts may still write it here locally.
+docs/screenshots/*/

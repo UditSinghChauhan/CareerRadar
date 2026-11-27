@@ -177,7 +177,11 @@ async function main() {
     mark("landing: headline painted");
     await shot("01-landing");
 
-    await page.locator(".lp-hero .lp-btn").click();
+    // By name: the hero also has "Explore the demo", in the same style.
+    await page
+      .locator(".lp-hero")
+      .getByRole("link", { name: "Get started" })
+      .click();
     await page.locator("[data-capture-standin=sign-up]").waitFor();
     mark("sign-up card");
     await shot("02-sign-up");
