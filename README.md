@@ -92,9 +92,9 @@ turns from day to day.
 
 - **Today's ten:** ten ranked roles a day, duplicates collapsed, dismissals
   respected, a daily target counter, and up to three reasons per row.
-- **Applications tracker:** board and table views across
-  saved → applied → OA → interview → offered, with referral/outreach tracking
-  and an "awaiting follow-up" filter.
+- **Applications tracker:** a board of six stages that fits the screen
+  (Saved, Applied, Assessment, Interview, Offer, Closed) and a table view,
+  with referral/outreach tracking and an "awaiting follow-up" filter.
 - **One-click apply:** opens the posting and logs the application in the same
   click, date stamped.
 - **Paste-to-parse capture:** paste a job description, get a filled form.
@@ -192,7 +192,7 @@ the app runs, and only the feature in the last column goes quiet.
 | `DEMO_CLERK_USER_ID` | optional | `/demo` is off and says so. |
 | `ALLOWED_ORIGINS` | optional | The API reflects any origin and skips Clerk's `azp` check. Needed only when the frontend is on another origin ([docs/DEPLOY.md](docs/DEPLOY.md)). |
 | `VITE_CLERK_PROXY_URL` | optional | Clerk is reached directly rather than through `/api/__clerk`. |
-| `RELEVANCE_GRADUATION_YEAR` | optional | Until a profile names a graduation year, no batch modifier fires. |
+| `RELEVANCE_GRADUATION_YEAR` | optional | The year comes from the profile; until a profile names one, no batch modifier fires. |
 | `PROVIDER_ENABLED` and the other `PROVIDER_*` | optional | The in-process scheduler stays off; the GitHub Actions cron drives sync. |
 | Request budgets, notification thresholds, `SYNC_MAX_AGE_DAYS`, `PORT`, `LOG_LEVEL` | optional | Defaults apply (listed in `.env.example`). |
 
@@ -202,7 +202,7 @@ the app runs, and only the feature in the last column goes quiet.
 pnpm run typecheck:libs   # always first: a stale .tsbuildinfo causes phantom errors
 pnpm run typecheck
 pnpm run lint
-pnpm run test             # Vitest: 1,005 api-server + 136 career-radar tests (2026-11-26)
+pnpm run test             # Vitest: 1,005 api-server + 140 career-radar tests (2026-11-28)
 pnpm run build
 pnpm run test:e2e         # 12 Playwright specs, needs a local DB + Clerk dev keys
 pnpm run test:landing     # 2 landing specs, against a built landing on :5198
