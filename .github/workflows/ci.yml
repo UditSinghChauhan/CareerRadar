@@ -117,6 +117,11 @@ jobs:
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_TEST }}
       CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}
       VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}
+      # The API server syncs the live job boards on start unless this is
+      # false. In the suite that floods the seeded database with real postings
+      # and every spec that asserts on the seed fails. e2e/global-setup.ts
+      # refuses to run without it.
+      PROVIDER_ENABLED: "false"
 
     steps:
       - name: Checkout
