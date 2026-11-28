@@ -422,7 +422,10 @@ test.describe("Today's Queue on the dashboard (§3.3)", () => {
       await expect(row.getByTestId("queue-priority")).toHaveText(/^\d+$/);
     }
 
-    // The four weighted parts sit behind the score.
+    // The four weighted parts sit behind the score. The breakdown is a Radix
+    // tooltip, which renders its content twice: the visible popup and a
+    // visually hidden role="tooltip" copy for screen readers. Address the
+    // visible one, or strict mode rightly refuses the ambiguous locator.
     await rows.first().getByTestId("queue-priority").hover();
     const breakdown = page.getByTestId("priority-breakdown").first();
     for (const key of [
@@ -432,7 +435,7 @@ test.describe("Today's Queue on the dashboard (§3.3)", () => {
       "dreamCompanyBoost",
     ]) {
       await expect(
-        breakdown.locator(`[data-component="${key}"]`),
+        breakdown.locator(`[data-component="${key}"]`).first(),
       ).toBeVisible();
     }
   });

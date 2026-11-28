@@ -207,6 +207,10 @@ function JobCardImpl({
     <article
       data-testid="job-card"
       data-job-id={job.id}
+      // The normaliser's metro, kept on the card for the location E2E spec
+      // after the visible metro chip was removed as a repeat of the location
+      // line (e3d5505). Absent when the posting has no metro.
+      data-location-metro={job.locationMetro ?? undefined}
       className="group relative flex flex-col bg-card border border-border rounded-xl overflow-hidden transition-all duration-150 hover:border-border/80 hover:shadow-sm"
     >
       {/* Top strip */}
