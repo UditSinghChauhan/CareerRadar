@@ -11,14 +11,23 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e-landing",
+  // Its own folder, so this run does not clear the main suite's traces.
+  outputDir: "./e2e-landing/.results",
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  forbidOnly: Boolean(process.env.CI),
+  // As in playwright.config.ts: one retry in CI only.
+  retries: process.env.CI ? 1 : 0,
   timeout: 90_000,
-  reporter: [["list"]],
+  reporter: [
+    ["list"],
+    ["html", { open: "never", outputFolder: "e2e-landing/.report" }],
+  ],
   use: {
     baseURL: process.env.LANDING_URL ?? "http://localhost:5198",
-    trace: "off",
+    // Tracing slows the scroll and motion specs it records, so only the
+    // CI retry of a failed spec is traced.
+    trace: process.env.CI ? "on-first-retry" : "off",
     video: "off",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
