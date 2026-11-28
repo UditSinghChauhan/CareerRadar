@@ -1,4 +1,9 @@
+import type { CSSProperties } from "react";
 import { Bell, Bookmark, BookmarkCheck } from "lucide-react";
+import {
+  BOARD_STAGES,
+  type BoardStage,
+} from "@/components/applications/status";
 import { Monogram } from "./role-card";
 import { RANKED, type SampleRole } from "./sample-roles";
 import { Reveal } from "./motion/reveal";
@@ -11,25 +16,24 @@ import captures from "./captures.json";
  * it sits in rises in with the page's one reveal (DESIGN.md, Motion).
  */
 
-/** The app's board columns, named as the board's statuses group them. */
-const COLUMNS = [
-  "Saved",
-  "Applied",
-  "Online assessment",
-  "Interview",
-  "Offer",
-] as const;
-type Column = (typeof COLUMNS)[number];
-
-/** A little of what a real board carries: a referral, an interview day. */
-const BOARD: Array<{ role: SampleRole; col: Column; note?: string }> = [
-  { role: RANKED[4], col: "Saved" },
-  { role: RANKED[8], col: "Saved" },
-  { role: RANKED[5], col: "Applied", note: "Referral" },
-  { role: RANKED[1], col: "Online assessment" },
-  { role: RANKED[2], col: "Online assessment" },
-  { role: RANKED[6], col: "Interview", note: "Interview on Thursday" },
-  { role: RANKED[9], col: "Offer" },
+/**
+ * A little of what a real board carries: a referral, an interview day. The
+ * columns are the app's own stages (BOARD_STAGES), so the landing cannot
+ * show a board the app no longer has.
+ */
+const BOARD: Array<{
+  role: SampleRole;
+  stage: BoardStage["key"];
+  note?: string;
+}> = [
+  { role: RANKED[4], stage: "saved" },
+  { role: RANKED[8], stage: "saved" },
+  { role: RANKED[5], stage: "applied", note: "Referral" },
+  { role: RANKED[1], stage: "assessment" },
+  { role: RANKED[2], stage: "assessment" },
+  { role: RANKED[6], stage: "interview", note: "Interview on Thursday" },
+  { role: RANKED[9], stage: "offer" },
+  { role: RANKED[7], stage: "closed" },
 ];
 
 function BoardCard({ role, note }: { role: SampleRole; note?: string }) {
@@ -47,13 +51,17 @@ function BoardCard({ role, note }: { role: SampleRole; note?: string }) {
 
 function Board() {
   return (
-    <div className="lp-board" inert>
-      {COLUMNS.map((col) => {
-        const cards = BOARD.filter((b) => b.col === col);
+    <div
+      className="lp-board"
+      style={{ "--lp-board-cols": BOARD_STAGES.length } as CSSProperties}
+      inert
+    >
+      {BOARD_STAGES.map((stage) => {
+        const cards = BOARD.filter((b) => b.stage === stage.key);
         return (
-          <div key={col} className="lp-board__col">
+          <div key={stage.key} className="lp-board__col" data-stage={stage.key}>
             <p className="lp-board__head">
-              <span>{col}</span>
+              <span>{stage.label}</span>
               <span className="lp-mono">{cards.length}</span>
             </p>
             <div className="lp-board__cards">
@@ -220,8 +228,8 @@ export function Features() {
           <div className="lp-feature__text">
             <h3 className="lp-h3">One board for every application</h3>
             <p className="lp-body">
-              Saved to offer, with online assessments and interviews in between.
-              Move a card as you hear back.
+              Saved to offer or closed, with assessments and interviews in
+              between. Move a card as you hear back.
             </p>
           </div>
           <Board />

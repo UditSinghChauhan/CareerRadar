@@ -68,6 +68,17 @@ export default async function globalSetup() {
     );
   }
 
+  if (process.env.PROVIDER_ENABLED !== "false") {
+    // The API server the suite starts would sync the live job boards on boot
+    // and fill the seeded database with real postings. Specs assert on the
+    // seed, so they would fail for a reason unrelated to the code (CI did,
+    // before this check existed). .env.example sets it; CI sets it explicitly.
+    throw new Error(
+      'Refusing to run: PROVIDER_ENABLED must be "false" for the e2e suite, ' +
+        "or the API server pulls live job boards into the test database.",
+    );
+  }
+
   await ensureTestUser();
   // Fetches the Clerk Testing Token that lets the suite bypass bot protection.
   await clerkSetup();

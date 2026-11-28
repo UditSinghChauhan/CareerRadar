@@ -15,6 +15,31 @@ async function signIn(page: Page): Promise<void> {
     timeout: 30_000,
   });
   await clerk.signIn({ page, emailAddress: E2E_EMAIL });
+  await answerOnboarding(page);
+}
+
+/**
+ * Answers the one onboarding question for the test user, through the same
+ * PUT /api/profile the /welcome page uses.
+ *
+ * Since the first-minute work, the dashboard sends any account whose
+ * rolePreference is null to /welcome. The suite's user never answers it, so
+ * every dashboard spec landed on /welcome and could not find the queue or the
+ * notification bell. "both" with no cities is the no-preference answer: the
+ * queue ranks exactly as it did for an unanswered profile
+ * (api-server/src/queue/preferences.ts returns no preference for it).
+ */
+async function answerOnboarding(page: Page): Promise<void> {
+  const status = await page.evaluate(async () => {
+    const res = await fetch("/api/profile", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rolePreference: "both", preferredLocations: [] }),
+    });
+    return res.status;
+  });
+  expect(status, "PUT /api/profile (onboarding answer)").toBe(200);
 }
 
 /**

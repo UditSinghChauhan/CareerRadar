@@ -193,7 +193,7 @@ the app runs, and only the feature in the last column goes quiet.
 | `ALLOWED_ORIGINS` | optional | The API reflects any origin and skips Clerk's `azp` check. Needed only when the frontend is on another origin ([docs/DEPLOY.md](docs/DEPLOY.md)). |
 | `VITE_CLERK_PROXY_URL` | optional | Clerk is reached directly rather than through `/api/__clerk`. |
 | `RELEVANCE_GRADUATION_YEAR` | optional | The year comes from the profile; until a profile names one, no batch modifier fires. |
-| `PROVIDER_ENABLED` and the other `PROVIDER_*` | optional | The in-process scheduler stays off; the GitHub Actions cron drives sync. |
+| `PROVIDER_ENABLED` and the other `PROVIDER_*` | optional | The in-process scheduler is on by default and syncs 5 seconds after boot, then every 6 hours. Set `PROVIDER_ENABLED=false` to leave sync to the GitHub Actions cron (the E2E job does). |
 | Request budgets, notification thresholds, `SYNC_MAX_AGE_DAYS`, `PORT`, `LOG_LEVEL` | optional | Defaults apply (listed in `.env.example`). |
 
 ### Verification
@@ -202,11 +202,23 @@ the app runs, and only the feature in the last column goes quiet.
 pnpm run typecheck:libs   # always first: a stale .tsbuildinfo causes phantom errors
 pnpm run typecheck
 pnpm run lint
-pnpm run test             # Vitest: 1,005 api-server + 140 career-radar tests (2026-11-28)
+pnpm run test             # Vitest: 1,005 api-server + 141 career-radar tests (2026-11-28), one package at a time
 pnpm run build
 pnpm run test:e2e         # 12 Playwright specs, needs a local DB + Clerk dev keys
 pnpm run test:landing     # 2 landing specs, against a built landing on :5198
 ```
+
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every pull
+request and every push to `main`, in two jobs:
+
+- **Lint, Typecheck, Test & Build** runs the first five commands above.
+- **E2E · Playwright (Chromium)** pushes the schema to a fresh PostgreSQL 16
+  service, seeds it, and runs `test:e2e`, then `test:landing` against a built
+  landing. It signs in to the Clerk development instance with the
+  `CLERK_PUBLISHABLE_KEY_TEST` and `CLERK_SECRET_KEY_TEST` secrets. Each spec
+  gets one retry in CI and none locally. On a failure, the HTML reports and
+  traces are uploaded as the `playwright-report` artifact. A fork's pull
+  request has no secrets, so the job is skipped with a notice.
 
 ### The walkthrough film
 
@@ -241,7 +253,7 @@ API code. It prints the time each step was reached.
 | AI | Google Gemini, optional everywhere it appears |
 | Contract | OpenAPI 3.1 → orval → Zod validators + React Query hooks |
 | Tests | Vitest, PGlite (Postgres in WASM), Playwright |
-| Hosting | **Render** runs one Express service that serves the built frontend and `/api`. **GitHub Actions** runs CI, the six-hourly sync and the nightly AI batch. A split that moves the frontend to Vercel's CDN, so visitors never wait for a sleeping API, is configured (`vercel.json`) and documented in [docs/DEPLOY.md](docs/DEPLOY.md), but is not live yet. |
+| Hosting | **Render** runs one Express service that serves the built frontend and `/api`. **GitHub Actions** runs CI (lint, typecheck, unit tests, build and both Playwright suites), the six-hourly sync and the nightly AI batch. A split that moves the frontend to Vercel's CDN, so visitors never wait for a sleeping API, is configured (`vercel.json`) and documented in [docs/DEPLOY.md](docs/DEPLOY.md), but is not live yet. |
 
 ---
 

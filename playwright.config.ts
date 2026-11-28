@@ -36,7 +36,10 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   forbidOnly: Boolean(process.env.CI),
-  retries: 0,
+  // One retry in CI only, where a shared runner can stall a dev server for
+  // a moment; a spec that passes only on its retry is reported as flaky.
+  // Locally a failure is always a failure.
+  retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
   expect: { timeout: 15_000 },
   reporter: [

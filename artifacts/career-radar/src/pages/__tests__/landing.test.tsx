@@ -13,12 +13,17 @@ import {
   resetPublicStats,
 } from "@/components/landing/use-public-stats";
 import illustrative from "@/components/landing/illustrative-queue.json";
+// LandingPage lazy-loads this chunk after its first paint. Imported here,
+// it is transformed while the file is collected, which has no per-test
+// timeout. Otherwise the first test to render asks vitest's main process
+// for every below-fold module mid-test, queued behind every other worker's
+// requests (about 225ms of that test's 700ms even when run alone).
+import "@/components/landing/below-fold";
 
 /** Renders the landing and waits for the sections it mounts after the hero. */
 async function renderLanding() {
   const utils = render(<LandingPage />);
-  // The first render imports the below-fold chunk; under a loaded runner
-  // that alone can pass the default 1s wait.
+  // A full render under a loaded runner can pass the default 1s wait.
   await screen.findByRole("heading", { name: "Questions" }, { timeout: 5000 });
   return utils;
 }
