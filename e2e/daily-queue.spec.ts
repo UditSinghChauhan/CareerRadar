@@ -174,12 +174,16 @@ test.describe("GET /api/dashboard/today", () => {
     await resetDismissals(page);
     const { items } = await fetchQueue(page);
     const first = items[0]!;
+    // Reasons are short, student-facing phrases (api-server/src/queue/
+    // priority.ts explainPriority). Scores, weights and the classifier's
+    // vocabulary moved behind "How is this ranked?" and must not leak back.
+    expect(first.reasons.length).toBeGreaterThan(0);
+    expect(first.reasons.length).toBeLessThanOrEqual(3);
     const text = first.reasons.join(" ");
-    expect(text).toMatch(/Relevance \d+\/100|Relevance 100\/100/);
-    // Every seeded row has a deadline, so the reason must say so rather than
-    // emitting the "no deadline published" line.
-    expect(text).toMatch(/Closes|Deadline/);
-    expect(text).toMatch(/Posted/);
+    expect(text).not.toMatch(/\/100|classifier|band|weight/i);
+    // Every seeded row has a deadline and a posted date, so both are named.
+    expect(text).toMatch(/Closes (today|tomorrow|in \d+ days)/);
+    expect(text).toMatch(/Posted (today|yesterday|\d+ days ago)/);
   });
 
   test("clamps limit to the 1–50 range and defaults to 10", async ({

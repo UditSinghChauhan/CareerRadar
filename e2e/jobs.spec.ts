@@ -85,7 +85,7 @@ test.describe("Jobs explorer", () => {
     await expect(cards.first()).toBeVisible();
     expect(await cards.count()).toBeGreaterThan(0);
     await expect(
-      page.getByRole("heading", { name: "Jobs Explorer" }),
+      page.getByRole("heading", { level: 1, name: "Jobs", exact: true }),
     ).toBeVisible();
   });
 

@@ -137,9 +137,7 @@ test.describe("Jobs explorer — server-side paging", () => {
     const request = page.waitForRequest(
       (r) => JOBS_URL.test(r.url()) && r.url().includes("search="),
     );
-    await page
-      .getByPlaceholder("Search roles, companies, skills...")
-      .fill("intern");
+    await page.getByPlaceholder("Search roles or companies").fill("intern");
 
     const url = new URL((await request).url());
     // The point: "intern" left the browser. Before Phase 7 the search text did
