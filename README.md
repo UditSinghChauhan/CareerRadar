@@ -193,7 +193,7 @@ the app runs, and only the feature in the last column goes quiet.
 | `ALLOWED_ORIGINS` | optional | The API reflects any origin and skips Clerk's `azp` check. Needed only when the frontend is on another origin ([docs/DEPLOY.md](docs/DEPLOY.md)). |
 | `VITE_CLERK_PROXY_URL` | optional | Clerk is reached directly rather than through `/api/__clerk`. |
 | `RELEVANCE_GRADUATION_YEAR` | optional | The year comes from the profile; until a profile names one, no batch modifier fires. |
-| `PROVIDER_ENABLED` and the other `PROVIDER_*` | optional | The in-process scheduler stays off; the GitHub Actions cron drives sync. |
+| `PROVIDER_ENABLED` and the other `PROVIDER_*` | optional | The in-process scheduler is on by default and syncs 5 seconds after boot, then every 6 hours. Set `PROVIDER_ENABLED=false` to leave sync to the GitHub Actions cron (the E2E job does). |
 | Request budgets, notification thresholds, `SYNC_MAX_AGE_DAYS`, `PORT`, `LOG_LEVEL` | optional | Defaults apply (listed in `.env.example`). |
 
 ### Verification
